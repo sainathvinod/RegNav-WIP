@@ -407,14 +407,15 @@ const performAIDiscovery = async (
   lob: string,
   docType: string,
   llmConfig: ScoutingConfiguration['llmConfig'],
-  country: string = 'US'
+  country: string = 'US',
+  customPrompt?: string
 ): Promise<RegulatorySource[]> => {
   const stateName = US_STATES.find((s) => s.code === state)?.name || state;
   const lobName = LINES_OF_BUSINESS.find((l) => l.id === lob)?.name || lob;
   const docTypeName = REGULATORY_DOCUMENT_TYPES.find((d) => d.id === docType)?.name || docType;
 
-  // Generate the discovery prompt
-  const prompt = generateSearchPrompt(state, lob, docType, llmConfig.provider);
+  // Use custom prompt if provided, otherwise generate default prompt
+  const prompt = customPrompt || generateSearchPrompt(state, lob, docType, llmConfig.provider);
   
   try {
     // Call the real LLM with retry logic
@@ -632,7 +633,8 @@ const parseTextResponse = (
  */
 export const executeScoutingJob = async (
   config: ScoutingConfiguration,
-  onProgress?: (progress: DiscoveryProgress) => void
+  onProgress?: (progress: DiscoveryProgress) => void,
+  customPrompt?: string
 ): Promise<ScoutingJob> => {
   const jobId = `scout-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
   
@@ -677,8 +679,8 @@ export const executeScoutingJob = async (
               seedSources.push(...seeds);
             }
             
-            // STEP 2: Perform real AI discovery using configured LLM
-            const aiSources = await performAIDiscovery(state, lob, docType, config.llmConfig, country);
+            // STEP 2: Perform real AI discovery using configured LLM (with custom prompt if provided)
+            const aiSources = await performAIDiscovery(state, lob, docType, config.llmConfig, country, customPrompt);
             
             // STEP 3: Filter AI sources (NOT seeds) through gov-only filter
             const govOnlyAISources = aiSources.filter(source => {

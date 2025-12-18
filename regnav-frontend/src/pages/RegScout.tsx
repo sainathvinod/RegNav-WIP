@@ -4,7 +4,9 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { AppLayout } from '../components/layout/AppLayout';
 import { LLMIndicator } from '../components/LLMIndicator';
+import { PromptEditor } from '../components/PromptEditor';
 import { useAppStore } from '../store/appStore';
+import { generateDiscoveryPrompt } from '../services/promptGeneratorService';
 import {
   COUNTRIES,
   LOB_CATALOG,
@@ -65,6 +67,11 @@ export const RegScout: React.FC = () => {
     stepLabel: 'Generating queries',
     percent: 0,
   });
+  
+  // Prompt generation state
+  const [generatedPrompt, setGeneratedPrompt] = useState('');
+  const [isGeneratingPrompt, setIsGeneratingPrompt] = useState(false);
+  const [promptGenerationStatus, setPromptGenerationStatus] = useState('');
   
   // Results table state
   const [sortBy, setSortBy] = useState<'name' | 'pages'>('name');
@@ -159,6 +166,42 @@ export const RegScout: React.FC = () => {
                           selectedLOB !== '' && 
                           selectedDocTypes.length > 0;
 
+  // Handle prompt generation
+  const handleGeneratePrompt = async () => {
+    if (!canRunDiscovery) return;
+
+    setIsGeneratingPrompt(true);
+
+    try {
+      // Use first state and first doc type for prompt generation
+      // (If multiple, we'll generate prompts for each combination during discovery)
+      const firstState = selectedStates[0];
+      const firstDocType = selectedDocTypes[0];
+
+      const prompt = await generateDiscoveryPrompt(
+        selectedCountries[0],
+        firstState,
+        selectedLOB,
+        firstDocType,
+        llmConfig,
+        (status) => setPromptGenerationStatus(status)
+      );
+
+      setGeneratedPrompt(prompt);
+      setPromptGenerationStatus('');
+    } catch (error) {
+      console.error('Prompt generation failed:', error);
+      alert('Failed to generate prompt. Please try again.');
+    } finally {
+      setIsGeneratingPrompt(false);
+    }
+  };
+
+  // Handle prompt approval (proceed to discovery)
+  const handleApprovePrompt = () => {
+    handleRunDiscovery();
+  };
+
   // Handle discovery
   const handleRunDiscovery = async () => {
     if (!canRunDiscovery) return;
@@ -181,9 +224,13 @@ export const RegScout: React.FC = () => {
     };
 
     try {
-      const job = await executeScoutingJob(config, (progress) => {
-        setDiscoveryProgress(progress);
-      });
+      const job = await executeScoutingJob(
+        config,
+        (progress) => {
+          setDiscoveryProgress(progress);
+        },
+        generatedPrompt || undefined // Pass custom prompt if available
+      );
 
       setDiscoveredSources(job.results || []);
       setRegScoutView('results');
@@ -667,32 +714,39 @@ export const RegScout: React.FC = () => {
               </div>
             </div>
 
-            {/* Action Button - FIXED: Always visible */}
-            <div className="mt-8 flex items-center gap-4">
-              <button
-                onClick={handleRunDiscovery}
-                disabled={!canRunDiscovery}
-                className={`flex items-center gap-2 px-8 py-4 rounded-lg font-semibold text-lg transition-all ${
-                  canRunDiscovery
-                    ? 'bg-purple-600 text-white hover:bg-purple-700 shadow-lg shadow-purple-600/30 hover:shadow-purple-600/50'
-                    : 'bg-gray-700 text-gray-500 cursor-not-allowed'
-                }`}
-              >
-                <MagnifyingGlassIcon className="h-6 w-6" />
-                Discover Sources
-              </button>
+            {/* Prompt Editor - Generate and edit discovery prompt */}
+            {canRunDiscovery && (
+              <div className="mt-8">
+                <PromptEditor
+                  prompt={generatedPrompt}
+                  onPromptChange={setGeneratedPrompt}
+                  onGenerate={handleGeneratePrompt}
+                  onApprove={handleApprovePrompt}
+                  isGenerating={isGeneratingPrompt}
+                  generationStatus={promptGenerationStatus}
+                  configuration={{
+                    country: selectedCountries[0],
+                    state: selectedStates[0] || '',
+                    lob: selectedLOB,
+                    docType: selectedDocTypes[0] || '',
+                  }}
+                />
+              </div>
+            )}
 
-              {!canRunDiscovery && (
+            {/* Info Message when fields not selected */}
+            {!canRunDiscovery && (
+              <div className="mt-8 p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
                 <div className="flex items-center gap-2 text-sm text-yellow-400">
                   <ExclamationTriangleIcon className="h-5 w-5" />
                   {!isUSSelected ? (
                     <span>Discovery for {selectedCountry.name} coming soon. Please select United States for full functionality.</span>
                   ) : (
-                    <span>Please select {selectedCountry.label}, LOB, and Document Types</span>
+                    <span>Please select {selectedCountry.label}, LOB, and Document Types to begin</span>
                   )}
                 </div>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         </div>
       </AppLayout>
