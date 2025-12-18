@@ -161,7 +161,7 @@ export const ReferencePromptEditor: React.FC = () => {
         {/* Document Type Selector */}
         <div className="col-span-3 space-y-2">
           <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">
-            Document Types
+            Regulatory Document Types
           </h3>
           <div className="space-y-1">
             {docTypes.map((docType) => {
