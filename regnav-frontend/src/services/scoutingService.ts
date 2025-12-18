@@ -1,7 +1,8 @@
 // RegScout AI-Powered Regulatory Source Discovery Service
 
-import { ScoutingConfiguration, ScoutingJob, RegulatorySource } from '../types';
+import { ScoutingConfiguration, ScoutingJob, RegulatorySource, DiscoveryProgress } from '../types';
 import { US_STATES, LINES_OF_BUSINESS, REGULATORY_DOCUMENT_TYPES } from '../data/mockData';
+import { isGovAuthorizedAutoSource, getSourceTrustLevel } from '../utils/sourceQuality';
 
 // Simulated authoritative regulatory sources database
 // In production, this would be AI-discovered and validated
@@ -71,10 +72,11 @@ const simulateAIDiscovery = async (
   state: string,
   lob: string,
   docType: string,
-  llmConfig: ScoutingConfiguration['llmConfig']
+  llmConfig: ScoutingConfiguration['llmConfig'],
+  country: string = 'US'
 ): Promise<RegulatorySource[]> => {
-  // Simulate API call delay
-  await new Promise((resolve) => setTimeout(resolve, 1500 + Math.random() * 1000));
+  // Simulate API call delay (faster for better UX)
+  await new Promise((resolve) => setTimeout(resolve, 600 + Math.random() * 400));
 
   const sources: RegulatorySource[] = [];
   const stateInfo = KNOWN_REGULATORY_SOURCES[state];
@@ -250,10 +252,11 @@ const simulateAIDiscovery = async (
 
 /**
  * Main scouting function - discovers regulatory sources using AI
+ * with step-by-step progress tracking
  */
 export const executeScoutingJob = async (
   config: ScoutingConfiguration,
-  onProgress?: (job: Partial<ScoutingJob>) => void
+  onProgress?: (progress: DiscoveryProgress) => void
 ): Promise<ScoutingJob> => {
   const jobId = `scout-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
   
@@ -269,10 +272,22 @@ export const executeScoutingJob = async (
   };
 
   try {
-    // Calculate total combinations to search
+    // Step 1: Generating queries (0-20%)
+    if (onProgress) {
+      onProgress({ step: 'generating', stepLabel: 'Generating queries', percent: 10 });
+    }
+    await new Promise(resolve => setTimeout(resolve, 800));
+    
     const totalSearches = config.states.length * config.linesOfBusiness.length * config.documentTypes.length;
+    
+    // Step 2: Searching official sources (20-60%)
+    if (onProgress) {
+      onProgress({ step: 'searching', stepLabel: 'Searching official sources', percent: 30 });
+    }
+    
     let completedSearches = 0;
     const allSources: RegulatorySource[] = [];
+    const country = config.countries[0] || 'US';
 
     // Iterate through all combinations
     for (const state of config.states) {
@@ -280,27 +295,37 @@ export const executeScoutingJob = async (
         for (const docType of config.documentTypes) {
           try {
             // Simulate AI discovery
-            const sources = await simulateAIDiscovery(state, lob, docType, config.llmConfig);
+            const sources = await simulateAIDiscovery(state, lob, docType, config.llmConfig, country);
+            
+            // CRITICAL: Filter out non-gov sources for auto-discovered
+            const govOnlySources = sources.filter(source => {
+              if (source.discoveryMethod === 'ai_discovered') {
+                return isGovAuthorizedAutoSource(source.sourceUrl, country, [state]);
+              }
+              return true; // Keep user-provided sources
+            });
+            
+            // Add trust level to each source
+            const sourcesWithTrust = govOnlySources.map(source => ({
+              ...source,
+              trustLevel: getSourceTrustLevel(source, country, [state]),
+            }));
             
             // Filter by confidence threshold
-            const filteredSources = sources.filter(
+            const filteredSources = sourcesWithTrust.filter(
               (s) => s.confidenceScore >= config.confidenceThreshold
             );
             
             allSources.push(...filteredSources);
             completedSearches++;
 
-            // Update progress
-            const progress = Math.round((completedSearches / totalSearches) * 100);
-            job.progress = progress;
-            job.sourcesFound = allSources.length;
-            job.sourcesValidated = allSources.filter((s) => s.validationResult?.isValid).length;
-
-            if (onProgress) {
+            // Update progress (20-60% range)
+            const searchPercent = 20 + Math.round((completedSearches / totalSearches) * 40);
+            if (onProgress && completedSearches % 3 === 0) {
               onProgress({
-                progress,
-                sourcesFound: allSources.length,
-                sourcesValidated: job.sourcesValidated,
+                step: 'searching',
+                stepLabel: 'Searching official sources',
+                percent: searchPercent,
               });
             }
           } catch (error) {
@@ -311,6 +336,24 @@ export const executeScoutingJob = async (
         }
       }
     }
+
+    // Step 3: Validating links (60-75%)
+    if (onProgress) {
+      onProgress({ step: 'validating', stepLabel: 'Validating links', percent: 65 });
+    }
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    // Step 4: Extracting metadata (75-90%)
+    if (onProgress) {
+      onProgress({ step: 'extracting', stepLabel: 'Extracting metadata', percent: 80 });
+    }
+    await new Promise(resolve => setTimeout(resolve, 800));
+    
+    // Step 5: Finalizing results (90-100%)
+    if (onProgress) {
+      onProgress({ step: 'finalizing', stepLabel: 'Finalizing results', percent: 95 });
+    }
+    await new Promise(resolve => setTimeout(resolve, 500));
 
     // Apply max results limit
     const finalSources = config.maxResults > 0 
@@ -327,7 +370,7 @@ export const executeScoutingJob = async (
     job.executionTime = new Date(job.completedAt).getTime() - new Date(job.startedAt).getTime();
 
     if (onProgress) {
-      onProgress(job);
+      onProgress({ step: 'finalizing', stepLabel: 'Finalizing results', percent: 100 });
     }
 
     return job;
@@ -336,10 +379,6 @@ export const executeScoutingJob = async (
     job.completedAt = new Date().toISOString();
     job.errors = [`Critical error: ${error}`];
     
-    if (onProgress) {
-      onProgress(job);
-    }
-
     throw error;
   }
 };

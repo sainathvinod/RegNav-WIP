@@ -13,6 +13,7 @@ export interface Organization {
 export interface Country {
   code: string;
   name: string;
+  label: string; // e.g., "State" or "Province"
   regions?: string[];
 }
 
@@ -108,6 +109,7 @@ export interface RegulatorySource {
   discoveryMethod: 'ai_discovered' | 'user_provided' | 'scraped' | 'baseline';
   status: 'active' | 'archived' | 'pending_review' | 'invalid';
   confidenceScore: number;
+  trustLevel?: 'gov-auto' | 'user-added';
   metadata?: {
     lastVerified?: string;
     fileSize?: string;
@@ -118,6 +120,7 @@ export interface RegulatorySource {
     category?: string;
     tags?: string[];
     contactInfo?: string;
+    generatedSummary?: string;
   };
   createdAt: string;
   discoveredBy?: string;
@@ -128,6 +131,14 @@ export interface RegulatorySource {
     lastChecked: string;
     errorMessage?: string;
   };
+}
+
+export type RegScoutView = 'config' | 'loading' | 'results';
+
+export interface DiscoveryProgress {
+  step: 'generating' | 'searching' | 'validating' | 'extracting' | 'finalizing';
+  stepLabel: string;
+  percent: number;
 }
 
 export interface ScoutingJob {

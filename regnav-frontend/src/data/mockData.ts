@@ -3,10 +3,10 @@
 import { Country, State, LineOfBusiness, RegulatoryDocumentType, LLMProvider } from '../types';
 
 export const COUNTRIES: Country[] = [
-  { code: 'US', name: 'United States', regions: ['Northeast', 'Southeast', 'Midwest', 'Southwest', 'West'] },
-  { code: 'CA', name: 'Canada', regions: ['Eastern', 'Central', 'Western', 'Northern'] },
-  { code: 'UK', name: 'United Kingdom', regions: ['England', 'Scotland', 'Wales', 'Northern Ireland'] },
-  { code: 'AU', name: 'Australia', regions: ['NSW', 'VIC', 'QLD', 'SA', 'WA', 'TAS'] },
+  { code: 'US', name: 'United States', label: 'State', regions: ['Northeast', 'Southeast', 'Midwest', 'Southwest', 'West'] },
+  { code: 'CA', name: 'Canada', label: 'Province', regions: ['Eastern', 'Central', 'Western', 'Northern'] },
+  { code: 'UK', name: 'United Kingdom', label: 'Country', regions: ['England', 'Scotland', 'Wales', 'Northern Ireland'] },
+  { code: 'AU', name: 'Australia', label: 'State', regions: ['NSW', 'VIC', 'QLD', 'SA', 'WA', 'TAS'] },
 ];
 
 export const US_STATES: State[] = [
@@ -452,4 +452,80 @@ export const DEFAULT_LLM_CONFIG = {
   enableCaching: true,
   enableStreaming: false,
 };
+
+// State-specific LOB mappings (examples - not exhaustive)
+// This demonstrates the scalable pattern without claiming completeness
+export const LOB_BY_STATE: Record<string, string[]> = {
+  MI: ['commercial_auto', 'personal_auto', 'workers_comp', 'general_liability', 'professional_liability', 'commercial_property', 'homeowners'],
+  CA: ['commercial_auto', 'personal_auto', 'workers_comp', 'general_liability', 'homeowners', 'health_insurance'],
+  TX: ['commercial_auto', 'personal_auto', 'workers_comp', 'general_liability', 'commercial_property', 'homeowners', 'life_insurance'],
+  NY: ['commercial_auto', 'personal_auto', 'workers_comp', 'general_liability', 'professional_liability', 'homeowners', 'health_insurance'],
+  NC: ['commercial_auto', 'personal_auto', 'workers_comp', 'general_liability', 'homeowners'],
+  // Default for states not explicitly mapped
+  DEFAULT: ['commercial_auto', 'personal_auto', 'workers_comp', 'general_liability', 'homeowners'],
+};
+
+// State-specific Document Type mappings (examples - not exhaustive)
+export const DOC_TYPES_BY_STATE: Record<string, string[]> = {
+  MI: ['wcpols', 'wcstats', 'iso_forms', 'rate_filing', 'dmv_requirements', 'state_bulletin'],
+  CA: ['wcpols', 'wcstats', 'iso_forms', 'rate_filing', 'dmv_requirements', 'state_bulletin', 'statute'],
+  TX: ['wcpols', 'iso_forms', 'rate_filing', 'dmv_requirements', 'state_bulletin', 'form_filing'],
+  NY: ['wcpols', 'wcstats', 'iso_forms', 'rate_filing', 'state_bulletin', 'statute', 'form_filing'],
+  NC: ['wcpols', 'iso_forms', 'rate_filing', 'dmv_requirements', 'state_bulletin'],
+  // Default for states not explicitly mapped
+  DEFAULT: ['wcpols', 'iso_forms', 'rate_filing', 'state_bulletin'],
+};
+
+/**
+ * Get available LOBs for selected states (INTERSECTION)
+ * Only returns LOBs that are valid for ALL selected states
+ */
+export function getAvailableLOBsForStates(stateCodes: string[]): string[] {
+  if (stateCodes.length === 0) {
+    return LINES_OF_BUSINESS.map(lob => lob.id);
+  }
+  
+  // Get LOBs for each state
+  const lobSets = stateCodes.map(stateCode => {
+    const stateLobs = LOB_BY_STATE[stateCode] || LOB_BY_STATE.DEFAULT;
+    return new Set(stateLobs);
+  });
+  
+  // Return intersection
+  if (lobSets.length === 1) {
+    return Array.from(lobSets[0]);
+  }
+  
+  const intersection = Array.from(lobSets[0]).filter(lob =>
+    lobSets.every(set => set.has(lob))
+  );
+  
+  return intersection;
+}
+
+/**
+ * Get available Doc Types for selected states (INTERSECTION)
+ */
+export function getAvailableDocTypesForStates(stateCodes: string[]): string[] {
+  if (stateCodes.length === 0) {
+    return REGULATORY_DOCUMENT_TYPES.map(dt => dt.id);
+  }
+  
+  // Get doc types for each state
+  const docTypeSets = stateCodes.map(stateCode => {
+    const stateDocTypes = DOC_TYPES_BY_STATE[stateCode] || DOC_TYPES_BY_STATE.DEFAULT;
+    return new Set(stateDocTypes);
+  });
+  
+  // Return intersection
+  if (docTypeSets.length === 1) {
+    return Array.from(docTypeSets[0]);
+  }
+  
+  const intersection = Array.from(docTypeSets[0]).filter(docType =>
+    docTypeSets.every(set => set.has(docType))
+  );
+  
+  return intersection;
+}
 

@@ -7,6 +7,7 @@ import { DEFAULT_LLM_CONFIG } from '../data/mockData';
 interface AppStore {
   // UI State
   sidebarCollapsed: boolean;
+  regScoutView: 'config' | 'loading' | 'results';
   
   // Configuration
   selectedCountries: string[];
@@ -22,6 +23,7 @@ interface AppStore {
   
   // Actions
   toggleSidebar: () => void;
+  setRegScoutView: (view: 'config' | 'loading' | 'results') => void;
   setSelectedCountries: (countries: string[]) => void;
   setSelectedStates: (states: string[]) => void;
   toggleState: (stateCode: string) => void;
@@ -36,6 +38,7 @@ interface AppStore {
   updateScoutingJob: (jobId: string, updates: Partial<ScoutingJob>) => void;
   setDiscoveredSources: (sources: RegulatorySource[]) => void;
   addDiscoveredSource: (source: RegulatorySource) => void;
+  removeDiscoveredSource: (sourceId: string) => void;
   clearSelections: () => void;
   reset: () => void;
 }
@@ -45,6 +48,7 @@ export const useAppStore = create<AppStore>()(
     (set, get) => ({
       // Initial State
       sidebarCollapsed: false,
+      regScoutView: 'config',
       selectedCountries: ['US'],
       selectedStates: [],
       selectedLOBs: [],
@@ -56,6 +60,8 @@ export const useAppStore = create<AppStore>()(
 
       // Actions
       toggleSidebar: () => set((state) => ({ sidebarCollapsed: !state.sidebarCollapsed })),
+      
+      setRegScoutView: (view) => set({ regScoutView: view }),
 
       setSelectedCountries: (countries) => set({ selectedCountries: countries }),
 
@@ -117,6 +123,11 @@ export const useAppStore = create<AppStore>()(
       addDiscoveredSource: (source) =>
         set((state) => ({
           discoveredSources: [...state.discoveredSources, source],
+        })),
+      
+      removeDiscoveredSource: (sourceId) =>
+        set((state) => ({
+          discoveredSources: state.discoveredSources.filter(s => s.id !== sourceId),
         })),
 
       clearSelections: () =>
