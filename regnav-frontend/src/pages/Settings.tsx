@@ -1,4 +1,4 @@
-// Settings - Module-Level LLM Configuration & Reference Prompts
+// Settings - Module-Level LLM Configuration & Meta Prompts
 import React, { useState } from 'react';
 import { AppLayout } from '../components/layout/AppLayout';
 import { LLMConfig } from '../components/LLMConfig';
@@ -123,7 +123,7 @@ export const Settings: React.FC = () => {
             Settings
           </h1>
           <p className="mt-2 text-gray-400">
-            Configure AI models and reference prompts for RegNav.AI
+            Configure AI models and meta prompts for RegNav.AI
           </p>
         </div>
 
@@ -157,7 +157,7 @@ export const Settings: React.FC = () => {
             >
               <span className="flex items-center gap-2">
                 <DocumentTextIcon className="w-5 h-5" />
-                Reference Prompts
+                Meta Prompts
               </span>
             </button>
           </div>

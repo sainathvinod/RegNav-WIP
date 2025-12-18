@@ -17,7 +17,7 @@ interface AppStore {
   selectedDocTypes: string[];
   llmConfig: LLMConfiguration; // Global LLM config (for Settings page)
   moduleLLMConfigs: ModuleLLMConfigurations; // Per-module LLM configs
-  referencePrompts: Record<string, string>; // Reference prompts per doc type
+  referencePrompts: Record<string, string>; // Meta prompts per doc type
   
   // Scouting
   currentScoutingJob: ScoutingJob | null;
@@ -157,7 +157,7 @@ export const useAppStore = create<AppStore>()(
           set({ referencePrompts: prompts });
           return true;
         } catch (error) {
-          console.error('Failed to import reference prompts:', error);
+          console.error('Failed to import meta prompts:', error);
           return false;
         }
       },

@@ -1,5 +1,5 @@
-// Default Reference Prompts for Each Regulatory Document Type
-// These serve as gold standards for meta-prompt generation
+// Default Meta Prompts for Each Regulatory Document Type
+// These serve as gold standards for AI-generated discovery prompts
 
 export const DEFAULT_REFERENCE_PROMPTS: Record<string, string> = {
   // WCPOLS - Wisconsin Workers' Comp Policy Language (Gold Standard)

@@ -179,7 +179,7 @@ export const RegScout: React.FC = () => {
       const firstState = selectedStates[0];
       const firstDocType = selectedDocTypes[0];
 
-      // Get the configured reference prompt for this doc type
+      // Get the configured meta prompt for this doc type
       const referencePrompt = getReferencePrompt(firstDocType);
 
       const prompt = await generateDiscoveryPrompt(

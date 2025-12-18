@@ -31,13 +31,13 @@ const generateMetaPrompt = (
 **YOUR TASK:**
 Generate a discovery prompt that an AI assistant will use to find ALL authoritative sources for "${docTypeName}" related to "${lobName}" in "${stateName}".
 
-**REFERENCE PROMPT (Gold Standard - User-Configured Template):**
+**META PROMPT (Gold Standard - User-Configured Template):**
 \`\`\`
 ${referencePrompt}
 \`\`\`
 
 **INSTRUCTIONS:**
-1. Use the reference prompt above as your template for structure, clarity, and level of detail
+1. Use the meta prompt above as your template for structure, clarity, and level of detail
 2. Adapt it specifically for: ${stateName} + ${lobName} + ${docTypeName}
 3. Research and include state-specific details:
    - Name the actual state agencies (e.g., "California Department of Insurance" not "State Department of Insurance")
@@ -49,7 +49,7 @@ ${referencePrompt}
 6. Ensure the prompt is comprehensive enough to find 5-10+ authoritative sources
 
 **CRITICAL REQUIREMENTS:**
-- The prompt MUST be at least as detailed as the reference prompt
+- The prompt MUST be at least as detailed as the meta prompt
 - Include BOTH government sources AND industry-standard organizations
 - Use strong directive language (CRITICAL, MANDATORY, DO NOT MISS)
 - Provide specific examples and domains

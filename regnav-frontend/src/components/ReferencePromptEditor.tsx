@@ -1,8 +1,8 @@
 /**
- * Reference Prompt Editor
+ * Meta Prompt Editor
  * 
- * Allows users to configure reference prompts for each regulatory document type.
- * These prompts serve as templates for meta-prompt generation.
+ * Allows users to configure meta prompts for each regulatory document type.
+ * These prompts serve as templates for AI-generated discovery prompts.
  */
 
 import React, { useState, useEffect } from 'react';
@@ -57,7 +57,7 @@ export const ReferencePromptEditor: React.FC = () => {
       setSaveStatus('saved');
       setTimeout(() => setSaveStatus('idle'), 3000);
     } catch (error) {
-      console.error('Failed to save reference prompt:', error);
+      console.error('Failed to save meta prompt:', error);
       setSaveStatus('error');
     }
   };
@@ -119,10 +119,10 @@ export const ReferencePromptEditor: React.FC = () => {
         <div>
           <h2 className="text-2xl font-bold text-white flex items-center gap-2">
             <DocumentTextIcon className="w-7 h-7 text-purple-400" />
-            Reference Prompt Configuration
+            Meta Prompt Configuration
           </h2>
           <p className="mt-2 text-gray-400">
-            Configure reference prompts for each regulatory document type. These serve as templates for AI-generated discovery prompts.
+            Configure meta prompts for each regulatory document type. These serve as templates for AI-generated discovery prompts.
           </p>
         </div>
         
@@ -148,11 +148,11 @@ export const ReferencePromptEditor: React.FC = () => {
       </div>
 
       {/* Info Banner */}
-      <div className="bg-purple-900/20 border border-purple-500/30 rounded-lg p-4 flex items-start gap-3">
+        <div className="bg-purple-900/20 border border-purple-500/30 rounded-lg p-4 flex items-start gap-3">
         <InformationCircleIcon className="w-5 h-5 text-purple-400 flex-shrink-0 mt-0.5" />
         <div className="text-sm text-gray-300">
-          <strong className="text-purple-400">How it works:</strong> When generating discovery prompts, RegNav.AI uses these reference prompts as templates. 
-          The LLM analyzes your reference and creates a customized prompt for any country/state/LOB/doc-type combination.
+          <strong className="text-purple-400">How it works:</strong> When generating discovery prompts, RegNav.AI uses these meta prompts as templates. 
+          The LLM analyzes your meta prompt and creates a customized prompt for any country/state/LOB/doc-type combination.
           Wisconsin WCPOLS is the gold standard—customize it for your organization's needs.
         </div>
       </div>
@@ -247,7 +247,7 @@ export const ReferencePromptEditor: React.FC = () => {
             value={editedPrompt}
             onChange={(e) => handlePromptChange(e.target.value)}
             className="w-full h-96 px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-gray-200 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
-            placeholder="Enter reference prompt..."
+            placeholder="Enter meta prompt..."
             spellCheck={false}
           />
 
