@@ -13,20 +13,73 @@ import {
   ExclamationTriangleIcon,
   ArrowDownTrayIcon,
   ArrowUpTrayIcon,
-  InformationCircleIcon
+  InformationCircleIcon,
+  MagnifyingGlassIcon,
+  BeakerIcon,
+  LightBulbIcon,
+  ShieldCheckIcon
 } from '@heroicons/react/24/outline';
 import { useAppStore } from '../store/appStore';
 import { DEFAULT_REFERENCE_PROMPTS, DOC_TYPE_INFO } from '../data/defaultReferencePrompts';
+import { ModuleName } from '../types';
+
+interface ModuleInfo {
+  id: ModuleName;
+  name: string;
+  description: string;
+  icon: React.ComponentType<{ className?: string }>;
+  color: string;
+}
+
+const MODULES: ModuleInfo[] = [
+  {
+    id: 'regscout',
+    name: 'RegScout',
+    description: 'Regulatory source discovery',
+    icon: MagnifyingGlassIcon,
+    color: 'purple',
+  },
+  {
+    id: 'regingest',
+    name: 'RegIngest',
+    description: 'Document ingestion',
+    icon: DocumentTextIcon,
+    color: 'blue',
+  },
+  {
+    id: 'ruleminer',
+    name: 'RuleMiner',
+    description: 'Rule extraction',
+    icon: BeakerIcon,
+    color: 'green',
+  },
+  {
+    id: 'rulesense',
+    name: 'RuleSense',
+    description: 'Rule interpretation',
+    icon: LightBulbIcon,
+    color: 'yellow',
+  },
+  {
+    id: 'regvalidate',
+    name: 'RegValidate',
+    description: 'File validation',
+    icon: ShieldCheckIcon,
+    color: 'red',
+  },
+];
 
 export const ReferencePromptEditor: React.FC = () => {
   const { 
-    referencePrompts, 
-    updateReferencePrompt, 
-    resetReferencePrompt,
-    exportReferencePrompts,
-    importReferencePrompts 
+    moduleReferencePrompts, 
+    getModuleReferencePrompt,
+    updateModuleReferencePrompt, 
+    resetModuleReferencePrompt,
+    exportModuleReferencePrompts,
+    importModuleReferencePrompts 
   } = useAppStore();
 
+  const [selectedModule, setSelectedModule] = useState<ModuleName>('regscout');
   const [selectedDocType, setSelectedDocType] = useState<string>('wcpols');
   const [editedPrompt, setEditedPrompt] = useState<string>('');
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
@@ -34,14 +87,14 @@ export const ReferencePromptEditor: React.FC = () => {
   const [charCount, setCharCount] = useState(0);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
 
-  // Load prompt when doc type changes
+  // Load prompt when module or doc type changes
   useEffect(() => {
-    const prompt = referencePrompts[selectedDocType] || DEFAULT_REFERENCE_PROMPTS[selectedDocType] || '';
+    const prompt = getModuleReferencePrompt(selectedModule, selectedDocType);
     setEditedPrompt(prompt);
     setCharCount(prompt.length);
     setHasUnsavedChanges(false);
     setSaveStatus('idle');
-  }, [selectedDocType, referencePrompts]);
+  }, [selectedModule, selectedDocType, moduleReferencePrompts, getModuleReferencePrompt]);
 
   const handlePromptChange = (value: string) => {
     setEditedPrompt(value);
@@ -52,7 +105,7 @@ export const ReferencePromptEditor: React.FC = () => {
 
   const handleSave = () => {
     try {
-      updateReferencePrompt(selectedDocType, editedPrompt);
+      updateModuleReferencePrompt(selectedModule, selectedDocType, editedPrompt);
       setHasUnsavedChanges(false);
       setSaveStatus('saved');
       setTimeout(() => setSaveStatus('idle'), 3000);
@@ -63,7 +116,7 @@ export const ReferencePromptEditor: React.FC = () => {
   };
 
   const handleReset = () => {
-    resetReferencePrompt(selectedDocType);
+    resetModuleReferencePrompt(selectedModule, selectedDocType);
     const defaultPrompt = DEFAULT_REFERENCE_PROMPTS[selectedDocType] || '';
     setEditedPrompt(defaultPrompt);
     setCharCount(defaultPrompt.length);
@@ -73,12 +126,12 @@ export const ReferencePromptEditor: React.FC = () => {
   };
 
   const handleExport = () => {
-    const json = exportReferencePrompts();
+    const json = exportModuleReferencePrompts(selectedModule);
     const blob = new Blob([json], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `regnav-reference-prompts-${Date.now()}.json`;
+    a.download = `regnav-${selectedModule}-meta-prompts-${Date.now()}.json`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -92,10 +145,10 @@ export const ReferencePromptEditor: React.FC = () => {
     const reader = new FileReader();
     reader.onload = (e) => {
       const content = e.target?.result as string;
-      const success = importReferencePrompts(content);
+      const success = importModuleReferencePrompts(selectedModule, content);
       if (success) {
         // Reload current prompt
-        const prompt = referencePrompts[selectedDocType] || DEFAULT_REFERENCE_PROMPTS[selectedDocType] || '';
+        const prompt = getModuleReferencePrompt(selectedModule, selectedDocType);
         setEditedPrompt(prompt);
         setCharCount(prompt.length);
         setHasUnsavedChanges(false);
@@ -110,7 +163,43 @@ export const ReferencePromptEditor: React.FC = () => {
 
   const docTypes = Object.keys(DOC_TYPE_INFO);
   const currentDocInfo = DOC_TYPE_INFO[selectedDocType];
-  const isModified = referencePrompts[selectedDocType] !== DEFAULT_REFERENCE_PROMPTS[selectedDocType];
+  const isModified = moduleReferencePrompts[selectedModule]?.[selectedDocType] !== DEFAULT_REFERENCE_PROMPTS[selectedDocType];
+
+  const getColorClasses = (color: string, selected: boolean) => {
+    const colors: Record<string, { border: string; bg: string; text: string; hover: string }> = {
+      purple: {
+        border: selected ? 'border-purple-500' : 'border-gray-700',
+        bg: selected ? 'bg-purple-500/20' : 'bg-gray-800',
+        text: selected ? 'text-purple-300' : 'text-gray-400',
+        hover: 'hover:border-purple-500/50',
+      },
+      blue: {
+        border: selected ? 'border-blue-500' : 'border-gray-700',
+        bg: selected ? 'bg-blue-500/20' : 'bg-gray-800',
+        text: selected ? 'text-blue-300' : 'text-gray-400',
+        hover: 'hover:border-blue-500/50',
+      },
+      green: {
+        border: selected ? 'border-green-500' : 'border-gray-700',
+        bg: selected ? 'bg-green-500/20' : 'bg-gray-800',
+        text: selected ? 'text-green-300' : 'text-gray-400',
+        hover: 'hover:border-green-500/50',
+      },
+      yellow: {
+        border: selected ? 'border-yellow-500' : 'border-gray-700',
+        bg: selected ? 'bg-yellow-500/20' : 'bg-gray-800',
+        text: selected ? 'text-yellow-300' : 'text-gray-400',
+        hover: 'hover:border-yellow-500/50',
+      },
+      red: {
+        border: selected ? 'border-red-500' : 'border-gray-700',
+        bg: selected ? 'bg-red-500/20' : 'bg-gray-800',
+        text: selected ? 'text-red-300' : 'text-gray-400',
+        hover: 'hover:border-red-500/50',
+      },
+    };
+    return colors[color];
+  };
 
   return (
     <div className="space-y-6">
@@ -147,8 +236,40 @@ export const ReferencePromptEditor: React.FC = () => {
         </div>
       </div>
 
+      {/* Module Selector */}
+      <div className="mb-6">
+        <h3 className="text-sm font-semibold text-gray-300 mb-3">Select Module</h3>
+        <div className="grid grid-cols-5 gap-3">
+          {MODULES.map((module) => {
+            const Icon = module.icon;
+            const selected = module.id === selectedModule;
+            const colors = getColorClasses(module.color, selected);
+
+            return (
+              <button
+                key={module.id}
+                onClick={() => {
+                  if (hasUnsavedChanges) {
+                    if (window.confirm('You have unsaved changes. Discard them?')) {
+                      setSelectedModule(module.id);
+                    }
+                  } else {
+                    setSelectedModule(module.id);
+                  }
+                }}
+                className={`p-4 rounded-lg border transition-all ${colors.border} ${colors.bg} ${colors.hover} cursor-pointer`}
+              >
+                <Icon className={`h-8 w-8 mx-auto mb-2 ${colors.text}`} />
+                <div className={`text-sm font-medium ${colors.text}`}>{module.name}</div>
+                <div className="text-xs text-gray-500 mt-1">{module.description}</div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
       {/* Info Banner */}
-        <div className="bg-purple-900/20 border border-purple-500/30 rounded-lg p-4 flex items-start gap-3">
+      <div className="bg-purple-900/20 border border-purple-500/30 rounded-lg p-4 flex items-start gap-3">
         <InformationCircleIcon className="w-5 h-5 text-purple-400 flex-shrink-0 mt-0.5" />
         <div className="text-sm text-gray-300">
           <strong className="text-purple-400">How it works:</strong> When generating discovery prompts, RegNav.AI uses these meta prompts as templates. 
@@ -167,7 +288,7 @@ export const ReferencePromptEditor: React.FC = () => {
             {docTypes.map((docType) => {
               const info = DOC_TYPE_INFO[docType];
               const isSelected = selectedDocType === docType;
-              const hasCustom = referencePrompts[docType] !== DEFAULT_REFERENCE_PROMPTS[docType];
+              const hasCustom = moduleReferencePrompts[selectedModule]?.[docType] !== DEFAULT_REFERENCE_PROMPTS[docType];
 
               return (
                 <button
