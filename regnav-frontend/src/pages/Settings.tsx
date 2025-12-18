@@ -76,19 +76,19 @@ export const Settings: React.FC = () => {
     <div className="max-w-5xl mx-auto">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-          <Cog6ToothIcon className="h-8 w-8 text-primary" />
+        <h1 className="text-3xl font-bold text-gray-50 flex items-center gap-3">
+          <Cog6ToothIcon className="h-8 w-8 text-purple-500" />
           Settings
         </h1>
-        <p className="mt-2 text-gray-600">
+        <p className="mt-2 text-gray-400">
           Configure AI models and application preferences
         </p>
       </div>
 
       {/* LLM Provider Selection */}
-      <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
-          <SparklesIcon className="h-6 w-6 text-primary" />
+      <div className="card mb-6">
+        <h2 className="text-xl font-semibold text-gray-50 mb-4 flex items-center gap-2">
+          <SparklesIcon className="h-6 w-6 text-purple-500" />
           AI Model Provider
         </h2>
 
@@ -100,17 +100,17 @@ export const Settings: React.FC = () => {
               className={clsx(
                 'p-4 rounded-lg border-2 text-left transition-all',
                 selectedProvider.id === provider.id
-                  ? 'border-primary bg-primary/5 shadow-md'
-                  : 'border-gray-200 hover:border-primary/30'
+                  ? 'border-purple-500 bg-purple-600/20 shadow-lg shadow-purple-600/30'
+                  : 'border-gray-700 hover:border-purple-500/50 bg-gray-800'
               )}
             >
               <div className="flex items-center justify-between mb-2">
-                <h3 className="font-semibold text-gray-900">{provider.name}</h3>
+                <h3 className="font-semibold text-gray-50">{provider.name}</h3>
                 {selectedProvider.id === provider.id && (
-                  <CheckCircleIcon className="h-5 w-5 text-primary" />
+                  <CheckCircleIcon className="h-5 w-5 text-purple-400" />
                 )}
               </div>
-              <div className="space-y-1 text-xs text-gray-600">
+              <div className="space-y-1 text-xs text-gray-400">
                 <div className="flex items-center gap-1">
                   <CpuChipIcon className="h-3.5 w-3.5" />
                   {provider.models.length} models available
@@ -143,9 +143,9 @@ export const Settings: React.FC = () => {
       </div>
 
       {/* Model Selection */}
-      <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
-          <CpuChipIcon className="h-6 w-6 text-primary" />
+      <div className="card mb-6">
+        <h2 className="text-xl font-semibold text-gray-50 mb-4 flex items-center gap-2">
+          <CpuChipIcon className="h-6 w-6 text-purple-500" />
           Model Selection
         </h2>
 
@@ -157,19 +157,19 @@ export const Settings: React.FC = () => {
               className={clsx(
                 'w-full p-4 rounded-lg border-2 text-left transition-all',
                 selectedModel?.id === model.id
-                  ? 'border-primary bg-primary/5'
-                  : 'border-gray-200 hover:border-primary/30'
+                  ? 'border-purple-500 bg-purple-600/20 shadow-lg shadow-purple-600/30'
+                  : 'border-gray-700 hover:border-purple-500/50 bg-gray-800'
               )}
             >
               <div className="flex items-start gap-3">
                 <div className="flex-1">
                   <div className="flex items-center justify-between mb-2">
-                    <h3 className="font-semibold text-gray-900">{model.name}</h3>
+                    <h3 className="font-semibold text-gray-50">{model.name}</h3>
                     {selectedModel?.id === model.id && (
-                      <CheckCircleIcon className="h-5 w-5 text-primary" />
+                      <CheckCircleIcon className="h-5 w-5 text-purple-400" />
                     )}
                   </div>
-                  <p className="text-sm text-gray-600 mb-3">{model.description}</p>
+                  <p className="text-sm text-gray-400 mb-3">{model.description}</p>
                   
                   <div className="grid grid-cols-3 gap-3">
                     <div className="flex items-center gap-2">
@@ -178,21 +178,21 @@ export const Settings: React.FC = () => {
                         model.speedRating === 'fast' ? 'text-green-600' :
                         model.speedRating === 'medium' ? 'text-yellow-600' : 'text-orange-600'
                       )} />
-                      <span className="text-xs text-gray-600 capitalize">{model.speedRating} speed</span>
+                      <span className="text-xs text-gray-400 capitalize">{model.speedRating} speed</span>
                     </div>
                     
                     <div className="flex items-center gap-2">
                       <SparklesIcon className={clsx(
                         'h-4 w-4',
-                        model.qualityRating === 'high' ? 'text-purple-600' :
-                        model.qualityRating === 'medium' ? 'text-blue-600' : 'text-gray-600'
+                        model.qualityRating === 'high' ? 'text-purple-500' :
+                        model.qualityRating === 'medium' ? 'text-blue-500' : 'text-gray-500'
                       )} />
-                      <span className="text-xs text-gray-600 capitalize">{model.qualityRating} quality</span>
+                      <span className="text-xs text-gray-400 capitalize">{model.qualityRating} quality</span>
                     </div>
                     
                     <div className="flex items-center gap-2">
-                      <CurrencyDollarIcon className="h-4 w-4 text-green-600" />
-                      <span className="text-xs text-gray-600">
+                      <CurrencyDollarIcon className="h-4 w-4 text-green-500" />
+                      <span className="text-xs text-gray-400">
                         {model.costPerToken === 0 ? 'Free' : `$${model.costPerToken.toFixed(6)}/token`}
                       </span>
                     </div>
@@ -206,14 +206,14 @@ export const Settings: React.FC = () => {
 
       {/* API Key Configuration */}
       {selectedProvider.requiresApiKey && (
-        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <KeyIcon className="h-6 w-6 text-primary" />
+        <div className="card mb-6">
+          <h2 className="text-xl font-semibold text-gray-50 mb-4 flex items-center gap-2">
+            <KeyIcon className="h-6 w-6 text-purple-500" />
             API Authentication
           </h2>
 
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-300 mb-2">
               {selectedProvider.name} API Key
             </label>
             <div className="relative">
@@ -222,11 +222,11 @@ export const Settings: React.FC = () => {
                 value={apiKey}
                 onChange={(e) => setApiKey(e.target.value)}
                 placeholder={`Enter your ${selectedProvider.name} API key`}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary pr-24"
+                className="input pr-24"
               />
               <button
                 onClick={() => setShowApiKey(!showApiKey)}
-                className="absolute right-2 top-1/2 -translate-y-1/2 px-3 py-1 text-xs text-primary hover:text-primary-dark"
+                className="absolute right-2 top-1/2 -translate-y-1/2 px-3 py-1 text-xs text-purple-400 hover:text-purple-300"
               >
                 {showApiKey ? 'Hide' : 'Show'}
               </button>
@@ -274,18 +274,18 @@ export const Settings: React.FC = () => {
       )}
 
       {/* Advanced Parameters */}
-      <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">Advanced Parameters</h2>
+      <div className="card mb-6">
+        <h2 className="text-xl font-semibold text-gray-50 mb-4">Advanced Parameters</h2>
 
         <div className="space-y-4">
           {/* Temperature */}
           <div>
             <div className="flex items-center justify-between mb-2">
-              <label className="text-sm font-medium text-gray-700">
+              <label className="text-sm font-medium text-gray-300">
                 Temperature: {llmConfig.temperature.toFixed(2)}
               </label>
               <InformationCircleIcon 
-                className="h-4 w-4 text-gray-400" 
+                className="h-4 w-4 text-gray-500" 
                 title="Controls randomness. Lower = more focused, Higher = more creative"
               />
             </div>
@@ -296,7 +296,7 @@ export const Settings: React.FC = () => {
               step="0.1"
               value={llmConfig.temperature}
               onChange={(e) => updateLLMConfig({ temperature: parseFloat(e.target.value) })}
-              className="w-full"
+              className="w-full accent-purple-600"
             />
             <div className="flex justify-between text-xs text-gray-500 mt-1">
               <span>Focused (0.0)</span>
@@ -307,7 +307,7 @@ export const Settings: React.FC = () => {
 
           {/* Max Tokens */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-300 mb-2">
               Max Tokens: {llmConfig.maxTokens}
             </label>
             <input
@@ -317,7 +317,7 @@ export const Settings: React.FC = () => {
               step="100"
               value={llmConfig.maxTokens}
               onChange={(e) => updateLLMConfig({ maxTokens: parseInt(e.target.value) })}
-              className="w-full"
+              className="w-full accent-purple-600"
             />
             <p className="text-xs text-gray-500 mt-1">
               Maximum length of the generated response
@@ -326,7 +326,7 @@ export const Settings: React.FC = () => {
 
           {/* Top P */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-300 mb-2">
               Top P: {llmConfig.topP.toFixed(2)}
             </label>
             <input
@@ -336,7 +336,7 @@ export const Settings: React.FC = () => {
               step="0.05"
               value={llmConfig.topP}
               onChange={(e) => updateLLMConfig({ topP: parseFloat(e.target.value) })}
-              className="w-full"
+              className="w-full accent-purple-600"
             />
             <p className="text-xs text-gray-500 mt-1">
               Controls diversity via nucleus sampling
@@ -346,7 +346,7 @@ export const Settings: React.FC = () => {
           {/* Frequency & Presence Penalty */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-300 mb-2">
                 Frequency Penalty: {llmConfig.frequencyPenalty.toFixed(1)}
               </label>
               <input
@@ -356,11 +356,11 @@ export const Settings: React.FC = () => {
                 step="0.1"
                 value={llmConfig.frequencyPenalty}
                 onChange={(e) => updateLLMConfig({ frequencyPenalty: parseFloat(e.target.value) })}
-                className="w-full"
+                className="w-full accent-purple-600"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-300 mb-2">
                 Presence Penalty: {llmConfig.presencePenalty.toFixed(1)}
               </label>
               <input
@@ -370,7 +370,7 @@ export const Settings: React.FC = () => {
                 step="0.1"
                 value={llmConfig.presencePenalty}
                 onChange={(e) => updateLLMConfig({ presencePenalty: parseFloat(e.target.value) })}
-                className="w-full"
+                className="w-full accent-purple-600"
               />
             </div>
           </div>
@@ -378,7 +378,7 @@ export const Settings: React.FC = () => {
           {/* Additional Settings */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-300 mb-2">
                 Timeout (seconds)
               </label>
               <input
@@ -387,11 +387,11 @@ export const Settings: React.FC = () => {
                 max="300"
                 value={llmConfig.timeout}
                 onChange={(e) => updateLLMConfig({ timeout: parseInt(e.target.value) || 60 })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
+                className="input"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-300 mb-2">
                 Retry Attempts
               </label>
               <input
@@ -400,7 +400,7 @@ export const Settings: React.FC = () => {
                 max="10"
                 value={llmConfig.retries}
                 onChange={(e) => updateLLMConfig({ retries: parseInt(e.target.value) || 3 })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
+                className="input"
               />
             </div>
           </div>
@@ -412,18 +412,18 @@ export const Settings: React.FC = () => {
                 type="checkbox"
                 checked={llmConfig.enableCaching}
                 onChange={(e) => updateLLMConfig({ enableCaching: e.target.checked })}
-                className="rounded text-primary focus:ring-primary"
+                className="rounded text-purple-600 focus:ring-purple-500 bg-gray-800 border-gray-700"
               />
-              <span className="text-sm text-gray-700">Enable response caching (faster & cheaper)</span>
+              <span className="text-sm text-gray-300">Enable response caching (faster & cheaper)</span>
             </label>
             <label className="flex items-center gap-2">
               <input
                 type="checkbox"
                 checked={llmConfig.enableStreaming}
                 onChange={(e) => updateLLMConfig({ enableStreaming: e.target.checked })}
-                className="rounded text-primary focus:ring-primary"
+                className="rounded text-purple-600 focus:ring-purple-500 bg-gray-800 border-gray-700"
               />
-              <span className="text-sm text-gray-700">Enable streaming responses</span>
+              <span className="text-sm text-gray-300">Enable streaming responses</span>
             </label>
           </div>
         </div>
@@ -433,25 +433,25 @@ export const Settings: React.FC = () => {
       <div className="flex items-center justify-end gap-3">
         <button
           onClick={() => updateLLMConfig(selectedProvider.requiresApiKey ? { apiKey: '' } : {})}
-          className="px-6 py-3 rounded-lg border-2 border-gray-300 text-gray-700 font-medium hover:bg-gray-50"
+          className="btn-secondary"
         >
           Reset to Defaults
         </button>
         <button
           onClick={handleSaveConfig}
-          className="px-6 py-3 rounded-lg bg-primary text-white font-medium hover:bg-primary-dark shadow-md"
+          className="btn-primary"
         >
           Save Configuration
         </button>
       </div>
 
       {/* Info Panel */}
-      <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+      <div className="mt-6 p-4 bg-blue-900/20 border border-blue-800 rounded-lg">
         <div className="flex items-start gap-3">
-          <InformationCircleIcon className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
-          <div className="text-sm text-blue-900">
+          <InformationCircleIcon className="h-5 w-5 text-blue-400 mt-0.5 flex-shrink-0" />
+          <div className="text-sm text-gray-300">
             <p className="font-medium mb-1">About LLM Configuration</p>
-            <p className="text-blue-800">
+            <p className="text-gray-400">
               The selected AI model will be used across all RegNav.AI agents (RegScout, RegIngest, RuleMiner, 
               RuleSense, and RegValidate). Choose a model that balances your needs for speed, quality, and cost. 
               For production use, we recommend GPT-4 Turbo or Claude 3 Opus for best accuracy.

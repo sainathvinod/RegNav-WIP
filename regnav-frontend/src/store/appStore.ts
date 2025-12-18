@@ -12,7 +12,7 @@ interface AppStore {
   // Configuration
   selectedCountries: string[];
   selectedStates: string[];
-  selectedLOBs: string[];
+  selectedLOB: string; // Single-select LOB
   selectedDocTypes: string[];
   llmConfig: LLMConfiguration;
   
@@ -27,8 +27,7 @@ interface AppStore {
   setSelectedCountries: (countries: string[]) => void;
   setSelectedStates: (states: string[]) => void;
   toggleState: (stateCode: string) => void;
-  setSelectedLOBs: (lobs: string[]) => void;
-  toggleLOB: (lobId: string) => void;
+  setSelectedLOB: (lob: string) => void; // Single LOB setter
   setSelectedDocTypes: (types: string[]) => void;
   toggleDocType: (typeId: string) => void;
   setLLMConfig: (config: LLMConfiguration) => void;
@@ -51,7 +50,7 @@ export const useAppStore = create<AppStore>()(
       regScoutView: 'config',
       selectedCountries: ['US'],
       selectedStates: [],
-      selectedLOBs: [],
+      selectedLOB: '', // Single LOB
       selectedDocTypes: [],
       llmConfig: DEFAULT_LLM_CONFIG as LLMConfiguration,
       currentScoutingJob: null,
@@ -74,14 +73,7 @@ export const useAppStore = create<AppStore>()(
             : [...state.selectedStates, stateCode],
         })),
 
-      setSelectedLOBs: (lobs) => set({ selectedLOBs: lobs }),
-
-      toggleLOB: (lobId) =>
-        set((state) => ({
-          selectedLOBs: state.selectedLOBs.includes(lobId)
-            ? state.selectedLOBs.filter((l) => l !== lobId)
-            : [...state.selectedLOBs, lobId],
-        })),
+      setSelectedLOB: (lob) => set({ selectedLOB: lob }), // Single LOB
 
       setSelectedDocTypes: (types) => set({ selectedDocTypes: types }),
 
@@ -133,7 +125,7 @@ export const useAppStore = create<AppStore>()(
       clearSelections: () =>
         set({
           selectedStates: [],
-          selectedLOBs: [],
+          selectedLOB: '',
           selectedDocTypes: [],
         }),
 
@@ -142,7 +134,7 @@ export const useAppStore = create<AppStore>()(
           sidebarCollapsed: false,
           selectedCountries: ['US'],
           selectedStates: [],
-          selectedLOBs: [],
+          selectedLOB: '',
           selectedDocTypes: [],
           llmConfig: DEFAULT_LLM_CONFIG as LLMConfiguration,
           currentScoutingJob: null,
@@ -154,7 +146,7 @@ export const useAppStore = create<AppStore>()(
       partialize: (state) => ({
         selectedCountries: state.selectedCountries,
         selectedStates: state.selectedStates,
-        selectedLOBs: state.selectedLOBs,
+        selectedLOB: state.selectedLOB,
         selectedDocTypes: state.selectedDocTypes,
         llmConfig: state.llmConfig,
       }),
@@ -166,7 +158,7 @@ export const useAppStore = create<AppStore>()(
 export const useSidebarCollapsed = () => useAppStore((state) => state.sidebarCollapsed);
 export const useSelectedCountries = () => useAppStore((state) => state.selectedCountries);
 export const useSelectedStates = () => useAppStore((state) => state.selectedStates);
-export const useSelectedLOBs = () => useAppStore((state) => state.selectedLOBs);
+export const useSelectedLOB = () => useAppStore((state) => state.selectedLOB); // Single LOB
 export const useSelectedDocTypes = () => useAppStore((state) => state.selectedDocTypes);
 export const useLLMConfig = () => useAppStore((state) => state.llmConfig);
 export const useCurrentScoutingJob = () => useAppStore((state) => state.currentScoutingJob);

@@ -6,12 +6,13 @@ import { AppLayout } from '../components/layout/AppLayout';
 import { useAppStore } from '../store/appStore';
 import {
   COUNTRIES,
-  US_STATES,
-  LINES_OF_BUSINESS,
-  REGULATORY_DOCUMENT_TYPES,
-  getAvailableLOBsForStates,
-  getAvailableDocTypesForStates,
-} from '../data/mockData';
+  LOB_CATALOG,
+  getAvailableLOBsForRegions,
+  getRegionsForCountry,
+  getLOBDetails,
+} from '../data/regscoutMappings';
+import { REGULATORY_DOCUMENT_TYPES, getAvailableDocTypesForStates } from '../data/mockData';
+import { WI_LOB_TO_DOC_TYPES } from '../data/stateMappings/WI';
 import { executeScoutingJob } from '../services/scoutingService';
 import { ScoutingConfiguration, DiscoveryProgress } from '../types';
 import { checkSourceQuality, getNonGovWarning } from '../utils/sourceQuality';
@@ -26,13 +27,15 @@ import {
   LinkIcon,
   FunnelIcon,
   ArrowsUpDownIcon,
+  DocumentTextIcon,
+  ArrowLeftIcon,
 } from '@heroicons/react/24/outline';
 
 export const RegScout: React.FC = () => {
   const {
     selectedCountries,
     selectedStates,
-    selectedLOBs,
+    selectedLOB,
     selectedDocTypes,
     llmConfig,
     regScoutView,
@@ -41,11 +44,11 @@ export const RegScout: React.FC = () => {
     setSelectedCountries,
     setSelectedStates,
     toggleState,
-    setSelectedLOBs,
-    toggleLOB,
+    setSelectedLOB,
     setSelectedDocTypes,
     toggleDocType,
     setDiscoveredSources,
+    addDiscoveredSource,
     removeDiscoveredSource,
   } = useAppStore();
 
@@ -63,60 +66,94 @@ export const RegScout: React.FC = () => {
   const [sortBy, setSortBy] = useState<'name' | 'pages'>('name');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [filterType, setFilterType] = useState<'all' | 'gov-auto' | 'user-added'>('all');
+  
+  // Bulk operations state
+  const [selectedSourceIds, setSelectedSourceIds] = useState<Set<string>>(new Set());
+  const [showAddSourceModal, setShowAddSourceModal] = useState(false);
+  const [sourceBlocks, setSourceBlocks] = useState<Array<{ id: string; name: string; url: string; error?: string }>>([
+    { id: '1', name: '', url: '' }
+  ]);
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
 
   // Get selected country details
   const selectedCountry = COUNTRIES.find(c => c.code === selectedCountries[0]) || COUNTRIES[0];
   
-  // Get states for selected country
-  const availableStates = useMemo(() => {
-    // For now, only US states are available
-    if (selectedCountries[0] === 'US') {
-      return US_STATES;
-    }
-    // Future: add Canadian provinces, UK countries, Australian states
-    return [];
+  // Check if US is selected (full functionality)
+  const isUSSelected = selectedCountries[0] === 'US';
+  
+  // Get regions for selected country (works for all countries)
+  const availableRegions = useMemo(() => {
+    return getRegionsForCountry(selectedCountries[0] || 'US');
   }, [selectedCountries]);
 
-  // Get available LOBs based on selected states (US only, INTERSECTION)
+  // Get available LOBs based on selected regions (INTERSECTION logic for all countries)
   const availableLOBs = useMemo(() => {
-    if (selectedCountries[0] === 'US' && selectedStates.length > 0) {
-      const availableIds = getAvailableLOBsForStates(selectedStates);
-      return LINES_OF_BUSINESS.filter(lob => availableIds.includes(lob.id));
+    if (selectedStates.length > 0) {
+      const availableIds = getAvailableLOBsForRegions(selectedCountries[0] || 'US', selectedStates);
+      // Convert IDs to LOB objects with details
+      return availableIds.map(id => getLOBDetails(id)).filter(Boolean) as any[];
     }
-    return LINES_OF_BUSINESS;
+    // No regions selected - show all LOBs
+    return Object.values(LOB_CATALOG);
   }, [selectedCountries, selectedStates]);
 
-  // Get available Doc Types based on selected states (US only, INTERSECTION)
+  // Check if Wisconsin-only is selected
+  const isWIOnly = useMemo(() => {
+    return selectedCountries[0] === 'US' && 
+           selectedStates.length === 1 && 
+           selectedStates[0] === 'WI';
+  }, [selectedCountries, selectedStates]);
+
+  // Get available Doc Types based on selected states (WI-specific if applicable)
   const availableDocTypes = useMemo(() => {
+    // WI-specific: Filter by LOB if WI is selected and LOB is set
+    if (isWIOnly && selectedLOB && WI_LOB_TO_DOC_TYPES[selectedLOB]) {
+      const wiDocTypeIds = WI_LOB_TO_DOC_TYPES[selectedLOB];
+      return REGULATORY_DOCUMENT_TYPES.filter(dt => wiDocTypeIds.includes(dt.id));
+    }
+    
+    // Generic logic for other states
     if (selectedCountries[0] === 'US' && selectedStates.length > 0) {
       const availableIds = getAvailableDocTypesForStates(selectedStates);
       return REGULATORY_DOCUMENT_TYPES.filter(dt => availableIds.includes(dt.id));
     }
+    
     return REGULATORY_DOCUMENT_TYPES;
-  }, [selectedCountries, selectedStates]);
+  }, [selectedCountries, selectedStates, selectedLOB, isWIOnly]);
 
   // Clear incompatible selections when country changes
   useEffect(() => {
     setSelectedStates([]);
-    setSelectedLOBs([]);
+    setSelectedLOB('');
     setSelectedDocTypes([]);
-  }, [selectedCountries, setSelectedStates, setSelectedLOBs, setSelectedDocTypes]);
+  }, [selectedCountries, setSelectedStates, setSelectedLOB, setSelectedDocTypes]);
 
-  // Clear LOB/DocType selections when states change (they may no longer be valid)
+  // Clear LOB/DocType selections when regions change (they may no longer be valid)
   useEffect(() => {
-    if (selectedCountries[0] === 'US' && selectedStates.length > 0) {
-      const availableLobIds = getAvailableLOBsForStates(selectedStates);
-      const availableDocTypeIds = getAvailableDocTypesForStates(selectedStates);
+    if (selectedStates.length > 0) {
+      const availableLobIds = getAvailableLOBsForRegions(selectedCountries[0] || 'US', selectedStates);
+      const availableDocTypeIds = selectedCountries[0] === 'US' 
+        ? getAvailableDocTypesForStates(selectedStates)
+        : selectedDocTypes; // Keep existing for non-US
       
-      setSelectedLOBs(selectedLOBs.filter(id => availableLobIds.includes(id)));
-      setSelectedDocTypes(selectedDocTypes.filter(id => availableDocTypeIds.includes(id)));
+      // Clear LOB if no longer valid
+      if (selectedLOB && !availableLobIds.includes(selectedLOB)) {
+        setSelectedLOB('');
+      }
+      if (selectedCountries[0] === 'US') {
+        setSelectedDocTypes(selectedDocTypes.filter(id => availableDocTypeIds.includes(id)));
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedStates]); // Only run when states change
 
-  // Can run if all required fields selected
-  const canRunDiscovery = selectedCountries.length > 0 && selectedStates.length > 0 && 
-                          selectedLOBs.length > 0 && selectedDocTypes.length > 0;
+  // Can run if all required fields selected (US only for now)
+  const canRunDiscovery = isUSSelected && 
+                          selectedCountries.length > 0 && 
+                          selectedStates.length > 0 && 
+                          selectedLOB !== '' && 
+                          selectedDocTypes.length > 0;
 
   // Handle discovery
   const handleRunDiscovery = async () => {
@@ -128,7 +165,7 @@ export const RegScout: React.FC = () => {
     const config: ScoutingConfiguration = {
       countries: selectedCountries,
       states: selectedStates,
-      linesOfBusiness: selectedLOBs,
+      linesOfBusiness: [selectedLOB], // Single LOB wrapped in array
       documentTypes: selectedDocTypes,
       llmConfig,
       searchDepth,
@@ -151,6 +188,150 @@ export const RegScout: React.FC = () => {
       alert('Discovery failed. Please try again.');
       setRegScoutView('config');
     }
+  };
+
+  // Bulk operations handlers
+  const toggleSourceSelection = (sourceId: string) => {
+    setSelectedSourceIds(prev => {
+      const next = new Set(prev);
+      if (next.has(sourceId)) {
+        next.delete(sourceId);
+      } else {
+        next.add(sourceId);
+      }
+      return next;
+    });
+  };
+
+  const toggleAllGovSources = () => {
+    const govIds = discoveredSources.filter(s => s.trustLevel === 'gov-auto').map(s => s.id);
+    if (govIds.every(id => selectedSourceIds.has(id))) {
+      setSelectedSourceIds(new Set());
+    } else {
+      setSelectedSourceIds(new Set(govIds));
+    }
+  };
+
+  const handleBulkDelete = () => {
+    setDiscoveredSources(discoveredSources.filter(s => !selectedSourceIds.has(s.id)));
+    setSelectedSourceIds(new Set());
+  };
+
+  const addSourceBlock = () => {
+    setSourceBlocks([...sourceBlocks, { id: Date.now().toString(), name: '', url: '' }]);
+  };
+
+  const removeSourceBlock = (blockId: string) => {
+    if (sourceBlocks.length === 1) return; // Keep at least one block
+    setSourceBlocks(sourceBlocks.filter(block => block.id !== blockId));
+  };
+
+  const updateSourceBlock = (blockId: string, field: 'name' | 'url', value: string) => {
+    setSourceBlocks(sourceBlocks.map(block => 
+      block.id === blockId ? { ...block, [field]: value, error: undefined } : block
+    ));
+  };
+
+  const handleAddSource = () => {
+    // Validate all blocks
+    const validatedBlocks = sourceBlocks.map(block => {
+      if (!block.url.trim() && !block.name.trim()) {
+        return { ...block, error: undefined }; // Empty blocks are ignored
+      }
+      if (!block.url.trim()) {
+        return { ...block, error: 'URL is required' };
+      }
+      // Basic URL validation
+      try {
+        new URL(block.url.trim());
+        return { ...block, error: undefined };
+      } catch {
+        return { ...block, error: 'Invalid URL format' };
+      }
+    });
+
+    setSourceBlocks(validatedBlocks);
+
+    // Check if there are any errors
+    if (validatedBlocks.some(block => block.error)) {
+      return;
+    }
+
+    // Get valid blocks (non-empty with URLs)
+    const validBlocks = validatedBlocks.filter(block => block.url.trim());
+
+    if (validBlocks.length === 0) {
+      return;
+    }
+
+    // Add all valid sources
+    validBlocks.forEach(block => {
+      const newSource: any = {
+        id: `user-${Date.now()}-${Math.random()}`,
+        country: selectedCountries[0] || 'US',
+        stateCode: selectedStates[0] || '',
+        lineOfBusiness: selectedLOB || '',
+        documentType: selectedDocTypes[0] || '',
+        sourceUrl: block.url.trim(),
+        sourceName: block.name.trim() || 'User-Added Source',
+        discoveryMethod: 'user_provided',
+        status: 'active',
+        confidenceScore: 0.5,
+        trustLevel: 'user-added',
+        metadata: {
+          category: 'USER_ADDED',
+          generatedSummary: 'User-provided source for regulatory compliance.',
+          jurisdiction: `State: ${selectedStates[0] || 'Unknown'}`,
+        },
+        createdAt: new Date().toISOString(),
+        discoveredBy: 'User',
+      };
+      
+      addDiscoveredSource(newSource);
+    });
+
+    // Show toast
+    setToastMessage(`Added ${validBlocks.length} source${validBlocks.length > 1 ? 's' : ''}`);
+    setShowToast(true);
+    setTimeout(() => setShowToast(false), 3000);
+
+    // Reset and close
+    setSourceBlocks([{ id: '1', name: '', url: '' }]);
+    setShowAddSourceModal(false);
+  };
+
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
+
+    Array.from(files).forEach(file => {
+      const newSource: any = {
+        id: `upload-${Date.now()}-${Math.random()}`,
+        country: selectedCountries[0] || 'US',
+        stateCode: selectedStates[0] || '',
+        lineOfBusiness: selectedLOB || '',
+        documentType: selectedDocTypes[0] || '',
+        sourceUrl: `local://${file.name}`,
+        sourceName: file.name,
+        discoveryMethod: 'user_provided',
+        status: 'active',
+        confidenceScore: 0.5,
+        trustLevel: 'user-added',
+        metadata: {
+          category: 'UPLOADED_DOCUMENT',
+          generatedSummary: `Uploaded document: ${file.name}`,
+          jurisdiction: `State: ${selectedStates[0] || 'Unknown'}`,
+          fileSize: `${(file.size / 1024).toFixed(1)} KB`,
+          format: file.name.split('.').pop()?.toUpperCase() || 'Unknown',
+        },
+        createdAt: new Date().toISOString(),
+        discoveredBy: 'User Upload',
+      };
+      
+      addDiscoveredSource(newSource);
+    });
+
+    event.target.value = '';
   };
 
   // Quality check for results
@@ -248,32 +429,32 @@ export const RegScout: React.FC = () => {
               </div>
             </div>
 
-            {/* State Selection */}
+            {/* Region Selection (Dynamic label based on country) */}
             <div className="mb-8">
               <label className="block text-sm font-medium text-gray-300 mb-3">
-                {selectedCountry?.label || 'State'} ({selectedStates.length} selected)
+                {selectedCountry?.label || 'Region'} ({selectedStates.length} selected)
               </label>
-              {availableStates.length > 0 ? (
+              {availableRegions.length > 0 ? (
                 <>
                   <div className="grid grid-cols-4 md:grid-cols-8 lg:grid-cols-10 gap-2 max-h-64 overflow-y-auto p-4 bg-gray-800 rounded-lg border border-gray-700">
-                    {availableStates.map((state) => (
+                    {availableRegions.map((region) => (
                       <button
-                        key={state.code}
-                        onClick={() => toggleState(state.code)}
+                        key={region.code}
+                        onClick={() => toggleState(region.code)}
                         className={`px-3 py-2 rounded-md text-sm font-medium transition-all ${
-                          selectedStates.includes(state.code)
+                          selectedStates.includes(region.code)
                             ? 'bg-purple-600 text-white shadow-md'
                             : 'bg-gray-700 text-gray-300 hover:bg-gray-600 hover:text-white'
                         }`}
-                        title={state.name}
+                        title={region.name}
                       >
-                        {state.code}
+                        {region.code}
                       </button>
                     ))}
                   </div>
                   <div className="mt-3 flex gap-3">
                     <button
-                      onClick={() => setSelectedStates(availableStates.map(s => s.code))}
+                      onClick={() => setSelectedStates(availableRegions.map(s => s.code))}
                       className="text-sm text-purple-400 hover:text-purple-300 transition-colors"
                     >
                       Select All
@@ -295,37 +476,67 @@ export const RegScout: React.FC = () => {
               )}
             </div>
 
-            {/* Lines of Business */}
-            <div className="mb-8">
-              <label className="block text-sm font-medium text-gray-300 mb-3">
-                Lines of Business ({selectedLOBs.length} selected)
-                {selectedCountries[0] === 'US' && selectedStates.length > 0 && (
-                  <span className="ml-2 text-xs text-purple-400">
-                    (Showing only LOBs valid for ALL selected states)
+            {/* Lines of Business (Single-Select) */}
+            <div className={`mb-8 ${!isUSSelected ? 'opacity-60' : ''}`}>
+              <div className="flex items-center gap-3 mb-3">
+                <label className="block text-sm font-medium text-gray-300">
+                  Line of Business {isUSSelected && selectedLOB && (
+                    <span className="text-purple-400">(1 selected)</span>
+                  )}
+                  {isUSSelected && selectedStates.length > 0 && !selectedLOB && (
+                    <span className="ml-2 text-xs text-purple-400">
+                      (Showing only LOBs valid for ALL selected {selectedCountry?.label?.toLowerCase()})
+                    </span>
+                  )}
+                </label>
+                {!isUSSelected && (
+                  <span className="px-3 py-1 text-xs font-medium bg-yellow-900/30 text-yellow-300 border border-yellow-800 rounded-full">
+                    Coming Soon
                   </span>
                 )}
-              </label>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                {availableLOBs.map((lob) => (
+              </div>
+              
+              {!isUSSelected && (
+                <div className="mb-4 p-3 bg-gray-800/50 border border-gray-700 rounded-lg">
+                  <p className="text-sm text-gray-400">
+                    LOB and document-type discovery for {selectedCountry.name} is coming soon. For now, select {selectedCountry.label?.toLowerCase()} only.
+                  </p>
+                </div>
+              )}
+              
+              <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 ${!isUSSelected ? 'pointer-events-none' : ''}`}>
+                {availableLOBs.slice(0, 6).map((lob) => (
                   <button
                     key={lob.id}
-                    onClick={() => toggleLOB(lob.id)}
+                    onClick={() => isUSSelected && setSelectedLOB(lob.id)}
+                    disabled={!isUSSelected}
                     className={`px-4 py-3 rounded-lg border-2 text-left transition-all ${
-                      selectedLOBs.includes(lob.id)
+                      !isUSSelected 
+                        ? 'border-gray-700 bg-gray-800/50 text-gray-500 cursor-not-allowed'
+                        : selectedLOB === lob.id
                         ? 'border-purple-500 bg-purple-600/20 text-purple-300'
                         : 'border-gray-700 bg-gray-800 text-gray-300 hover:border-purple-500 hover:text-white'
                     }`}
                   >
-                    <div className="flex items-center gap-2">
-                      <span className="text-2xl">{lob.icon}</span>
+                    <div className="flex items-start gap-2">
+                      <span className="text-2xl flex-shrink-0">{lob.icon}</span>
                       <div className="flex-1 min-w-0">
-                        <div className="text-sm font-medium truncate text-white">
-                          {lob.name}
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-sm font-medium text-white">
+                            {lob.name}
+                          </span>
+                          {lob.code && (
+                            <span className="px-1.5 py-0.5 text-xs bg-gray-700 text-gray-400 rounded">
+                              {lob.code}
+                            </span>
+                          )}
                         </div>
-                        <div className="text-xs text-gray-400 truncate">{lob.code}</div>
+                        <p className="text-xs text-gray-500 leading-relaxed">
+                          {lob.description}
+                        </p>
                       </div>
-                      {selectedLOBs.includes(lob.id) && (
-                        <CheckCircleIcon className="h-5 w-5 text-purple-400 flex-shrink-0" />
+                      {isUSSelected && selectedLOB === lob.id && (
+                        <CheckCircleIcon className="h-5 w-5 text-purple-400 flex-shrink-0 mt-1" />
                       )}
                     </div>
                   </button>
@@ -334,22 +545,33 @@ export const RegScout: React.FC = () => {
             </div>
 
             {/* Document Types */}
-            <div className="mb-8">
-              <label className="block text-sm font-medium text-gray-300 mb-3">
-                Regulatory Document Types ({selectedDocTypes.length} selected)
-                {selectedCountries[0] === 'US' && selectedStates.length > 0 && (
-                  <span className="ml-2 text-xs text-purple-400">
-                    (Showing only types valid for ALL selected states)
+            <div className={`mb-8 ${!isUSSelected ? 'opacity-60' : ''}`}>
+              <div className="flex items-center gap-3 mb-3">
+                <label className="block text-sm font-medium text-gray-300">
+                  Regulatory Document Types ({isUSSelected ? selectedDocTypes.length : 0} selected)
+                  {isUSSelected && selectedStates.length > 0 && (
+                    <span className="ml-2 text-xs text-purple-400">
+                      (Showing only types valid for ALL selected states)
+                    </span>
+                  )}
+                </label>
+                {!isUSSelected && (
+                  <span className="px-3 py-1 text-xs font-medium bg-yellow-900/30 text-yellow-300 border border-yellow-800 rounded-full">
+                    Coming Soon
                   </span>
                 )}
-              </label>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              </div>
+              
+              <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 ${!isUSSelected ? 'pointer-events-none' : ''}`}>
                 {availableDocTypes.map((docType) => (
                   <button
                     key={docType.id}
-                    onClick={() => toggleDocType(docType.id)}
+                    onClick={() => isUSSelected && toggleDocType(docType.id)}
+                    disabled={!isUSSelected}
                     className={`px-4 py-3 rounded-lg border-2 text-left transition-all ${
-                      selectedDocTypes.includes(docType.id)
+                      !isUSSelected
+                        ? 'border-gray-700 bg-gray-800/50 text-gray-500 cursor-not-allowed'
+                        : selectedDocTypes.includes(docType.id)
                         ? 'border-purple-500 bg-purple-600/20 text-purple-300'
                         : 'border-gray-700 bg-gray-800 text-gray-300 hover:border-purple-500 hover:text-white'
                     }`}
@@ -364,7 +586,7 @@ export const RegScout: React.FC = () => {
                         </div>
                         <div className="text-xs text-gray-400 mt-1 truncate">{docType.description}</div>
                       </div>
-                      {selectedDocTypes.includes(docType.id) && (
+                      {isUSSelected && selectedDocTypes.includes(docType.id) && (
                         <CheckCircleIcon className="h-5 w-5 text-purple-400 flex-shrink-0" />
                       )}
                     </div>
@@ -372,6 +594,15 @@ export const RegScout: React.FC = () => {
                 ))}
               </div>
             </div>
+
+            {/* WI-Only: Authority FYI */}
+            {isWIOnly && selectedLOB === 'workers_comp' && (
+              <div className="mb-6 p-3 bg-gray-800/30 border border-gray-700 rounded-lg">
+                <p className="text-xs text-gray-400">
+                  <strong className="text-gray-300">FYI:</strong> Common WI Workers' Compensation authorities include WI DWD (Department of Workforce Development), WI OCI (Office of the Commissioner of Insurance), and WI Legislature.
+                </p>
+              </div>
+            )}
 
             {/* Advanced Options */}
             <div className="border-t border-gray-800 pt-6">
@@ -408,6 +639,21 @@ export const RegScout: React.FC = () => {
                     onChange={(e) => setConfidenceThreshold(parseFloat(e.target.value))}
                     className="w-full accent-purple-500"
                   />
+                  {/* FYI Note for High Confidence */}
+                  {confidenceThreshold >= 0.7 && (
+                    <div className="mt-2 p-2 bg-blue-900/20 border border-blue-800/30 rounded text-xs text-blue-300">
+                      {confidenceThreshold === 1.0 ? (
+                        <span>
+                          <strong>FYI:</strong> At 100% confidence, results are strict and may return fewer sources. 
+                          Consider 70–90% to broaden discovery.
+                        </span>
+                      ) : (
+                        <span>
+                          <strong>FYI:</strong> Higher confidence thresholds may return fewer sources.
+                        </span>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -430,7 +676,11 @@ export const RegScout: React.FC = () => {
               {!canRunDiscovery && (
                 <div className="flex items-center gap-2 text-sm text-yellow-400">
                   <ExclamationTriangleIcon className="h-5 w-5" />
-                  <span>Please select Country, {selectedCountry.label}, LOB, and Document Types</span>
+                  {!isUSSelected ? (
+                    <span>Discovery for {selectedCountry.name} coming soon. Please select United States for full functionality.</span>
+                  ) : (
+                    <span>Please select {selectedCountry.label}, LOB, and Document Types</span>
+                  )}
                 </div>
               )}
             </div>
@@ -512,22 +762,129 @@ export const RegScout: React.FC = () => {
               <div className="flex items-center gap-4 text-sm text-gray-400">
                 <span>Country: <span className="text-purple-400">{selectedCountry.name}</span></span>
                 <span>•</span>
-                <span>{selectedCountry.label}s: <span className="text-purple-400">{selectedStates.join(', ')}</span></span>
+                <span>{selectedCountry.label}: <span className="text-purple-400">{selectedStates.join(', ')}</span></span>
                 <span>•</span>
-                <span>LOBs: <span className="text-purple-400">{selectedLOBs.length}</span></span>
+                <span>LOB: <span className="text-purple-400">{selectedLOB ? getLOBDetails(selectedLOB)?.name : 'None'}</span></span>
                 <span>•</span>
                 <span>Doc Types: <span className="text-purple-400">{selectedDocTypes.length}</span></span>
               </div>
             </div>
-            <button
-              onClick={() => setRegScoutView('config')}
-              className="flex items-center gap-2 px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-700 transition-all border border-gray-700"
-            >
-              <PencilSquareIcon className="h-5 w-5" />
-              Edit Selections
-            </button>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setShowAddSourceModal(true)}
+                className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-all"
+              >
+                <PencilSquareIcon className="h-5 w-5" />
+                Add Source
+              </button>
+              <label className="flex items-center gap-2 px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-700 transition-all border border-gray-700 cursor-pointer">
+                <input
+                  type="file"
+                  accept=".pdf,.docx,.txt"
+                  multiple
+                  onChange={handleFileUpload}
+                  className="hidden"
+                />
+                <DocumentTextIcon className="h-5 w-5" />
+                Upload File
+              </label>
+            </div>
           </div>
         </div>
+
+        {/* Toast Notification */}
+        {showToast && (
+          <div className="fixed top-4 right-4 z-50 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-2 animate-fade-in">
+            <CheckCircleIcon className="h-5 w-5" />
+            {toastMessage}
+          </div>
+        )}
+
+        {/* Add Source Modal */}
+        {showAddSourceModal && (
+          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className="bg-gray-900 border border-gray-800 rounded-lg max-w-2xl w-full p-6 max-h-[80vh] overflow-y-auto">
+              <h2 className="text-xl font-semibold text-white mb-4">Add Sources</h2>
+              
+              <div className="space-y-6 mb-6">
+                {sourceBlocks.map((block, index) => (
+                  <div key={block.id} className="border border-gray-800 rounded-lg p-4 bg-gray-800/50">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-sm font-medium text-gray-400">Source {index + 1}</span>
+                      {sourceBlocks.length > 1 && (
+                        <button
+                          onClick={() => removeSourceBlock(block.id)}
+                          className="text-gray-500 hover:text-red-400 transition-colors"
+                        >
+                          <TrashIcon className="h-4 w-4" />
+                        </button>
+                      )}
+                    </div>
+                    
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-2">
+                          Source Name
+                        </label>
+                        <input
+                          type="text"
+                          value={block.name}
+                          onChange={(e) => updateSourceBlock(block.id, 'name', e.target.value)}
+                          placeholder="e.g., Wisconsin OCI Bulletin 2024"
+                          className="w-full px-4 py-2 bg-gray-900 border border-gray-700 text-white rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-2">
+                          Source URL *
+                        </label>
+                        <input
+                          type="url"
+                          value={block.url}
+                          onChange={(e) => updateSourceBlock(block.id, 'url', e.target.value)}
+                          placeholder="https://..."
+                          className={`w-full px-4 py-2 bg-gray-900 border ${
+                            block.error ? 'border-red-500' : 'border-gray-700'
+                          } text-white rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent`}
+                        />
+                        {block.error && (
+                          <p className="text-sm text-red-400 mt-1">{block.error}</p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                
+                <button
+                  onClick={addSourceBlock}
+                  className="flex items-center gap-2 text-sm text-purple-400 hover:text-purple-300 transition-colors"
+                >
+                  <PencilSquareIcon className="h-4 w-4" />
+                  + Add another source
+                </button>
+              </div>
+              
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={() => {
+                    setShowAddSourceModal(false);
+                    setSourceBlocks([{ id: '1', name: '', url: '' }]);
+                  }}
+                  className="px-4 py-2 bg-gray-800 text-gray-300 rounded-lg hover:bg-gray-700 transition-all"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleAddSource}
+                  className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-all"
+                >
+                  Add {sourceBlocks.filter(b => b.url.trim()).length > 0 ? `${sourceBlocks.filter(b => b.url.trim()).length} ` : ''}Source{sourceBlocks.filter(b => b.url.trim()).length > 1 ? 's' : ''}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Quality Warning */}
         {qualityCheck.warning && (
@@ -540,13 +897,50 @@ export const RegScout: React.FC = () => {
           </div>
         )}
 
-        {/* Government-Authorized Sources */}
+        {/* Government-Authorized Sources Section */}
         {govAutoSources.length > 0 && (
           <div className="mb-8">
-            <h2 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
-              <CheckCircleIcon className="h-6 w-6 text-green-400" />
-              Government-Authorized Sources ({govAutoSources.length})
-            </h2>
+            <div className="mb-6">
+              <div className="flex items-center gap-2 mb-2">
+                <CheckCircleIcon className="h-6 w-6 text-green-400" />
+                <h2 className="text-xl font-semibold text-white">
+                  Government-Authorized Sources ({govAutoSources.length})
+                </h2>
+              </div>
+              <p className="text-sm text-gray-400 ml-8">
+                Auto-discovered and government-authorized for your selection.
+              </p>
+            </div>
+            
+            <div className="flex items-center justify-between mb-4">
+              <div />  {/* Spacer */}
+              
+              {selectedSourceIds.size > 0 && (
+                <div className="flex items-center gap-3">
+                  <span className="text-sm text-gray-400">{selectedSourceIds.size} selected</span>
+                  <button
+                    onClick={handleBulkDelete}
+                    className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all"
+                  >
+                    <TrashIcon className="h-4 w-4" />
+                    Delete Selected
+                  </button>
+                </div>
+              )}
+            </div>
+            
+            <div className="mb-3">
+              <label className="flex items-center gap-2 text-sm text-gray-400 cursor-pointer hover:text-gray-300">
+                <input
+                  type="checkbox"
+                  checked={govAutoSources.length > 0 && govAutoSources.every(s => selectedSourceIds.has(s.id))}
+                  onChange={toggleAllGovSources}
+                  className="w-4 h-4 rounded border-gray-700 bg-gray-800 text-purple-600 focus:ring-purple-500"
+                />
+                Select All
+              </label>
+            </div>
+            
             <div className="space-y-3">
               {govAutoSources.map((source) => (
                 <div
@@ -554,6 +948,12 @@ export const RegScout: React.FC = () => {
                   className="bg-gray-900 border border-green-800/30 rounded-lg p-4 hover:border-green-600/50 transition-all"
                 >
                   <div className="flex items-start gap-3">
+                    <input
+                      type="checkbox"
+                      checked={selectedSourceIds.has(source.id)}
+                      onChange={() => toggleSourceSelection(source.id)}
+                      className="mt-1 w-4 h-4 rounded border-gray-700 bg-gray-800 text-purple-600 focus:ring-purple-500"
+                    />
                     <CheckCircleIcon className="h-6 w-6 text-green-400 flex-shrink-0 mt-1" />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-2">
@@ -589,13 +989,20 @@ export const RegScout: React.FC = () => {
           </div>
         )}
 
-        {/* User-Added Sources */}
+        {/* User-Added Sources Section */}
         {userAddedSources.length > 0 && (
           <div className="mb-8">
-            <h2 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
-              <ExclamationTriangleIcon className="h-6 w-6 text-yellow-400" />
-              Additional Sources ({userAddedSources.length})
-            </h2>
+            <div className="mb-6">
+              <div className="flex items-center gap-2 mb-2">
+                <ExclamationTriangleIcon className="h-6 w-6 text-yellow-400" />
+                <h2 className="text-xl font-semibold text-white">
+                  User-Added Sources ({userAddedSources.length})
+                </h2>
+              </div>
+              <p className="text-sm text-gray-400 ml-8">
+                Manually added sources (may include internal or non-government resources).
+              </p>
+            </div>
             <div className="space-y-3">
               {userAddedSources.map((source) => (
                 <div
@@ -640,27 +1047,27 @@ export const RegScout: React.FC = () => {
             <XCircleIcon className="h-16 w-16 text-gray-600 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-white mb-2">No Sources Found</h3>
             <p className="text-gray-400 mb-6">
-              No government-authorized sources were discovered. Try:
+              No government-authorized sources were discovered. You can:
             </p>
-            <ul className="text-sm text-gray-400 mb-6 space-y-1">
-              <li>• Selecting more document types</li>
-              <li>• Adjusting the confidence threshold</li>
-              <li>• Choosing different states or LOBs</li>
+            <ul className="text-sm text-gray-400 space-y-1">
+              <li>• Add sources manually using the "Add Source" button above</li>
+              <li>• Upload documents using the "Upload File" button above</li>
             </ul>
-            <button
-              onClick={() => setRegScoutView('config')}
-              className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-all"
-            >
-              Adjust Configuration
-            </button>
           </div>
         )}
 
-        {/* Summary Table */}
+        {/* Summary Table Section */}
         {filteredSources.length > 0 && (
           <div className="bg-gray-900 rounded-lg border border-gray-800 p-6">
+            <div className="mb-6">
+              <h2 className="text-xl font-semibold text-white mb-2">Summary Table (Current Working Set)</h2>
+              <p className="text-sm text-gray-400">
+                This table always reflects the sources currently selected above.
+              </p>
+            </div>
+            
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold text-white">Summary Table</h2>
+              <div />  {/* Spacer */}
               <div className="flex items-center gap-4">
                 {/* Filter */}
                 <div className="flex items-center gap-2">
@@ -694,7 +1101,16 @@ export const RegScout: React.FC = () => {
                       </div>
                     </th>
                     <th className="text-left py-3 px-4 text-sm font-medium text-gray-300">
-                      Summary
+                      Description
+                    </th>
+                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-300">
+                      Doc Type
+                    </th>
+                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-300">
+                      Authority/Agency
+                    </th>
+                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-300">
+                      Jurisdiction
                     </th>
                     <th 
                       className="text-left py-3 px-4 text-sm font-medium text-gray-300 cursor-pointer hover:text-white"
@@ -708,24 +1124,51 @@ export const RegScout: React.FC = () => {
                       </div>
                     </th>
                     <th className="text-left py-3 px-4 text-sm font-medium text-gray-300">
+                      Confidence
+                    </th>
+                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-300">
                       Source URL
                     </th>
                     <th className="text-left py-3 px-4 text-sm font-medium text-gray-300">
-                      Type
+                      Source Type
                     </th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredSources.map((source) => (
                     <tr key={source.id} className="border-b border-gray-800 hover:bg-gray-800/50">
-                      <td className="py-3 px-4 text-sm text-white">
+                      <td className="py-3 px-4 text-sm text-white font-medium">
                         {source.sourceName}
                       </td>
-                      <td className="py-3 px-4 text-sm text-gray-400">
-                        {source.metadata?.generatedSummary || source.metadata?.category || 'No summary available'}
+                      <td className="py-3 px-4 text-sm text-gray-400 max-w-sm">
+                        {source.metadata?.generatedSummary || 'Official regulatory document'}
+                      </td>
+                      <td className="py-3 px-4 text-sm">
+                        <span className="px-2 py-1 bg-blue-900/30 text-blue-300 rounded text-xs">
+                          {source.metadata?.category?.replace(/_/g, ' ') || 'Unknown'}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4 text-sm text-gray-300">
+                        {source.agencyName || '—'}
                       </td>
                       <td className="py-3 px-4 text-sm text-gray-400">
-                        {source.metadata?.pages || '-'}
+                        {source.metadata?.jurisdiction || `State: ${source.stateCode}`}
+                      </td>
+                      <td className="py-3 px-4 text-sm text-gray-400 text-center">
+                        {source.metadata?.pages || '—'}
+                      </td>
+                      <td className="py-3 px-4 text-sm text-center">
+                        <span className={`font-semibold ${
+                          source.confidenceScore === 1.0 
+                            ? 'text-green-400'
+                            : source.confidenceScore >= 0.9
+                            ? 'text-green-300'
+                            : source.confidenceScore >= 0.8
+                            ? 'text-yellow-300'
+                            : 'text-gray-400'
+                        }`}>
+                          {Math.round(source.confidenceScore * 100)}%
+                        </span>
                       </td>
                       <td className="py-3 px-4 text-sm">
                         <a
@@ -733,12 +1176,13 @@ export const RegScout: React.FC = () => {
                           target="_blank"
                           rel="noopener noreferrer"
                           className="text-purple-400 hover:text-purple-300 transition-colors truncate block max-w-xs"
+                          title={source.sourceUrl}
                         >
                           {source.sourceUrl}
                         </a>
                       </td>
                       <td className="py-3 px-4 text-sm">
-                        <span className={`px-2 py-1 rounded text-xs ${
+                        <span className={`px-2 py-1 rounded text-xs font-medium ${
                           source.trustLevel === 'gov-auto'
                             ? 'bg-green-900 text-green-200'
                             : 'bg-yellow-900 text-yellow-200'
@@ -758,9 +1202,10 @@ export const RegScout: React.FC = () => {
         <div className="mt-8 flex justify-center gap-4">
           <button
             onClick={() => setRegScoutView('config')}
-            className="px-6 py-3 bg-gray-800 text-white rounded-lg hover:bg-gray-700 transition-all border border-gray-700"
+            className="flex items-center gap-2 px-6 py-3 bg-gray-900 text-gray-300 rounded-lg hover:bg-gray-800 border border-gray-700 hover:border-purple-600 transition-all"
           >
-            Edit Selections
+            <ArrowLeftIcon className="h-5 w-5" />
+            Back to Configuration
           </button>
           <button
             onClick={handleRunDiscovery}

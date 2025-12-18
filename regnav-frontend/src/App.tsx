@@ -8,11 +8,11 @@ import { Settings } from './pages/Settings';
 const Dashboard: React.FC = () => {
   return (
     <AppLayout title="Dashboard">
-      <div className="card mb-6 bg-gradient-to-r from-primary-500 to-primary-700 text-white">
+      <div className="card mb-6 bg-gradient-to-r from-purple-600 to-purple-800 text-white border-purple-700">
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-2xl font-bold mb-2">Welcome to RegNav.AI</h2>
-            <p className="text-primary-100">
+            <p className="text-purple-100">
               AI-Powered Regulatory Compliance Navigator
             </p>
           </div>
@@ -21,49 +21,49 @@ const Dashboard: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-        <div className="card hover:shadow-md transition-shadow">
+        <div className="card hover:shadow-2xl hover:border-gray-700 transition-all">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600 mb-1">Organizations</p>
-              <p className="text-3xl font-bold text-gray-900">3</p>
+              <p className="text-sm text-gray-400 mb-1">Organizations</p>
+              <p className="text-3xl font-bold text-gray-50">3</p>
             </div>
-            <div className="w-12 h-12 bg-blue-500 rounded-lg flex items-center justify-center text-2xl">
+            <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center text-2xl">
               🏢
             </div>
           </div>
         </div>
 
-        <div className="card hover:shadow-md transition-shadow">
+        <div className="card hover:shadow-2xl hover:border-gray-700 transition-all">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600 mb-1">Active Rules</p>
-              <p className="text-3xl font-bold text-gray-900">156</p>
+              <p className="text-sm text-gray-400 mb-1">Active Rules</p>
+              <p className="text-3xl font-bold text-gray-50">156</p>
             </div>
-            <div className="w-12 h-12 bg-purple-500 rounded-lg flex items-center justify-center text-2xl">
+            <div className="w-12 h-12 bg-purple-600 rounded-lg flex items-center justify-center text-2xl">
               ⚖️
             </div>
           </div>
         </div>
 
-        <div className="card hover:shadow-md transition-shadow">
+        <div className="card hover:shadow-2xl hover:border-gray-700 transition-all">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600 mb-1">Validations</p>
-              <p className="text-3xl font-bold text-gray-900">24</p>
+              <p className="text-sm text-gray-400 mb-1">Validations</p>
+              <p className="text-3xl font-bold text-gray-50">24</p>
             </div>
-            <div className="w-12 h-12 bg-green-500 rounded-lg flex items-center justify-center text-2xl">
+            <div className="w-12 h-12 bg-green-600 rounded-lg flex items-center justify-center text-2xl">
               ✅
             </div>
           </div>
         </div>
 
-        <div className="card hover:shadow-md transition-shadow">
+        <div className="card hover:shadow-2xl hover:border-gray-700 transition-all">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600 mb-1">Compliance Score</p>
-              <p className="text-3xl font-bold text-gray-900">94.5%</p>
+              <p className="text-sm text-gray-400 mb-1">Compliance Score</p>
+              <p className="text-3xl font-bold text-gray-50">94.5%</p>
             </div>
-            <div className="w-12 h-12 bg-yellow-500 rounded-lg flex items-center justify-center text-2xl">
+            <div className="w-12 h-12 bg-yellow-600 rounded-lg flex items-center justify-center text-2xl">
               📊
             </div>
           </div>
@@ -71,30 +71,30 @@ const Dashboard: React.FC = () => {
       </div>
 
       <div className="card">
-        <h3 className="text-lg font-semibold mb-4">🚀 Quick Start Guide</h3>
-        <p className="text-gray-600 mb-4">
+        <h3 className="text-lg font-semibold text-gray-50 mb-4">🚀 Quick Start Guide</h3>
+        <p className="text-gray-400 mb-4">
           Your end-to-end RegNav.AI UI framework is ready! Here's what you can do:
         </p>
         <ol className="space-y-3">
           <li className="flex items-start">
-            <span className="flex-shrink-0 w-6 h-6 flex items-center justify-center bg-primary-100 text-primary-700 rounded-full font-medium mr-3 text-sm">1</span>
+            <span className="flex-shrink-0 w-6 h-6 flex items-center justify-center bg-purple-600 text-white rounded-full font-medium mr-3 text-sm">1</span>
             <div>
-              <p className="font-medium text-gray-900">Complete Component Setup</p>
-              <p className="text-sm text-gray-600">Copy all component code from COMPLETE_FRONTEND_CODE.md</p>
+              <p className="font-medium text-gray-50">Complete Component Setup</p>
+              <p className="text-sm text-gray-400">Copy all component code from COMPLETE_FRONTEND_CODE.md</p>
             </div>
           </li>
           <li className="flex items-start">
-            <span className="flex-shrink-0 w-6 h-6 flex items-center justify-center bg-primary-100 text-primary-700 rounded-full font-medium mr-3 text-sm">2</span>
+            <span className="flex-shrink-0 w-6 h-6 flex items-center justify-center bg-purple-600 text-white rounded-full font-medium mr-3 text-sm">2</span>
             <div>
-              <p className="font-medium text-gray-900">Explore the Navigation</p>
-              <p className="text-sm text-gray-600">Check out the sidebar with all 5 AI agents and collapsible feature</p>
+              <p className="font-medium text-gray-50">Explore the Navigation</p>
+              <p className="text-sm text-gray-400">Check out the sidebar with all 5 AI agents and collapsible feature</p>
             </div>
           </li>
           <li className="flex items-start">
-            <span className="flex-shrink-0 w-6 h-6 flex items-center justify-center bg-primary-100 text-primary-700 rounded-full font-medium mr-3 text-sm">3</span>
+            <span className="flex-shrink-0 w-6 h-6 flex items-center justify-center bg-purple-600 text-white rounded-full font-medium mr-3 text-sm">3</span>
             <div>
-              <p className="font-medium text-gray-900">Test the Flow</p>
-              <p className="text-sm text-gray-600">Organization → Configuration → RegScout → RegValidate</p>
+              <p className="font-medium text-gray-50">Test the Flow</p>
+              <p className="text-sm text-gray-400">Organization → Configuration → RegScout → RegValidate</p>
             </div>
           </li>
         </ol>
@@ -110,8 +110,8 @@ const PlaceholderPage: React.FC<{ title: string }> = ({ title }) => {
       <div className="card">
         <div className="text-center py-12">
           <div className="text-6xl mb-4">🚧</div>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">{title}</h3>
-          <p className="text-gray-600 mb-4">
+          <h3 className="text-lg font-medium text-gray-50 mb-2">{title}</h3>
+          <p className="text-gray-400 mb-4">
             This page is ready to be implemented. Copy the code from COMPLETE_FRONTEND_CODE.md
           </p>
           <p className="text-sm text-gray-500">

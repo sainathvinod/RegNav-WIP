@@ -2,50 +2,152 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Enterprise Dark Theme - Global Tokens */
+:root {
+  /* Backgrounds */
+  --color-bg-app: #030712;          /* gray-950 - Main app background */
+  --color-bg-panel: #111827;        /* gray-900 - Cards/panels */
+  --color-bg-elevated: #1F2937;     /* gray-800 - Elevated elements */
+  --color-bg-hover: #374151;        /* gray-700 - Hover states */
+  
+  /* Borders */
+  --color-border-subtle: #1F2937;   /* gray-800 - Subtle borders */
+  --color-border-default: #374151;  /* gray-700 - Default borders */
+  
+  /* Text */
+  --color-text-primary: #F9FAFB;    /* gray-50 - Primary text */
+  --color-text-secondary: #D1D5DB;  /* gray-300 - Secondary text */
+  --color-text-muted: #9CA3AF;      /* gray-400 - Muted text */
+  --color-text-disabled: #6B7280;   /* gray-500 - Disabled text */
+  
+  /* Accent (Purple) */
+  --color-accent: #9333EA;          /* purple-600 - Primary accent */
+  --color-accent-hover: #7E22CE;    /* purple-700 - Accent hover */
+  --color-accent-light: #A855F7;    /* purple-500 - Light accent */
+  --color-accent-bg: #581C87;       /* purple-900 - Accent background */
+  
+  /* Status Colors */
+  --color-success: #10B981;         /* green-500 */
+  --color-warning: #F59E0B;         /* yellow-500 */
+  --color-error: #EF4444;           /* red-500 */
+  --color-info: #3B82F6;            /* blue-500 */
+}
+
 @layer base {
   body {
-    @apply bg-gray-50 text-gray-900;
+    @apply bg-gray-950 text-gray-50;
+    background-color: var(--color-bg-app);
+    color: var(--color-text-primary);
+  }
+  
+  * {
+    @apply border-gray-800;
   }
 }
 
 @layer components {
+  /* Buttons - Enterprise Dark Theme */
   .btn-primary {
-    @apply bg-primary-600 hover:bg-primary-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 shadow-sm hover:shadow-md;
+    @apply bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-lg transition-all duration-200 shadow-lg shadow-purple-600/30 hover:shadow-purple-600/50;
+    background-color: var(--color-accent);
+  }
+  
+  .btn-primary:hover {
+    background-color: var(--color-accent-hover);
   }
   
   .btn-secondary {
-    @apply bg-white hover:bg-gray-50 text-gray-700 font-medium py-2 px-4 rounded-lg border border-gray-300 transition-colors duration-200;
+    @apply bg-gray-800 hover:bg-gray-700 text-gray-200 font-medium py-2 px-4 rounded-lg border border-gray-700 transition-all duration-200;
+    background-color: var(--color-bg-elevated);
+    border-color: var(--color-border-default);
+    color: var(--color-text-secondary);
   }
   
+  .btn-secondary:hover {
+    background-color: var(--color-bg-hover);
+  }
+  
+  /* Cards/Panels - Enterprise Dark Theme */
   .card {
-    @apply bg-white rounded-lg shadow-sm border border-gray-200 p-6;
+    @apply bg-gray-900 rounded-lg shadow-xl border border-gray-800 p-6;
+    background-color: var(--color-bg-panel);
+    border-color: var(--color-border-subtle);
   }
   
+  /* Inputs - Enterprise Dark Theme */
   .input {
-    @apply w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all;
+    @apply w-full px-4 py-2 bg-gray-800 border border-gray-700 text-gray-100 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all placeholder-gray-500;
+    background-color: var(--color-bg-elevated);
+    border-color: var(--color-border-default);
+    color: var(--color-text-primary);
   }
   
+  .input:focus {
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 3px rgba(147, 51, 234, 0.1);
+  }
+  
+  /* Badges - Enterprise Dark Theme */
   .badge {
     @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
   }
   
   .badge-success {
-    @apply bg-green-100 text-green-800;
+    @apply bg-green-900/30 text-green-300 border border-green-800;
   }
   
   .badge-warning {
-    @apply bg-yellow-100 text-yellow-800;
+    @apply bg-yellow-900/30 text-yellow-300 border border-yellow-800;
   }
   
   .badge-danger {
-    @apply bg-red-100 text-red-800;
+    @apply bg-red-900/30 text-red-300 border border-red-800;
   }
   
+  .badge-info {
+    @apply bg-blue-900/30 text-blue-300 border border-blue-800;
+  }
+  
+  .badge-gray {
+    @apply bg-gray-800 text-gray-300 border border-gray-700;
+  }
+  
+  /* Sidebar - Enterprise Dark Theme */
   .sidebar-link {
-    @apply flex items-center px-4 py-3 text-gray-700 hover:bg-primary-50 hover:text-primary-700 rounded-lg transition-colors duration-150 cursor-pointer;
+    @apply flex items-center px-4 py-3 text-gray-300 hover:bg-gray-800 hover:text-white rounded-lg transition-all duration-150 cursor-pointer;
+  }
+  
+  .sidebar-link:hover {
+    background-color: var(--color-bg-elevated);
   }
   
   .sidebar-link-active {
-    @apply bg-primary-100 text-primary-700 font-medium;
+    @apply bg-purple-600 text-white font-medium shadow-md;
+    background-color: var(--color-accent);
+  }
+  
+  /* Tables - Enterprise Dark Theme */
+  .table {
+    @apply w-full text-sm text-left;
+  }
+  
+  .table thead {
+    @apply text-xs text-gray-400 uppercase bg-gray-800 border-b border-gray-700;
+  }
+  
+  .table th {
+    @apply px-6 py-3;
+  }
+  
+  .table tbody {
+    @apply divide-y divide-gray-800;
+  }
+  
+  .table tr {
+    @apply bg-gray-900 hover:bg-gray-800 transition-colors;
+  }
+  
+  .table td {
+    @apply px-6 py-4;
   }
 }

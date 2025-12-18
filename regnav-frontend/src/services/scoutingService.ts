@@ -4,8 +4,212 @@ import { ScoutingConfiguration, ScoutingJob, RegulatorySource, DiscoveryProgress
 import { US_STATES, LINES_OF_BUSINESS, REGULATORY_DOCUMENT_TYPES } from '../data/mockData';
 import { isGovAuthorizedAutoSource, getSourceTrustLevel } from '../utils/sourceQuality';
 
-// Simulated authoritative regulatory sources database
-// In production, this would be AI-discovered and validated
+// Authoritative seed sources for US states - GUARANTEED government entry points
+// These MUST always be included for deep searches and bypass AI discovery failures
+type DocumentType = 'STATUTE' | 'ADMIN_CODE' | 'AGENCY_PORTAL' | 'BULLETIN' | 'FILING_MANUAL' | 'WCPOLS_REFERENCE' | 'GUIDANCE';
+
+interface AuthoritativeSeedSource {
+  url: string;
+  agency: string;
+  description: string;
+  documentType: DocumentType;
+  pages?: number;
+}
+
+const US_AUTHORITATIVE_SEEDS: Record<string, AuthoritativeSeedSource[]> = {
+  WI: [
+    {
+      url: 'https://dwd.wisconsin.gov/wc/',
+      agency: 'Wisconsin Department of Workforce Development',
+      description: 'Primary government authority responsible for workers\' compensation regulation in Wisconsin.',
+      documentType: 'AGENCY_PORTAL',
+    },
+    {
+      url: 'https://oci.wi.gov',
+      agency: 'Wisconsin Office of the Commissioner of Insurance',
+      description: 'Primary government authority responsible for insurance oversight in Wisconsin.',
+      documentType: 'AGENCY_PORTAL',
+    },
+    {
+      url: 'https://docs.legis.wisconsin.gov/statutes/statutes/102',
+      agency: 'Wisconsin Legislature',
+      description: 'State law establishing legal requirements for workers\' compensation in Wisconsin.',
+      documentType: 'STATUTE',
+      pages: 245,
+    },
+    {
+      url: 'https://docs.legis.wisconsin.gov/code/admin_code/dwd',
+      agency: 'Wisconsin Legislature',
+      description: 'Administrative rules governing the implementation of Wisconsin workers\' compensation statutes.',
+      documentType: 'ADMIN_CODE',
+      pages: 156,
+    },
+  ],
+  CA: [
+    {
+      url: 'https://www.dir.ca.gov/dwc/',
+      agency: 'California Department of Industrial Relations',
+      description: 'Primary government authority responsible for workers\' compensation regulation in California.',
+      documentType: 'AGENCY_PORTAL',
+    },
+    {
+      url: 'https://www.insurance.ca.gov',
+      agency: 'California Department of Insurance',
+      description: 'Primary government authority responsible for insurance oversight in California.',
+      documentType: 'AGENCY_PORTAL',
+    },
+    {
+      url: 'https://leginfo.legislature.ca.gov/faces/codes_displayText.xhtml?division=4.&chapter=1.&lawCode=LAB',
+      agency: 'California Legislature',
+      description: 'State law establishing legal requirements for workers\' compensation in California.',
+      documentType: 'STATUTE',
+      pages: 892,
+    },
+  ],
+  TX: [
+    {
+      url: 'https://www.tdi.texas.gov/wc/',
+      agency: 'Texas Department of Insurance',
+      description: 'Primary government authority responsible for workers\' compensation regulation in Texas.',
+      documentType: 'AGENCY_PORTAL',
+    },
+    {
+      url: 'https://statutes.capitol.texas.gov/Docs/LA/htm/LA.401.htm',
+      agency: 'Texas Legislature',
+      description: 'State law establishing legal requirements for workers\' compensation in Texas.',
+      documentType: 'STATUTE',
+      pages: 456,
+    },
+  ],
+  NY: [
+    {
+      url: 'https://www.wcb.ny.gov',
+      agency: 'New York Workers\' Compensation Board',
+      description: 'Primary government authority responsible for workers\' compensation regulation in New York.',
+      documentType: 'AGENCY_PORTAL',
+    },
+    {
+      url: 'https://www.dfs.ny.gov/insurance',
+      agency: 'New York Department of Financial Services',
+      description: 'Primary government authority responsible for insurance oversight in New York.',
+      documentType: 'AGENCY_PORTAL',
+    },
+  ],
+  FL: [
+    {
+      url: 'https://www.myfloridacfo.com/division/wc/',
+      agency: 'Florida Department of Financial Services',
+      description: 'Primary government authority responsible for workers\' compensation regulation in Florida.',
+      documentType: 'AGENCY_PORTAL',
+    },
+    {
+      url: 'https://www.floir.com',
+      agency: 'Florida Office of Insurance Regulation',
+      description: 'Primary government authority responsible for insurance oversight in Florida.',
+      documentType: 'AGENCY_PORTAL',
+    },
+  ],
+  MI: [
+    {
+      url: 'https://www.michigan.gov/lara/bureau-list/wca',
+      agency: 'Michigan Department of Labor and Economic Opportunity',
+      description: 'Primary government authority responsible for workers\' compensation regulation in Michigan.',
+      documentType: 'AGENCY_PORTAL',
+    },
+    {
+      url: 'https://www.michigan.gov/difs',
+      agency: 'Michigan Department of Insurance and Financial Services',
+      description: 'Primary government authority responsible for insurance oversight in Michigan.',
+      documentType: 'AGENCY_PORTAL',
+    },
+  ],
+  IL: [
+    {
+      url: 'https://www2.illinois.gov/iwcc',
+      agency: 'Illinois Workers\' Compensation Commission',
+      description: 'Primary government authority responsible for workers\' compensation regulation in Illinois.',
+      documentType: 'AGENCY_PORTAL',
+    },
+    {
+      url: 'https://insurance.illinois.gov',
+      agency: 'Illinois Department of Insurance',
+      description: 'Primary government authority responsible for insurance oversight in Illinois.',
+      documentType: 'AGENCY_PORTAL',
+    },
+  ],
+  PA: [
+    {
+      url: 'https://www.dli.pa.gov/Businesses/Compensation/Pages/default.aspx',
+      agency: 'Pennsylvania Department of Labor & Industry',
+      description: 'Primary government authority responsible for workers\' compensation regulation in Pennsylvania.',
+      documentType: 'AGENCY_PORTAL',
+    },
+    {
+      url: 'https://www.insurance.pa.gov',
+      agency: 'Pennsylvania Insurance Department',
+      description: 'Primary government authority responsible for insurance oversight in Pennsylvania.',
+      documentType: 'AGENCY_PORTAL',
+    },
+  ],
+  OH: [
+    {
+      url: 'https://www.bwc.ohio.gov',
+      agency: 'Ohio Bureau of Workers\' Compensation',
+      description: 'Primary government authority responsible for workers\' compensation regulation in Ohio.',
+      documentType: 'AGENCY_PORTAL',
+    },
+    {
+      url: 'https://insurance.ohio.gov',
+      agency: 'Ohio Department of Insurance',
+      description: 'Primary government authority responsible for insurance oversight in Ohio.',
+      documentType: 'AGENCY_PORTAL',
+    },
+  ],
+  NC: [
+    {
+      url: 'https://www.ic.nc.gov',
+      agency: 'North Carolina Industrial Commission',
+      description: 'Primary government authority responsible for workers\' compensation regulation in North Carolina.',
+      documentType: 'AGENCY_PORTAL',
+    },
+    {
+      url: 'https://www.ncdoi.gov',
+      agency: 'North Carolina Department of Insurance',
+      description: 'Primary government authority responsible for insurance oversight in North Carolina.',
+      documentType: 'AGENCY_PORTAL',
+    },
+  ],
+  GA: [
+    {
+      url: 'https://sbwc.georgia.gov',
+      agency: 'Georgia State Board of Workers\' Compensation',
+      description: 'Primary government authority responsible for workers\' compensation regulation in Georgia.',
+      documentType: 'AGENCY_PORTAL',
+    },
+    {
+      url: 'https://www.oci.ga.gov',
+      agency: 'Georgia Office of Insurance and Safety Fire Commissioner',
+      description: 'Primary government authority responsible for insurance oversight in Georgia.',
+      documentType: 'AGENCY_PORTAL',
+    },
+  ],
+  AZ: [
+    {
+      url: 'https://www.azica.gov',
+      agency: 'Arizona Industrial Commission',
+      description: 'Primary government authority responsible for workers\' compensation regulation in Arizona.',
+      documentType: 'AGENCY_PORTAL',
+    },
+    {
+      url: 'https://difi.az.gov',
+      agency: 'Arizona Department of Insurance and Financial Institutions',
+      description: 'Primary government authority responsible for insurance oversight in Arizona.',
+      documentType: 'AGENCY_PORTAL',
+    },
+  ],
+};
+
+// Legacy sources database for backward compatibility
 const KNOWN_REGULATORY_SOURCES: Record<string, { baseUrl: string; agency: string; patterns: string[] }> = {
   CA: {
     baseUrl: 'https://www.dir.ca.gov',
@@ -42,6 +246,51 @@ const KNOWN_REGULATORY_SOURCES: Record<string, { baseUrl: string; agency: string
     agency: 'Florida Office of Insurance Regulation',
     patterns: ['/sections/', '/data-reports/'],
   },
+};
+
+/**
+ * Get authoritative seed sources for a state/LOB/docType combination
+ * These are GUARANTEED government sources that bypass AI discovery failures
+ */
+const getAuthoritativeSeedSources = (
+  state: string,
+  lob: string,
+  docType: string
+): RegulatorySource[] => {
+  const seeds = US_AUTHORITATIVE_SEEDS[state] || [];
+
+  return seeds.map((seed, index) => ({
+    id: `seed-${state}-${lob}-${docType}-${index}`,
+    country: 'US',
+    stateCode: state,
+    lineOfBusiness: lob,
+    documentType: docType,
+    sourceUrl: seed.url,
+    sourceName: `${seed.agency} - ${seed.documentType.replace(/_/g, ' ')}`,
+    agencyName: seed.agency,
+    discoveryMethod: 'baseline' as any, // Use baseline for authoritative seeds
+    status: 'active' as any,
+    confidenceScore: 1.0, // ALWAYS 100% confidence for seeds
+    trustLevel: 'gov-auto', // THIS IS THE KEY FIX - must be gov-auto
+    metadata: {
+      lastVerified: new Date().toISOString(),
+      format: seed.documentType === 'STATUTE' || seed.documentType === 'ADMIN_CODE' ? 'Legislative Document' : 'Web Portal',
+      pages: seed.pages,
+      language: 'English',
+      jurisdiction: `State: ${state}`,
+      category: seed.documentType,
+      tags: [lob, docType, 'authoritative', 'government', seed.documentType],
+      generatedSummary: seed.description,
+    },
+    createdAt: new Date().toISOString(),
+    discoveredBy: 'RegScout Authoritative Seed',
+    validationResult: {
+      isValid: true,
+      statusCode: 200,
+      contentType: seed.documentType === 'STATUTE' || seed.documentType === 'ADMIN_CODE' ? 'text/html' : 'text/html',
+      lastChecked: new Date().toISOString(),
+    },
+  }));
 };
 
 // Simulated AI prompts for different LLM providers
@@ -294,29 +543,40 @@ export const executeScoutingJob = async (
       for (const lob of config.linesOfBusiness) {
         for (const docType of config.documentTypes) {
           try {
-            // Simulate AI discovery
-            const sources = await simulateAIDiscovery(state, lob, docType, config.llmConfig, country);
+            // STEP 1: Always get authoritative seed sources for US deep searches
+            const seedSources: RegulatorySource[] = [];
+            if (country === 'US' && config.searchDepth === 'deep') {
+              const seeds = getAuthoritativeSeedSources(state, lob, docType);
+              seedSources.push(...seeds);
+            }
             
-            // CRITICAL: Filter out non-gov sources for auto-discovered
-            const govOnlySources = sources.filter(source => {
+            // STEP 2: Simulate AI discovery for expanded sources
+            const aiSources = await simulateAIDiscovery(state, lob, docType, config.llmConfig, country);
+            
+            // STEP 3: Filter AI sources (NOT seeds) through gov-only filter
+            const govOnlyAISources = aiSources.filter(source => {
               if (source.discoveryMethod === 'ai_discovered') {
                 return isGovAuthorizedAutoSource(source.sourceUrl, country, [state]);
               }
-              return true; // Keep user-provided sources
+              return true;
             });
             
-            // Add trust level to each source
-            const sourcesWithTrust = govOnlySources.map(source => ({
+            // STEP 4: Add trust level to AI sources
+            const aiSourcesWithTrust = govOnlyAISources.map(source => ({
               ...source,
               trustLevel: getSourceTrustLevel(source, country, [state]),
             }));
             
-            // Filter by confidence threshold
-            const filteredSources = sourcesWithTrust.filter(
+            // STEP 5: Apply confidence threshold ONLY to AI sources, NOT seeds
+            const filteredAISources = aiSourcesWithTrust.filter(
               (s) => s.confidenceScore >= config.confidenceThreshold
             );
             
-            allSources.push(...filteredSources);
+            // STEP 6: Combine seeds (always included) + filtered AI sources
+            // Seeds ALWAYS bypass all filters
+            const combinedSources = [...seedSources, ...filteredAISources];
+            
+            allSources.push(...combinedSources);
             completedSearches++;
 
             // Update progress (20-60% range)

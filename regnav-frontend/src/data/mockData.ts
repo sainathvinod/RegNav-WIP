@@ -285,6 +285,33 @@ export const REGULATORY_DOCUMENT_TYPES: RegulatoryDocumentType[] = [
     applicableLOBs: ['workers_comp', 'general_liability'],
     format: 'Excel',
   },
+  {
+    id: 'admin_code',
+    name: 'Administrative Code',
+    code: 'ADMIN',
+    description: 'State administrative rules and regulations',
+    applicableStates: ['ALL'],
+    applicableLOBs: ['ALL'],
+    format: 'Web',
+  },
+  {
+    id: 'agency_portal',
+    name: 'Agency Portal',
+    code: 'AGENCY',
+    description: 'State regulatory agency websites and portals',
+    applicableStates: ['ALL'],
+    applicableLOBs: ['ALL'],
+    format: 'Web',
+  },
+  {
+    id: 'guidance',
+    name: 'Regulatory Guidance',
+    code: 'GUIDANCE',
+    description: 'Official guidance documents and interpretations',
+    applicableStates: ['ALL'],
+    applicableLOBs: ['ALL'],
+    format: 'PDF',
+  },
 ];
 
 export const LLM_PROVIDERS: LLMProvider[] = [

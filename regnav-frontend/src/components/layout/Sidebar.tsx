@@ -27,20 +27,20 @@ export const Sidebar: React.FC = () => {
   };
 
   return (
-    <aside className={`fixed left-0 top-0 h-screen bg-white border-r border-gray-200 transition-all duration-300 z-40 flex flex-col ${collapsed ? 'w-20' : 'w-64'}`}>
+    <aside className={`fixed left-0 top-0 h-screen bg-gray-900 border-r border-gray-800 transition-all duration-300 z-40 flex flex-col ${collapsed ? 'w-20' : 'w-64'}`}>
       {/* Header */}
-      <div className="h-16 border-b border-gray-200 flex items-center justify-between px-4">
+      <div className="h-16 border-b border-gray-800 flex items-center justify-between px-4">
         {!collapsed && (
           <div className="flex items-center space-x-2">
             <span className="text-2xl">🧭</span>
-            <span className="font-bold text-xl bg-gradient-to-r from-primary-600 to-primary-400 bg-clip-text text-transparent">
+            <span className="font-bold text-xl bg-gradient-to-r from-purple-500 to-purple-400 bg-clip-text text-transparent">
               RegNav.AI
             </span>
           </div>
         )}
         {collapsed && <span className="text-2xl mx-auto">🧭</span>}
-        <button onClick={toggleSidebar} className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors">
-          <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <button onClick={toggleSidebar} className="p-1.5 hover:bg-gray-800 rounded-lg transition-colors">
+          <svg className="w-5 h-5 text-gray-400 hover:text-gray-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             {collapsed ? (
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" />
             ) : (
@@ -65,7 +65,7 @@ export const Sidebar: React.FC = () => {
                 <span className="text-2xl flex-shrink-0">{item.icon}</span>
                 {!collapsed && <span className="ml-3 flex-1">{item.label}</span>}
                 {collapsed && (
-                  <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-sm rounded-md opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
+                  <div className="absolute left-full ml-2 px-2 py-1 bg-gray-800 text-white text-sm rounded-md opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50 border border-gray-700 shadow-lg">
                     {item.label}
                   </div>
                 )}
