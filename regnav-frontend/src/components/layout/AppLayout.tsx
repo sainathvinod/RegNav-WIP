@@ -1,7 +1,7 @@
 import React from 'react';
 import { Sidebar } from './Sidebar';
 import { TopBar } from './TopBar';
-import { useSidebarCollapsed } from '../../store/appStore';
+import { useAppStore } from '../../store/appStore';
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -9,7 +9,7 @@ interface AppLayoutProps {
 }
 
 export const AppLayout: React.FC<AppLayoutProps> = ({ children, title }) => {
-  const collapsed = useSidebarCollapsed();
+  const collapsed = useAppStore((state) => state.sidebarCollapsed);
 
   return (
     <div className="min-h-screen bg-gray-50">

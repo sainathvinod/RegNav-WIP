@@ -1,6 +1,8 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AppLayout } from './components/layout/AppLayout';
+import { RegScout } from './pages/RegScout';
+import { Settings } from './pages/Settings';
 
 // Simple Dashboard for now
 const Dashboard: React.FC = () => {
@@ -128,13 +130,14 @@ function App() {
         <Route path="/" element={<Dashboard />} />
         <Route path="/organizations" element={<PlaceholderPage title="Organizations" />} />
         <Route path="/configuration" element={<PlaceholderPage title="Configuration" />} />
-        <Route path="/regscout" element={<PlaceholderPage title="RegScout - Document Discovery" />} />
+        <Route path="/regscout" element={<RegScout />} />
         <Route path="/regingest" element={<PlaceholderPage title="RegIngest - Document Repository" />} />
         <Route path="/ruleminer" element={<PlaceholderPage title="RuleMiner - Rule Extraction" />} />
         <Route path="/rulesense" element={<PlaceholderPage title="RuleSense - AI Insights" />} />
         <Route path="/regvalidate" element={<PlaceholderPage title="RegValidate - File Validation" />} />
         <Route path="/analytics" element={<PlaceholderPage title="Analytics" />} />
         <Route path="/reports" element={<PlaceholderPage title="Reports" />} />
+        <Route path="/settings" element={<Settings />} />
       </Routes>
     </Router>
   );

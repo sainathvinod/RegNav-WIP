@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { useSidebarCollapsed, useAppStore } from '../../store/appStore';
+import { useAppStore } from '../../store/appStore';
 
 const navItems = [
   { id: 'dashboard', label: 'Dashboard', icon: '📊', path: '/' },
@@ -13,11 +13,12 @@ const navItems = [
   { id: 'regvalidate', label: 'RegValidate', icon: '✅', path: '/regvalidate' },
   { id: 'analytics', label: 'Analytics', icon: '📈', path: '/analytics' },
   { id: 'reports', label: 'Reports', icon: '📑', path: '/reports' },
+  { id: 'settings', label: 'Settings', icon: '⚙️', path: '/settings' },
 ];
 
 export const Sidebar: React.FC = () => {
   const location = useLocation();
-  const collapsed = useSidebarCollapsed();
+  const collapsed = useAppStore((state) => state.sidebarCollapsed);
   const toggleSidebar = useAppStore((state) => state.toggleSidebar);
 
   const isActive = (path: string) => {
