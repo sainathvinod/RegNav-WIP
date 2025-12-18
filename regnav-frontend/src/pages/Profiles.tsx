@@ -1,0 +1,326 @@
+/**
+ * Profiles - Discovery Profile Management
+ * 
+ * Allows users to view, edit, and manage their saved discovery profiles.
+ * Profiles can be loaded into RegScout or used for rule mining.
+ */
+
+import React, { useState } from 'react';
+import { AppLayout } from '../components/layout/AppLayout';
+import { useAppStore } from '../store/appStore';
+import {
+  FolderIcon,
+  MagnifyingGlassIcon,
+  PencilSquareIcon,
+  TrashIcon,
+  EyeIcon,
+  TagIcon,
+  CalendarIcon,
+  CheckCircleIcon,
+  ClockIcon,
+  BeakerIcon,
+} from '@heroicons/react/24/outline';
+import { useNavigate } from 'react-router-dom';
+
+export const Profiles: React.FC = () => {
+  const { discoveryProfiles, deleteProfile } = useAppStore();
+  const navigate = useNavigate();
+  
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterStatus, setFilterStatus] = useState<'all' | 'draft' | 'finalized' | 'used_for_rules'>('all');
+  const [sortBy, setSortBy] = useState<'name' | 'created' | 'updated'>('updated');
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
+
+  // Filter and sort profiles
+  const filteredProfiles = discoveryProfiles
+    .filter(profile => {
+      // Search filter
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase();
+        const matchesName = profile.name.toLowerCase().includes(query);
+        const matchesDescription = profile.description?.toLowerCase().includes(query);
+        const matchesTags = profile.tags?.some(tag => tag.toLowerCase().includes(query));
+        if (!matchesName && !matchesDescription && !matchesTags) return false;
+      }
+      
+      // Status filter
+      if (filterStatus !== 'all' && profile.status !== filterStatus) return false;
+      
+      return true;
+    })
+    .sort((a, b) => {
+      if (sortBy === 'name') {
+        return a.name.localeCompare(b.name);
+      } else if (sortBy === 'created') {
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      } else {
+        return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+      }
+    });
+
+  const handleDelete = (profileId: string) => {
+    deleteProfile(profileId);
+    setShowDeleteConfirm(null);
+  };
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'draft':
+        return (
+          <span className="px-2 py-1 bg-blue-900/30 border border-blue-500/30 text-blue-300 text-xs rounded-full flex items-center gap-1">
+            <ClockIcon className="w-3 h-3" />
+            Draft
+          </span>
+        );
+      case 'finalized':
+        return (
+          <span className="px-2 py-1 bg-green-900/30 border border-green-500/30 text-green-300 text-xs rounded-full flex items-center gap-1">
+            <CheckCircleIcon className="w-3 h-3" />
+            Finalized
+          </span>
+        );
+      case 'used_for_rules':
+        return (
+          <span className="px-2 py-1 bg-purple-900/30 border border-purple-500/30 text-purple-300 text-xs rounded-full flex items-center gap-1">
+            <BeakerIcon className="w-3 h-3" />
+            Used for Rules
+          </span>
+        );
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <AppLayout title="Discovery Profiles">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-white flex items-center gap-3">
+            <FolderIcon className="w-8 h-8 text-purple-500" />
+            Discovery Profiles
+          </h1>
+          <p className="mt-2 text-gray-400">
+            Manage your saved discovery configurations and curated source lists
+          </p>
+        </div>
+
+        {/* Filters */}
+        <div className="bg-gray-900 border border-gray-800 rounded-lg p-6 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Search */}
+            <div className="md:col-span-2">
+              <div className="relative">
+                <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-500" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search profiles by name, description, or tags..."
+                  className="w-full pl-10 pr-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                />
+              </div>
+            </div>
+
+            {/* Status Filter */}
+            <div>
+              <select
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value as any)}
+                className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              >
+                <option value="all">All Statuses</option>
+                <option value="draft">Draft</option>
+                <option value="finalized">Finalized</option>
+                <option value="used_for_rules">Used for Rules</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Sort */}
+          <div className="mt-4 flex items-center gap-2">
+            <span className="text-sm text-gray-400">Sort by:</span>
+            <button
+              onClick={() => setSortBy('updated')}
+              className={`px-3 py-1 rounded text-sm transition-colors ${
+                sortBy === 'updated'
+                  ? 'bg-purple-600 text-white'
+                  : 'bg-gray-800 text-gray-400 hover:text-white'
+              }`}
+            >
+              Last Updated
+            </button>
+            <button
+              onClick={() => setSortBy('created')}
+              className={`px-3 py-1 rounded text-sm transition-colors ${
+                sortBy === 'created'
+                  ? 'bg-purple-600 text-white'
+                  : 'bg-gray-800 text-gray-400 hover:text-white'
+              }`}
+            >
+              Date Created
+            </button>
+            <button
+              onClick={() => setSortBy('name')}
+              className={`px-3 py-1 rounded text-sm transition-colors ${
+                sortBy === 'name'
+                  ? 'bg-purple-600 text-white'
+                  : 'bg-gray-800 text-gray-400 hover:text-white'
+              }`}
+            >
+              Name
+            </button>
+          </div>
+        </div>
+
+        {/* Profiles Count */}
+        <div className="mb-4 text-sm text-gray-400">
+          Showing {filteredProfiles.length} of {discoveryProfiles.length} profiles
+        </div>
+
+        {/* Profiles Grid */}
+        {filteredProfiles.length === 0 ? (
+          <div className="bg-gray-900 border border-gray-800 rounded-lg p-12 text-center">
+            <FolderIcon className="w-16 h-16 text-gray-700 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-gray-400 mb-2">
+              {searchQuery || filterStatus !== 'all' ? 'No profiles found' : 'No profiles yet'}
+            </h3>
+            <p className="text-gray-500 mb-6">
+              {searchQuery || filterStatus !== 'all'
+                ? 'Try adjusting your filters or search query'
+                : 'Save your first discovery result as a profile from RegScout'}
+            </p>
+            {!searchQuery && filterStatus === 'all' && (
+              <button
+                onClick={() => navigate('/regscout')}
+                className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-500 transition-colors"
+              >
+                Go to RegScout
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredProfiles.map((profile) => (
+              <div
+                key={profile.id}
+                className="bg-gray-900 border border-gray-800 rounded-lg p-6 hover:border-purple-500 transition-all"
+              >
+                {/* Header */}
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold text-white mb-1 line-clamp-2">
+                      {profile.name}
+                    </h3>
+                    {getStatusBadge(profile.status)}
+                  </div>
+                </div>
+
+                {/* Description */}
+                {profile.description && (
+                  <p className="text-sm text-gray-400 mb-4 line-clamp-2">
+                    {profile.description}
+                  </p>
+                )}
+
+                {/* Metadata */}
+                <div className="grid grid-cols-2 gap-3 text-xs mb-4">
+                  <div>
+                    <div className="text-gray-500">Sources</div>
+                    <div className="text-white font-semibold">{profile.metadata.totalSources}</div>
+                  </div>
+                  <div>
+                    <div className="text-gray-500">Gov Auto</div>
+                    <div className="text-white font-semibold">{profile.metadata.govAutoSources}</div>
+                  </div>
+                  <div>
+                    <div className="text-gray-500">Confidence</div>
+                    <div className="text-white font-semibold">{(profile.metadata.avgConfidence * 100).toFixed(0)}%</div>
+                  </div>
+                  <div>
+                    <div className="text-gray-500">LOB</div>
+                    <div className="text-white font-semibold truncate">{profile.configuration.linesOfBusiness || 'N/A'}</div>
+                  </div>
+                </div>
+
+                {/* Tags */}
+                {profile.tags && profile.tags.length > 0 && (
+                  <div className="flex items-center gap-2 mb-4 flex-wrap">
+                    <TagIcon className="w-4 h-4 text-gray-500" />
+                    {profile.tags.slice(0, 3).map((tag, idx) => (
+                      <span
+                        key={idx}
+                        className="px-2 py-0.5 bg-gray-800 text-gray-300 text-xs rounded"
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                    {profile.tags.length > 3 && (
+                      <span className="text-xs text-gray-500">
+                        +{profile.tags.length - 3} more
+                      </span>
+                    )}
+                  </div>
+                )}
+
+                {/* Date */}
+                <div className="flex items-center gap-2 text-xs text-gray-500 mb-4">
+                  <CalendarIcon className="w-4 h-4" />
+                  Updated {new Date(profile.updatedAt).toLocaleDateString()}
+                </div>
+
+                {/* Actions */}
+                <div className="flex gap-2">
+                  <button
+                    className="flex-1 px-3 py-2 bg-purple-600 text-white rounded hover:bg-purple-500 transition-colors text-sm flex items-center justify-center gap-1"
+                  >
+                    <EyeIcon className="w-4 h-4" />
+                    View
+                  </button>
+                  <button
+                    className="px-3 py-2 bg-gray-800 text-gray-300 rounded hover:bg-gray-700 transition-colors"
+                  >
+                    <PencilSquareIcon className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => setShowDeleteConfirm(profile.id)}
+                    className="px-3 py-2 bg-gray-800 text-red-400 rounded hover:bg-red-900/30 transition-colors"
+                  >
+                    <TrashIcon className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Delete Confirmation Modal */}
+        {showDeleteConfirm && (
+          <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+            <div className="bg-gray-900 rounded-lg border border-gray-700 max-w-md w-full p-6">
+              <h3 className="text-lg font-semibold text-white mb-2">Delete Profile?</h3>
+              <p className="text-gray-400 mb-6">
+                This action cannot be undone. The profile and all its data will be permanently deleted.
+              </p>
+              <div className="flex gap-3 justify-end">
+                <button
+                  onClick={() => setShowDeleteConfirm(null)}
+                  className="px-4 py-2 bg-gray-800 text-gray-300 rounded-lg hover:bg-gray-700 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => handleDelete(showDeleteConfirm)}
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-500 transition-colors"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </AppLayout>
+  );
+};
+

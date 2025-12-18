@@ -6,6 +6,7 @@ const navItems = [
   { id: 'dashboard', label: 'Dashboard', icon: '📊', path: '/' },
   { id: 'organizations', label: 'Organizations', icon: '🏢', path: '/organizations' },
   { id: 'configuration', label: 'Configuration', icon: '⚙️', path: '/configuration' },
+  { id: 'profiles', label: 'Profiles', icon: '🗂️', path: '/profiles' },
   { id: 'regscout', label: 'RegScout', icon: '🔍', path: '/regscout' },
   { id: 'regingest', label: 'RegIngest', icon: '📄', path: '/regingest' },
   { id: 'ruleminer', label: 'RuleMiner', icon: '⛏️', path: '/ruleminer' },
