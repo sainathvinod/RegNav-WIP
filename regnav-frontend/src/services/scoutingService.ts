@@ -294,7 +294,7 @@ const getAuthoritativeSeedSources = (
   }));
 };
 
-// Simulated AI prompts for different LLM providers
+// Enhanced AI prompts for comprehensive regulatory discovery
 const generateSearchPrompt = (
   state: string,
   lob: string,
@@ -305,16 +305,100 @@ const generateSearchPrompt = (
   const lobName = LINES_OF_BUSINESS.find((l) => l.id === lob)?.name || lob;
   const docTypeName = REGULATORY_DOCUMENT_TYPES.find((d) => d.id === docType)?.name || docType;
 
-  return `You are a regulatory compliance expert. Find all authoritative government sources for ${docTypeName} related to ${lobName} in ${stateName}.
+  // Build LOB-specific authoritative source guidance
+  let specificGuidance = '';
+  if (lob === 'workers_comp') {
+    specificGuidance = `
 
-Requirements:
-1. Only include official government websites (.gov, .state.*.us)
-2. Identify the primary regulatory agency
-3. Locate specific pages with filing requirements, forms, or manuals
-4. Extract effective dates and version information if available
-5. Verify the URL is currently active
+CRITICAL: For Workers' Compensation, you MUST include these types of authoritative sources:
 
-Provide results in JSON format with: source_url, agency_name, document_title, effective_date, confidence_score`;
+**Government Sources (.gov):**
+- State Department of Insurance / Commissioner of Insurance
+- State Department of Labor / Workforce Development
+- State Workers' Compensation Board/Commission
+- State Legislature (statutes and administrative code)
+
+**Industry-Standard Organizations (.org, .com):**
+- **State-Specific Rating Bureaus** (REQUIRED - DO NOT MISS):
+  • Wisconsin: WCRB (www.wcrb.org) - Wisconsin Compensation Rating Bureau
+  • Massachusetts: WCRIBMA (www.wcribma.org)
+  • Delaware: DCRB (www.dcrb.com)
+  • New Jersey: NJCRIB (www.njcrib.org)
+  • North Carolina: NCRB (www.ncrb.org)
+  • Pennsylvania: PCRB (www.pcrb.com)
+- **NCCI** (www.ncci.com) - National Council on Compensation Insurance (for NCCI states)
+- **ISO** (www.iso.com) - Insurance Services Office (standardized forms)
+
+These rating bureaus are PRIMARY authoritative sources for policy forms, manual rules, class codes, and filing requirements.`;
+  } else if (lob === 'commercial_auto' || lob === 'personal_auto') {
+    specificGuidance = `
+
+CRITICAL: For Auto Insurance, include:
+- State Department of Motor Vehicles (DMV)
+- State Department of Insurance
+- ISO (www.iso.com) - Insurance Services Office
+- State-specific rating bureaus`;
+  } else if (lob === 'general_liability' || lob === 'commercial_property') {
+    specificGuidance = `
+
+CRITICAL: For Commercial Lines, include:
+- State Department of Insurance
+- ISO (www.iso.com) - Insurance Services Office (forms and manuals)
+- AAIS (www.aaisonline.com) - American Association of Insurance Services`;
+  }
+
+  return `You are an expert regulatory compliance analyst specializing in insurance regulation. Your task is to find ALL authoritative sources for ${docTypeName} related to ${lobName} in ${stateName}.
+
+**SCOPE: You must identify BOTH government sources AND industry-standard authoritative organizations.**
+${specificGuidance}
+
+**General Requirements:**
+1. **Government Sources** - Official state/federal agencies:
+   - Primary domains: .gov, .state.*.us, .us
+   - Examples: Department of Insurance, Workers' Comp Commission, Legislature
+   
+2. **Industry-Standard Organizations** - Rating bureaus and advisory organizations:
+   - Domains: .org, .com (if authoritative)
+   - Examples: State rating bureaus (WCRB, NCCI, etc.), ISO, AAIS
+   - These are REQUIRED sources - do not skip them!
+   
+3. **Document Specificity:**
+   - Find actual document pages (not just homepages)
+   - Include URLs to specific forms, manuals, bulletins, code sections
+   - Look for: Filing requirements, policy forms, manual rules, statistical reporting
+   
+4. **Metadata to Extract:**
+   - Effective dates, version numbers, last updated dates
+   - Document format (PDF, web, database)
+   - Page count (if available)
+   - Contact information
+
+**CRITICAL: For ${stateName} ${lobName}, the state-specific rating bureau (if one exists) is a MANDATORY source. Do not omit it.**
+
+**Output Format:**
+Return a JSON array of objects with this exact structure:
+[
+  {
+    "source_url": "https://...",
+    "agency_name": "Full official name of organization",
+    "document_title": "Specific document or page title",
+    "description": "One-sentence description of what this source provides",
+    "document_type": "${docTypeName}",
+    "effective_date": "YYYY-MM-DD or null",
+    "confidence_score": 0.0-1.0,
+    "authority_type": "government" or "rating_bureau" or "advisory_organization",
+    "format": "PDF" or "Web" or "Database",
+    "pages": number or null
+  }
+]
+
+**Quality Standards:**
+- Confidence score 0.9-1.0: Primary government or rating bureau sources
+- Confidence score 0.7-0.89: Secondary authoritative sources
+- Confidence score <0.7: Supplementary sources
+- Only include sources that are currently active and accessible
+
+Return ONLY the JSON array, no additional text or explanation.`;
 };
 
 // Real AI discovery function using configured LLM
