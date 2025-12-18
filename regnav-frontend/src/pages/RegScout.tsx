@@ -3,7 +3,7 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import { AppLayout } from '../components/layout/AppLayout';
-import { LLMConfig } from '../components/LLMConfig';
+import { LLMIndicator } from '../components/LLMIndicator';
 import { useAppStore } from '../store/appStore';
 import {
   COUNTRIES,
@@ -51,7 +51,6 @@ export const RegScout: React.FC = () => {
     addDiscoveredSource,
     removeDiscoveredSource,
     getModuleLLMConfig,
-    updateModuleLLMConfig,
   } = useAppStore();
 
   // Get module-specific LLM config
@@ -408,6 +407,11 @@ export const RegScout: React.FC = () => {
             </div>
           </div>
 
+          {/* AI Model Indicator */}
+          <div className="mb-6">
+            <LLMIndicator config={llmConfig} moduleName="RegScout" />
+          </div>
+
           {/* Configuration Panel - Dark Theme */}
           <div className="bg-gray-900 rounded-xl border border-gray-800 p-8 mb-6 shadow-2xl">
             <h2 className="text-xl font-semibold text-gray-100 mb-6">Discovery Configuration</h2>
@@ -608,17 +612,6 @@ export const RegScout: React.FC = () => {
                 </p>
               </div>
             )}
-
-            {/* AI Configuration (Module-Level) */}
-            <div className="border-t border-gray-800 pt-6">
-              <LLMConfig
-                config={llmConfig}
-                onChange={(newConfig) => updateModuleLLMConfig('regscout', newConfig)}
-                title="AI Discovery Configuration (RegScout)"
-                collapsible={true}
-                defaultCollapsed={false}
-              />
-            </div>
 
             {/* Advanced Options */}
             <div className="border-t border-gray-800 pt-6 mt-6">

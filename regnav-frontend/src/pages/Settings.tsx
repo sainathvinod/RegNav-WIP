@@ -1,466 +1,259 @@
-// Settings - LLM Configuration and Application Settings
+// Settings - Module-Level LLM Configuration
 import React, { useState } from 'react';
 import { AppLayout } from '../components/layout/AppLayout';
+import { LLMConfig } from '../components/LLMConfig';
 import { useAppStore } from '../store/appStore';
-import { LLM_PROVIDERS } from '../data/mockData';
-import { LLMProvider, LLMModel } from '../types';
+import { ModuleName } from '../types';
 import {
   Cog6ToothIcon,
-  CpuChipIcon,
-  KeyIcon,
-  CheckCircleIcon,
-  ExclamationTriangleIcon,
-  InformationCircleIcon,
-  SparklesIcon,
-  BoltIcon,
-  CurrencyDollarIcon,
+  MagnifyingGlassIcon,
+  DocumentTextIcon,
+  BeakerIcon,
+  LightBulbIcon,
+  ShieldCheckIcon,
 } from '@heroicons/react/24/outline';
-import clsx from 'clsx';
+
+interface ModuleInfo {
+  id: ModuleName;
+  name: string;
+  description: string;
+  icon: React.ComponentType<{ className?: string }>;
+  color: string;
+  status: 'active' | 'coming-soon';
+}
+
+const MODULES: ModuleInfo[] = [
+  {
+    id: 'regscout',
+    name: 'RegScout',
+    description: 'AI-powered regulatory source discovery',
+    icon: MagnifyingGlassIcon,
+    color: 'purple',
+    status: 'active',
+  },
+  {
+    id: 'regingest',
+    name: 'RegIngest',
+    description: 'Document ingestion and processing',
+    icon: DocumentTextIcon,
+    color: 'blue',
+    status: 'coming-soon',
+  },
+  {
+    id: 'ruleminer',
+    name: 'RuleMiner',
+    description: 'Rule extraction from documents',
+    icon: BeakerIcon,
+    color: 'green',
+    status: 'coming-soon',
+  },
+  {
+    id: 'rulesense',
+    name: 'RuleSense',
+    description: 'Rule interpretation & categorization',
+    icon: LightBulbIcon,
+    color: 'yellow',
+    status: 'coming-soon',
+  },
+  {
+    id: 'regvalidate',
+    name: 'RegValidate',
+    description: 'File validation against rules',
+    icon: ShieldCheckIcon,
+    color: 'red',
+    status: 'coming-soon',
+  },
+];
 
 export const Settings: React.FC = () => {
-  const { llmConfig, setLLMConfig, updateLLMConfig } = useAppStore();
-  
-  const [selectedProvider, setSelectedProvider] = useState<LLMProvider>(
-    LLM_PROVIDERS.find(p => p.id === llmConfig.provider) || LLM_PROVIDERS[0]
-  );
-  
-  const [selectedModel, setSelectedModel] = useState<LLMModel | null>(
-    selectedProvider.models.find(m => m.id === llmConfig.model) || selectedProvider.models[0]
-  );
-  
-  const [apiKey, setApiKey] = useState(llmConfig.apiKey || '');
-  const [showApiKey, setShowApiKey] = useState(false);
-  const [testStatus, setTestStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
+  const { getModuleLLMConfig, updateModuleLLMConfig } = useAppStore();
+  const [selectedModule, setSelectedModule] = useState<ModuleName>('regscout');
 
-  const handleProviderChange = (provider: LLMProvider) => {
-    setSelectedProvider(provider);
-    const defaultModel = provider.models[0];
-    setSelectedModel(defaultModel);
-    updateLLMConfig({
-      provider: provider.id,
-      model: defaultModel.id,
-    });
-  };
+  const currentModule = MODULES.find(m => m.id === selectedModule)!;
+  const currentConfig = getModuleLLMConfig(selectedModule);
 
-  const handleModelChange = (model: LLMModel) => {
-    setSelectedModel(model);
-    updateLLMConfig({ model: model.id });
-  };
-
-  const handleTestConnection = async () => {
-    setTestStatus('testing');
-    
-    // Simulate API test
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    if (selectedProvider.requiresApiKey && !apiKey) {
-      setTestStatus('error');
-      setTimeout(() => setTestStatus('idle'), 3000);
-      return;
-    }
-    
-    setTestStatus('success');
-    setTimeout(() => setTestStatus('idle'), 3000);
-  };
-
-  const handleSaveConfig = () => {
-    setLLMConfig({
-      ...llmConfig,
-      apiKey: selectedProvider.requiresApiKey ? apiKey : undefined,
-    });
-    alert('Configuration saved successfully!');
+  const getColorClasses = (color: string, selected: boolean) => {
+    const colors: Record<string, { border: string; bg: string; text: string; hover: string }> = {
+      purple: {
+        border: selected ? 'border-purple-500' : 'border-gray-700',
+        bg: selected ? 'bg-purple-500/20' : 'bg-gray-800',
+        text: selected ? 'text-purple-300' : 'text-gray-400',
+        hover: 'hover:border-purple-500/50',
+      },
+      blue: {
+        border: selected ? 'border-blue-500' : 'border-gray-700',
+        bg: selected ? 'bg-blue-500/20' : 'bg-gray-800',
+        text: selected ? 'text-blue-300' : 'text-gray-400',
+        hover: 'hover:border-blue-500/50',
+      },
+      green: {
+        border: selected ? 'border-green-500' : 'border-gray-700',
+        bg: selected ? 'bg-green-500/20' : 'bg-gray-800',
+        text: selected ? 'text-green-300' : 'text-gray-400',
+        hover: 'hover:border-green-500/50',
+      },
+      yellow: {
+        border: selected ? 'border-yellow-500' : 'border-gray-700',
+        bg: selected ? 'bg-yellow-500/20' : 'bg-gray-800',
+        text: selected ? 'text-yellow-300' : 'text-gray-400',
+        hover: 'hover:border-yellow-500/50',
+      },
+      red: {
+        border: selected ? 'border-red-500' : 'border-gray-700',
+        bg: selected ? 'bg-red-500/20' : 'bg-gray-800',
+        text: selected ? 'text-red-300' : 'text-gray-400',
+        hover: 'hover:border-red-500/50',
+      },
+    };
+    return colors[color];
   };
 
   return (
     <AppLayout title="Settings">
-    <div className="max-w-5xl mx-auto">
-      {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-50 flex items-center gap-3">
-          <Cog6ToothIcon className="h-8 w-8 text-purple-500" />
-          Settings
-        </h1>
-        <p className="mt-2 text-gray-400">
-          Configure AI models and application preferences
-        </p>
-      </div>
-
-      {/* LLM Provider Selection */}
-      <div className="card mb-6">
-        <h2 className="text-xl font-semibold text-gray-50 mb-4 flex items-center gap-2">
-          <SparklesIcon className="h-6 w-6 text-purple-500" />
-          AI Model Provider
-        </h2>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {LLM_PROVIDERS.map((provider) => (
-            <button
-              key={provider.id}
-              onClick={() => handleProviderChange(provider)}
-              className={clsx(
-                'p-4 rounded-lg border-2 text-left transition-all',
-                selectedProvider.id === provider.id
-                  ? 'border-purple-500 bg-purple-600/20 shadow-lg shadow-purple-600/30'
-                  : 'border-gray-700 hover:border-purple-500/50 bg-gray-800'
-              )}
-            >
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="font-semibold text-gray-50">{provider.name}</h3>
-                {selectedProvider.id === provider.id && (
-                  <CheckCircleIcon className="h-5 w-5 text-purple-400" />
-                )}
-              </div>
-              <div className="space-y-1 text-xs text-gray-400">
-                <div className="flex items-center gap-1">
-                  <CpuChipIcon className="h-3.5 w-3.5" />
-                  {provider.models.length} models available
-                </div>
-                <div className="flex items-center gap-1">
-                  {provider.supportsStreaming && (
-                    <>
-                      <BoltIcon className="h-3.5 w-3.5" />
-                      Streaming supported
-                    </>
-                  )}
-                </div>
-                <div className="flex items-center gap-1">
-                  {provider.requiresApiKey ? (
-                    <>
-                      <KeyIcon className="h-3.5 w-3.5" />
-                      API key required
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircleIcon className="h-3.5 w-3.5 text-green-600" />
-                      No API key needed
-                    </>
-                  )}
-                </div>
-              </div>
-            </button>
-          ))}
+      <div className="max-w-6xl mx-auto">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-50 flex items-center gap-3">
+            <Cog6ToothIcon className="h-8 w-8 text-purple-500" />
+            LLM Configuration
+          </h1>
+          <p className="mt-2 text-gray-400">
+            Configure AI models for each RegNav module independently
+          </p>
         </div>
-      </div>
 
-      {/* Model Selection */}
-      <div className="card mb-6">
-        <h2 className="text-xl font-semibold text-gray-50 mb-4 flex items-center gap-2">
-          <CpuChipIcon className="h-6 w-6 text-purple-500" />
-          Model Selection
-        </h2>
+        {/* Module Selector */}
+        <div className="mb-6">
+          <h2 className="text-sm font-semibold text-gray-300 mb-3">Select Module</h2>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+            {MODULES.map((module) => {
+              const Icon = module.icon;
+              const selected = module.id === selectedModule;
+              const colors = getColorClasses(module.color, selected);
+              const isDisabled = module.status === 'coming-soon';
 
-        <div className="space-y-3">
-          {selectedProvider.models.map((model) => (
-            <button
-              key={model.id}
-              onClick={() => handleModelChange(model)}
-              className={clsx(
-                'w-full p-4 rounded-lg border-2 text-left transition-all',
-                selectedModel?.id === model.id
-                  ? 'border-purple-500 bg-purple-600/20 shadow-lg shadow-purple-600/30'
-                  : 'border-gray-700 hover:border-purple-500/50 bg-gray-800'
-              )}
-            >
-              <div className="flex items-start gap-3">
-                <div className="flex-1">
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 className="font-semibold text-gray-50">{model.name}</h3>
-                    {selectedModel?.id === model.id && (
-                      <CheckCircleIcon className="h-5 w-5 text-purple-400" />
-                    )}
-                  </div>
-                  <p className="text-sm text-gray-400 mb-3">{model.description}</p>
-                  
-                  <div className="grid grid-cols-3 gap-3">
-                    <div className="flex items-center gap-2">
-                      <BoltIcon className={clsx(
-                        'h-4 w-4',
-                        model.speedRating === 'fast' ? 'text-green-600' :
-                        model.speedRating === 'medium' ? 'text-yellow-600' : 'text-orange-600'
-                      )} />
-                      <span className="text-xs text-gray-400 capitalize">{model.speedRating} speed</span>
-                    </div>
-                    
-                    <div className="flex items-center gap-2">
-                      <SparklesIcon className={clsx(
-                        'h-4 w-4',
-                        model.qualityRating === 'high' ? 'text-purple-500' :
-                        model.qualityRating === 'medium' ? 'text-blue-500' : 'text-gray-500'
-                      )} />
-                      <span className="text-xs text-gray-400 capitalize">{model.qualityRating} quality</span>
-                    </div>
-                    
-                    <div className="flex items-center gap-2">
-                      <CurrencyDollarIcon className="h-4 w-4 text-green-500" />
-                      <span className="text-xs text-gray-400">
-                        {model.costPerToken === 0 ? 'Free' : `$${model.costPerToken.toFixed(6)}/token`}
+              return (
+                <button
+                  key={module.id}
+                  onClick={() => !isDisabled && setSelectedModule(module.id)}
+                  disabled={isDisabled}
+                  className={`relative p-4 rounded-lg border transition-all ${colors.border} ${colors.bg} ${
+                    isDisabled ? 'opacity-40 cursor-not-allowed' : `${colors.hover} cursor-pointer`
+                  }`}
+                >
+                  {isDisabled && (
+                    <div className="absolute top-1 right-1">
+                      <span className="text-xs bg-gray-700 text-gray-400 px-2 py-0.5 rounded">
+                        Soon
                       </span>
                     </div>
-                  </div>
-                </div>
+                  )}
+                  <Icon className={`h-8 w-8 mx-auto mb-2 ${colors.text}`} />
+                  <div className={`text-sm font-medium ${colors.text}`}>{module.name}</div>
+                  <div className="text-xs text-gray-500 mt-1">{module.description}</div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Module Configuration */}
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-xl font-semibold text-gray-50">
+                {currentModule.name} AI Configuration
+              </h2>
+              <p className="text-sm text-gray-400 mt-1">
+                This configuration will be used whenever {currentModule.name} runs
+              </p>
+            </div>
+          </div>
+
+          <LLMConfig
+            config={currentConfig}
+            onChange={(newConfig) => updateModuleLLMConfig(selectedModule, newConfig)}
+            title={`${currentModule.name} AI Model`}
+            collapsible={false}
+          />
+        </div>
+
+        {/* Info Panel */}
+        <div className="card border border-blue-500/30 bg-blue-500/5">
+          <div className="flex items-start gap-3">
+            <div className="flex-shrink-0">
+              <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center">
+                <Cog6ToothIcon className="h-6 w-6 text-blue-400" />
               </div>
-            </button>
-          ))}
+            </div>
+            <div className="flex-1">
+              <h3 className="text-sm font-semibold text-blue-300 mb-2">How Module Configuration Works</h3>
+              <ul className="text-sm text-gray-300 space-y-1">
+                <li>• Each module (RegScout, RegIngest, etc.) has its own independent LLM configuration</li>
+                <li>• Configure the AI model once here, and it will be used automatically in that module</li>
+                <li>• API keys are stored securely in your browser's local storage</li>
+                <li>• You can use different models for different modules (e.g., Claude for RegScout, GPT-4o for RegIngest)</li>
+                <li>• Click "Test Connection" to verify your API key before saving</li>
+              </ul>
+            </div>
+          </div>
         </div>
-      </div>
 
-      {/* API Key Configuration */}
-      {selectedProvider.requiresApiKey && (
-        <div className="card mb-6">
-          <h2 className="text-xl font-semibold text-gray-50 mb-4 flex items-center gap-2">
-            <KeyIcon className="h-6 w-6 text-purple-500" />
-            API Authentication
-          </h2>
-
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-              {selectedProvider.name} API Key
-            </label>
-            <div className="relative">
-              <input
-                type={showApiKey ? 'text' : 'password'}
-                value={apiKey}
-                onChange={(e) => setApiKey(e.target.value)}
-                placeholder={`Enter your ${selectedProvider.name} API key`}
-                className="input pr-24"
-              />
-              <button
-                onClick={() => setShowApiKey(!showApiKey)}
-                className="absolute right-2 top-1/2 -translate-y-1/2 px-3 py-1 text-xs text-purple-400 hover:text-purple-300"
-              >
-                {showApiKey ? 'Hide' : 'Show'}
-              </button>
-            </div>
-            <p className="mt-2 text-xs text-gray-500">
-              Your API key is stored locally and encrypted. It's never shared with third parties.
-            </p>
-          </div>
-
-          <button
-            onClick={handleTestConnection}
-            disabled={testStatus === 'testing'}
-            className={clsx(
-              'px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2',
-              testStatus === 'testing'
-                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                : testStatus === 'success'
-                ? 'bg-green-600 text-white'
-                : testStatus === 'error'
-                ? 'bg-red-600 text-white'
-                : 'bg-primary text-white hover:bg-primary-dark'
-            )}
-          >
-            {testStatus === 'testing' && (
-              <>
-                <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                Testing Connection...
-              </>
-            )}
-            {testStatus === 'success' && (
-              <>
-                <CheckCircleIcon className="h-5 w-5" />
-                Connection Successful!
-              </>
-            )}
-            {testStatus === 'error' && (
-              <>
-                <ExclamationTriangleIcon className="h-5 w-5" />
-                Connection Failed
-              </>
-            )}
-            {testStatus === 'idle' && 'Test Connection'}
-          </button>
-        </div>
-      )}
-
-      {/* Advanced Parameters */}
-      <div className="card mb-6">
-        <h2 className="text-xl font-semibold text-gray-50 mb-4">Advanced Parameters</h2>
-
-        <div className="space-y-4">
-          {/* Temperature */}
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <label className="text-sm font-medium text-gray-300">
-                Temperature: {llmConfig.temperature.toFixed(2)}
-              </label>
-              <InformationCircleIcon 
-                className="h-4 w-4 text-gray-500" 
-                title="Controls randomness. Lower = more focused, Higher = more creative"
-              />
-            </div>
-            <input
-              type="range"
-              min="0"
-              max="2"
-              step="0.1"
-              value={llmConfig.temperature}
-              onChange={(e) => updateLLMConfig({ temperature: parseFloat(e.target.value) })}
-              className="w-full accent-purple-600"
-            />
-            <div className="flex justify-between text-xs text-gray-500 mt-1">
-              <span>Focused (0.0)</span>
-              <span>Balanced (1.0)</span>
-              <span>Creative (2.0)</span>
-            </div>
-          </div>
-
-          {/* Max Tokens */}
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-              Max Tokens: {llmConfig.maxTokens}
-            </label>
-            <input
-              type="range"
-              min="100"
-              max="8000"
-              step="100"
-              value={llmConfig.maxTokens}
-              onChange={(e) => updateLLMConfig({ maxTokens: parseInt(e.target.value) })}
-              className="w-full accent-purple-600"
-            />
-            <p className="text-xs text-gray-500 mt-1">
-              Maximum length of the generated response
-            </p>
-          </div>
-
-          {/* Top P */}
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-              Top P: {llmConfig.topP.toFixed(2)}
-            </label>
-            <input
-              type="range"
-              min="0"
-              max="1"
-              step="0.05"
-              value={llmConfig.topP}
-              onChange={(e) => updateLLMConfig({ topP: parseFloat(e.target.value) })}
-              className="w-full accent-purple-600"
-            />
-            <p className="text-xs text-gray-500 mt-1">
-              Controls diversity via nucleus sampling
-            </p>
-          </div>
-
-          {/* Frequency & Presence Penalty */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Frequency Penalty: {llmConfig.frequencyPenalty.toFixed(1)}
-              </label>
-              <input
-                type="range"
-                min="0"
-                max="2"
-                step="0.1"
-                value={llmConfig.frequencyPenalty}
-                onChange={(e) => updateLLMConfig({ frequencyPenalty: parseFloat(e.target.value) })}
-                className="w-full accent-purple-600"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Presence Penalty: {llmConfig.presencePenalty.toFixed(1)}
-              </label>
-              <input
-                type="range"
-                min="0"
-                max="2"
-                step="0.1"
-                value={llmConfig.presencePenalty}
-                onChange={(e) => updateLLMConfig({ presencePenalty: parseFloat(e.target.value) })}
-                className="w-full accent-purple-600"
-              />
-            </div>
-          </div>
-
-          {/* Additional Settings */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Timeout (seconds)
-              </label>
-              <input
-                type="number"
-                min="10"
-                max="300"
-                value={llmConfig.timeout}
-                onChange={(e) => updateLLMConfig({ timeout: parseInt(e.target.value) || 60 })}
-                className="input"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Retry Attempts
-              </label>
-              <input
-                type="number"
-                min="0"
-                max="10"
-                value={llmConfig.retries}
-                onChange={(e) => updateLLMConfig({ retries: parseInt(e.target.value) || 3 })}
-                className="input"
-              />
-            </div>
-          </div>
-
-          {/* Toggles */}
-          <div className="space-y-2">
-            <label className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={llmConfig.enableCaching}
-                onChange={(e) => updateLLMConfig({ enableCaching: e.target.checked })}
-                className="rounded text-purple-600 focus:ring-purple-500 bg-gray-800 border-gray-700"
-              />
-              <span className="text-sm text-gray-300">Enable response caching (faster & cheaper)</span>
-            </label>
-            <label className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={llmConfig.enableStreaming}
-                onChange={(e) => updateLLMConfig({ enableStreaming: e.target.checked })}
-                className="rounded text-purple-600 focus:ring-purple-500 bg-gray-800 border-gray-700"
-              />
-              <span className="text-sm text-gray-300">Enable streaming responses</span>
-            </label>
+        {/* Module Defaults Reference */}
+        <div className="mt-6 card border border-gray-700">
+          <h3 className="text-sm font-semibold text-gray-300 mb-3">Recommended Defaults</h3>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-gray-700">
+                  <th className="text-left py-2 px-3 text-gray-400 font-medium">Module</th>
+                  <th className="text-left py-2 px-3 text-gray-400 font-medium">Provider</th>
+                  <th className="text-left py-2 px-3 text-gray-400 font-medium">Model</th>
+                  <th className="text-left py-2 px-3 text-gray-400 font-medium">Temperature</th>
+                  <th className="text-left py-2 px-3 text-gray-400 font-medium">Use Case</th>
+                </tr>
+              </thead>
+              <tbody className="text-gray-300">
+                <tr className="border-b border-gray-800">
+                  <td className="py-2 px-3 font-medium text-purple-300">RegScout</td>
+                  <td className="py-2 px-3">Anthropic</td>
+                  <td className="py-2 px-3">Claude Sonnet 4.5</td>
+                  <td className="py-2 px-3">0.3</td>
+                  <td className="py-2 px-3 text-gray-400">Factual source discovery</td>
+                </tr>
+                <tr className="border-b border-gray-800">
+                  <td className="py-2 px-3 font-medium text-blue-300">RegIngest</td>
+                  <td className="py-2 px-3">OpenAI</td>
+                  <td className="py-2 px-3">GPT-4o</td>
+                  <td className="py-2 px-3">0.2</td>
+                  <td className="py-2 px-3 text-gray-400">Document parsing & extraction</td>
+                </tr>
+                <tr className="border-b border-gray-800">
+                  <td className="py-2 px-3 font-medium text-green-300">RuleMiner</td>
+                  <td className="py-2 px-3">Anthropic</td>
+                  <td className="py-2 px-3">Claude Sonnet 4.5</td>
+                  <td className="py-2 px-3">0.1</td>
+                  <td className="py-2 px-3 text-gray-400">Precise rule extraction</td>
+                </tr>
+                <tr className="border-b border-gray-800">
+                  <td className="py-2 px-3 font-medium text-yellow-300">RuleSense</td>
+                  <td className="py-2 px-3">Anthropic</td>
+                  <td className="py-2 px-3">Claude Opus</td>
+                  <td className="py-2 px-3">0.4</td>
+                  <td className="py-2 px-3 text-gray-400">Complex interpretation</td>
+                </tr>
+                <tr>
+                  <td className="py-2 px-3 font-medium text-red-300">RegValidate</td>
+                  <td className="py-2 px-3">OpenAI</td>
+                  <td className="py-2 px-3">GPT-4o Mini</td>
+                  <td className="py-2 px-3">0.2</td>
+                  <td className="py-2 px-3 text-gray-400">Fast validation checks</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
-
-      {/* Save Button */}
-      <div className="flex items-center justify-end gap-3">
-        <button
-          onClick={() => updateLLMConfig(selectedProvider.requiresApiKey ? { apiKey: '' } : {})}
-          className="btn-secondary"
-        >
-          Reset to Defaults
-        </button>
-        <button
-          onClick={handleSaveConfig}
-          className="btn-primary"
-        >
-          Save Configuration
-        </button>
-      </div>
-
-      {/* Info Panel */}
-      <div className="mt-6 p-4 bg-blue-900/20 border border-blue-800 rounded-lg">
-        <div className="flex items-start gap-3">
-          <InformationCircleIcon className="h-5 w-5 text-blue-400 mt-0.5 flex-shrink-0" />
-          <div className="text-sm text-gray-300">
-            <p className="font-medium mb-1">About LLM Configuration</p>
-            <p className="text-gray-400">
-              The selected AI model will be used across all RegNav.AI agents (RegScout, RegIngest, RuleMiner, 
-              RuleSense, and RegValidate). Choose a model that balances your needs for speed, quality, and cost. 
-              For production use, we recommend GPT-4 Turbo or Claude 3 Opus for best accuracy.
-            </p>
-          </div>
-        </div>
-      </div>
-    </div>
     </AppLayout>
   );
 };
-
