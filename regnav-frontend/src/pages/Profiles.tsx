@@ -8,6 +8,7 @@
 import React, { useState } from 'react';
 import { AppLayout } from '../components/layout/AppLayout';
 import { ProfileDetailsModal } from '../components/ProfileDetailsModal';
+import { DuplicateProfileModal } from '../components/DuplicateProfileModal';
 import { useAppStore } from '../store/appStore';
 import {
   FolderIcon,
@@ -38,6 +39,8 @@ export const Profiles: React.FC = () => {
   const [detailsMode, setDetailsMode] = useState<'view' | 'edit'>('view');
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
+  const [showDuplicateModal, setShowDuplicateModal] = useState(false);
+  const [profileToDuplicate, setProfileToDuplicate] = useState<DiscoveryProfile | null>(null);
 
   // Filter and sort profiles
   const filteredProfiles = discoveryProfiles
@@ -97,21 +100,35 @@ export const Profiles: React.FC = () => {
   };
 
   const handleDuplicate = (profile: DiscoveryProfile) => {
-    // Create a copy with modified name
+    // Open duplicate modal for user to name the copy
+    setProfileToDuplicate(profile);
+    setShowDuplicateModal(true);
+  };
+
+  const handleConfirmDuplicate = (newName: string, newDescription?: string) => {
+    if (!profileToDuplicate) return;
+
+    // Deep copy to ensure complete isolation from original
     const copiedProfile = createProfile({
-      name: `${profile.name} (Copy)`,
-      description: profile.description,
-      configuration: { ...profile.configuration },
-      sources: [...profile.sources],
-      metadata: { ...profile.metadata },
+      name: newName,
+      description: newDescription || profileToDuplicate.description,
+      // Deep copy configuration
+      configuration: JSON.parse(JSON.stringify(profileToDuplicate.configuration)),
+      // Deep copy sources
+      sources: JSON.parse(JSON.stringify(profileToDuplicate.sources)),
+      // Deep copy metadata
+      metadata: JSON.parse(JSON.stringify(profileToDuplicate.metadata)),
       status: 'draft', // Reset status to draft for new copy
-      tags: profile.tags ? [...profile.tags, 'copy'] : ['copy'],
+      tags: profileToDuplicate.tags ? JSON.parse(JSON.stringify(profileToDuplicate.tags)) : [],
     });
 
     // Show toast notification
     setToastMessage(`Profile "${copiedProfile.name}" created successfully!`);
     setShowToast(true);
     setTimeout(() => setShowToast(false), 3000);
+
+    // Reset duplicate modal state
+    setProfileToDuplicate(null);
   };
 
   const getStatusBadge = (status: string) => {
@@ -390,6 +407,17 @@ export const Profiles: React.FC = () => {
           onSave={handleSaveProfile}
           onDuplicate={handleDuplicate}
           mode={detailsMode}
+        />
+
+        {/* Duplicate Profile Modal */}
+        <DuplicateProfileModal
+          isOpen={showDuplicateModal}
+          onClose={() => {
+            setShowDuplicateModal(false);
+            setProfileToDuplicate(null);
+          }}
+          sourceProfile={profileToDuplicate}
+          onDuplicate={handleConfirmDuplicate}
         />
 
         {/* Toast Notification */}
