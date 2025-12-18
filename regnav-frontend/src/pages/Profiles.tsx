@@ -20,12 +20,13 @@ import {
   CheckCircleIcon,
   ClockIcon,
   BeakerIcon,
+  DocumentDuplicateIcon,
 } from '@heroicons/react/24/outline';
 import { DiscoveryProfile } from '../types';
 import { useNavigate } from 'react-router-dom';
 
 export const Profiles: React.FC = () => {
-  const { discoveryProfiles, deleteProfile, updateProfile } = useAppStore();
+  const { discoveryProfiles, deleteProfile, updateProfile, createProfile } = useAppStore();
   const navigate = useNavigate();
   
   const [searchQuery, setSearchQuery] = useState('');
@@ -35,6 +36,8 @@ export const Profiles: React.FC = () => {
   const [selectedProfile, setSelectedProfile] = useState<DiscoveryProfile | null>(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [detailsMode, setDetailsMode] = useState<'view' | 'edit'>('view');
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
 
   // Filter and sort profiles
   const filteredProfiles = discoveryProfiles
@@ -91,6 +94,24 @@ export const Profiles: React.FC = () => {
   const handleCloseDetails = () => {
     setShowDetailsModal(false);
     setSelectedProfile(null);
+  };
+
+  const handleDuplicate = (profile: DiscoveryProfile) => {
+    // Create a copy with modified name
+    const copiedProfile = createProfile({
+      name: `${profile.name} (Copy)`,
+      description: profile.description,
+      configuration: { ...profile.configuration },
+      sources: [...profile.sources],
+      metadata: { ...profile.metadata },
+      status: 'draft', // Reset status to draft for new copy
+      tags: profile.tags ? [...profile.tags, 'copy'] : ['copy'],
+    });
+
+    // Show toast notification
+    setToastMessage(`Profile "${copiedProfile.name}" created successfully!`);
+    setShowToast(true);
+    setTimeout(() => setShowToast(false), 3000);
   };
 
   const getStatusBadge = (status: string) => {
@@ -316,6 +337,13 @@ export const Profiles: React.FC = () => {
                     <PencilSquareIcon className="w-4 h-4" />
                   </button>
                   <button
+                    onClick={() => handleDuplicate(profile)}
+                    className="px-3 py-2 bg-gray-800 text-blue-400 rounded hover:bg-blue-900/30 transition-colors"
+                    title="Duplicate"
+                  >
+                    <DocumentDuplicateIcon className="w-4 h-4" />
+                  </button>
+                  <button
                     onClick={() => setShowDeleteConfirm(profile.id)}
                     className="px-3 py-2 bg-gray-800 text-red-400 rounded hover:bg-red-900/30 transition-colors"
                     title="Delete"
@@ -360,8 +388,19 @@ export const Profiles: React.FC = () => {
           onClose={handleCloseDetails}
           profile={selectedProfile}
           onSave={handleSaveProfile}
+          onDuplicate={handleDuplicate}
           mode={detailsMode}
         />
+
+        {/* Toast Notification */}
+        {showToast && (
+          <div className="fixed bottom-4 right-4 z-50 animate-fade-in">
+            <div className="bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-2">
+              <CheckCircleIcon className="w-5 h-5" />
+              {toastMessage}
+            </div>
+          </div>
+        )}
       </div>
     </AppLayout>
   );

@@ -19,6 +19,7 @@ import {
   ClockIcon,
   BeakerIcon,
   ArrowPathIcon,
+  DocumentDuplicateIcon,
 } from '@heroicons/react/24/outline';
 import { DiscoveryProfile, RegulatorySource } from '../types';
 
@@ -27,6 +28,7 @@ interface ProfileDetailsModalProps {
   onClose: () => void;
   profile: DiscoveryProfile | null;
   onSave: (profileId: string, updates: Partial<DiscoveryProfile>) => void;
+  onDuplicate?: (profile: DiscoveryProfile) => void;
   mode: 'view' | 'edit';
 }
 
@@ -35,6 +37,7 @@ export const ProfileDetailsModal: React.FC<ProfileDetailsModalProps> = ({
   onClose,
   profile,
   onSave,
+  onDuplicate,
   mode: initialMode,
 }) => {
   const [mode, setMode] = useState<'view' | 'edit'>(initialMode);
@@ -163,13 +166,27 @@ export const ProfileDetailsModal: React.FC<ProfileDetailsModalProps> = ({
           </div>
           <div className="flex items-center gap-2 ml-4">
             {mode === 'view' ? (
-              <button
-                onClick={() => setMode('edit')}
-                className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-500 transition-colors flex items-center gap-2"
-              >
-                <PencilSquareIcon className="w-4 h-4" />
-                Edit
-              </button>
+              <>
+                <button
+                  onClick={() => setMode('edit')}
+                  className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-500 transition-colors flex items-center gap-2"
+                >
+                  <PencilSquareIcon className="w-4 h-4" />
+                  Edit
+                </button>
+                {onDuplicate && (
+                  <button
+                    onClick={() => {
+                      onDuplicate(profile);
+                      onClose();
+                    }}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-500 transition-colors flex items-center gap-2"
+                  >
+                    <DocumentDuplicateIcon className="w-4 h-4" />
+                    Duplicate
+                  </button>
+                )}
+              </>
             ) : (
               <>
                 <button
