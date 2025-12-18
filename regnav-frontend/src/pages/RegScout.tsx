@@ -3,6 +3,7 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import { AppLayout } from '../components/layout/AppLayout';
+import { LLMConfig } from '../components/LLMConfig';
 import { useAppStore } from '../store/appStore';
 import {
   COUNTRIES,
@@ -37,7 +38,6 @@ export const RegScout: React.FC = () => {
     selectedStates,
     selectedLOB,
     selectedDocTypes,
-    llmConfig,
     regScoutView,
     discoveredSources,
     setRegScoutView,
@@ -50,7 +50,12 @@ export const RegScout: React.FC = () => {
     setDiscoveredSources,
     addDiscoveredSource,
     removeDiscoveredSource,
+    getModuleLLMConfig,
+    updateModuleLLMConfig,
   } = useAppStore();
+
+  // Get module-specific LLM config
+  const llmConfig = getModuleLLMConfig('regscout');
 
   // Local state
   const [searchDepth, setSearchDepth] = useState<'shallow' | 'moderate' | 'deep'>('moderate');
@@ -604,8 +609,19 @@ export const RegScout: React.FC = () => {
               </div>
             )}
 
-            {/* Advanced Options */}
+            {/* AI Configuration (Module-Level) */}
             <div className="border-t border-gray-800 pt-6">
+              <LLMConfig
+                config={llmConfig}
+                onChange={(newConfig) => updateModuleLLMConfig('regscout', newConfig)}
+                title="AI Discovery Configuration (RegScout)"
+                collapsible={true}
+                defaultCollapsed={false}
+              />
+            </div>
+
+            {/* Advanced Options */}
+            <div className="border-t border-gray-800 pt-6 mt-6">
               <h3 className="text-sm font-semibold text-gray-300 mb-4">Advanced Options</h3>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

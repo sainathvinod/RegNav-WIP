@@ -81,6 +81,24 @@ export interface LLMConfiguration {
   enableStreaming: boolean;
 }
 
+export type ModuleName = 'regscout' | 'regingest' | 'ruleminer' | 'rulesense' | 'regvalidate';
+
+export interface ModuleLLMConfigurations {
+  regscout: LLMConfiguration;
+  regingest: LLMConfiguration;
+  ruleminer: LLMConfiguration;
+  rulesense: LLMConfiguration;
+  regvalidate: LLMConfiguration;
+}
+
+export interface LLMTestResult {
+  success: boolean;
+  message: string;
+  latency?: number;
+  model?: string;
+  error?: string;
+}
+
 export interface ScoutingConfiguration {
   countries: string[];
   states: string[];

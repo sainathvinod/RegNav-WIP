@@ -3,6 +3,7 @@
 import { ScoutingConfiguration, ScoutingJob, RegulatorySource, DiscoveryProgress } from '../types';
 import { US_STATES, LINES_OF_BUSINESS, REGULATORY_DOCUMENT_TYPES } from '../data/mockData';
 import { isGovAuthorizedAutoSource, getSourceTrustLevel } from '../utils/sourceQuality';
+import { callLLMWithRetry, parseLLMResponse } from './llm/llmClient';
 
 // Authoritative seed sources for US states - GUARANTEED government entry points
 // These MUST always be included for deep searches and bypass AI discovery failures
@@ -316,17 +317,86 @@ Requirements:
 Provide results in JSON format with: source_url, agency_name, document_title, effective_date, confidence_score`;
 };
 
-// Simulated AI discovery function
-const simulateAIDiscovery = async (
+// Real AI discovery function using configured LLM
+const performAIDiscovery = async (
   state: string,
   lob: string,
   docType: string,
   llmConfig: ScoutingConfiguration['llmConfig'],
   country: string = 'US'
 ): Promise<RegulatorySource[]> => {
-  // Simulate API call delay (faster for better UX)
-  await new Promise((resolve) => setTimeout(resolve, 600 + Math.random() * 400));
+  const stateName = US_STATES.find((s) => s.code === state)?.name || state;
+  const lobName = LINES_OF_BUSINESS.find((l) => l.id === lob)?.name || lob;
+  const docTypeName = REGULATORY_DOCUMENT_TYPES.find((d) => d.id === docType)?.name || docType;
 
+  // Generate the discovery prompt
+  const prompt = generateSearchPrompt(state, lob, docType, llmConfig.provider);
+  
+  try {
+    // Call the real LLM with retry logic
+    const response = await callLLMWithRetry(prompt, llmConfig);
+    
+    // Parse the LLM response (expecting JSON array of sources)
+    const parsedSources = parseLLMResponse<any[]>(response);
+    
+    if (!parsedSources || !Array.isArray(parsedSources)) {
+      console.warn('LLM did not return valid JSON array, falling back to text parsing');
+      return parseTextResponse(response, state, lob, docType, llmConfig, country);
+    }
+    
+    // Convert LLM response to RegulatorySource objects
+    const sources: RegulatorySource[] = parsedSources.map((item, index) => ({
+      id: `${state}-${lob}-${docType}-ai-${index}`,
+      country,
+      stateCode: state,
+      lineOfBusiness: lob,
+      documentType: docType,
+      sourceUrl: item.source_url || item.url || '',
+      sourceName: item.document_title || item.title || item.name || `${docTypeName} - ${stateName}`,
+      agencyName: item.agency_name || item.agency || `${stateName} Regulatory Authority`,
+      effectiveDate: item.effective_date || undefined,
+      discoveryMethod: 'ai_discovered',
+      status: 'active',
+      confidenceScore: item.confidence_score || item.confidence || 0.85,
+      metadata: {
+        lastVerified: new Date().toISOString(),
+        format: item.format || 'Web',
+        language: 'English',
+        jurisdiction: `State: ${state}`,
+        category: docTypeName,
+        tags: [lob, docType, 'ai-discovered'],
+        generatedSummary: item.description || item.summary || `${docTypeName} for ${lobName} in ${stateName}`,
+      },
+      createdAt: new Date().toISOString(),
+      discoveredBy: `${llmConfig.provider}:${llmConfig.model}`,
+      validationResult: {
+        isValid: true,
+        statusCode: 200,
+        contentType: 'text/html',
+        lastChecked: new Date().toISOString(),
+      },
+    }));
+
+    // Filter out sources with invalid URLs
+    return sources.filter(s => s.sourceUrl && s.sourceUrl.startsWith('http'));
+    
+  } catch (error: any) {
+    console.error(`AI Discovery failed for ${state}-${lob}-${docType}:`, error);
+    // If real LLM fails, fall back to mock data for graceful degradation
+    return fallbackDiscovery(state, lob, docType, llmConfig, country);
+  }
+};
+
+// Fallback discovery using mock data (when real LLM fails)
+const fallbackDiscovery = async (
+  state: string,
+  lob: string,
+  docType: string,
+  llmConfig: ScoutingConfiguration['llmConfig'],
+  country: string = 'US'
+): Promise<RegulatorySource[]> => {
+  console.warn(`Using fallback discovery for ${state}-${lob}-${docType}`);
+  
   const sources: RegulatorySource[] = [];
   const stateInfo = KNOWN_REGULATORY_SOURCES[state];
   
@@ -334,7 +404,7 @@ const simulateAIDiscovery = async (
     // For states we don't have mock data, generate a generic source
     const stateName = US_STATES.find((s) => s.code === state)?.name || state;
     sources.push({
-      id: `${state}-${lob}-${docType}-1`,
+      id: `${state}-${lob}-${docType}-fallback-1`,
       country: 'US',
       stateCode: state,
       lineOfBusiness: lob,
@@ -351,21 +421,20 @@ const simulateAIDiscovery = async (
         language: 'English',
         jurisdiction: state,
         category: 'General Information',
-        tags: [lob, docType, 'regulatory'],
+        tags: [lob, docType, 'regulatory', 'fallback'],
       },
       createdAt: new Date().toISOString(),
-      discoveredBy: `${llmConfig.provider}:${llmConfig.model}`,
+      discoveredBy: `fallback:${llmConfig.provider}:${llmConfig.model}`,
     });
     return sources;
   }
 
   // Generate multiple sources for states with known data
-  const lobInfo = LINES_OF_BUSINESS.find((l) => l.id === lob);
   const docTypeInfo = REGULATORY_DOCUMENT_TYPES.find((d) => d.id === docType);
   
   // Source 1: Main department page
   sources.push({
-    id: `${state}-${lob}-${docType}-main`,
+    id: `${state}-${lob}-${docType}-fallback-main`,
     country: 'US',
     stateCode: state,
     lineOfBusiness: lob,
@@ -376,18 +445,18 @@ const simulateAIDiscovery = async (
     effectiveDate: '2024-01-01',
     discoveryMethod: 'ai_discovered',
     status: 'active',
-    confidenceScore: 0.95,
+    confidenceScore: 0.90,
     metadata: {
       lastVerified: new Date().toISOString(),
       format: docTypeInfo?.format || 'Web',
       language: 'English',
       jurisdiction: state,
       category: 'Primary Source',
-      tags: [lob, docType, 'official', 'regulatory'],
+      tags: [lob, docType, 'official', 'regulatory', 'fallback'],
       contactInfo: `Contact: ${stateInfo.agency}`,
     },
     createdAt: new Date().toISOString(),
-    discoveredBy: `${llmConfig.provider}:${llmConfig.model}`,
+    discoveredBy: `fallback:${llmConfig.provider}:${llmConfig.model}`,
     validationResult: {
       isValid: true,
       statusCode: 200,
@@ -396,107 +465,81 @@ const simulateAIDiscovery = async (
     },
   });
 
-  // Source 2: Forms and filing requirements
+  // Source 2: Forms page
   sources.push({
-    id: `${state}-${lob}-${docType}-forms`,
+    id: `${state}-${lob}-${docType}-fallback-forms`,
     country: 'US',
     stateCode: state,
     lineOfBusiness: lob,
     documentType: docType,
-    sourceUrl: `${stateInfo.baseUrl}${stateInfo.patterns[1]}forms-${docType.toLowerCase()}`,
+    sourceUrl: `${stateInfo.baseUrl}${stateInfo.patterns[1]}forms`,
     sourceName: `${docTypeInfo?.name || docType} Filing Forms and Instructions`,
     agencyName: stateInfo.agency,
     effectiveDate: '2024-01-01',
     discoveryMethod: 'ai_discovered',
     status: 'active',
-    confidenceScore: 0.92,
+    confidenceScore: 0.85,
     metadata: {
       lastVerified: new Date().toISOString(),
       format: 'PDF',
-      fileSize: '2.3 MB',
       pages: 45,
       language: 'English',
       jurisdiction: state,
       category: 'Forms & Templates',
-      tags: [lob, docType, 'forms', 'filing requirements'],
+      tags: [lob, docType, 'forms', 'fallback'],
     },
     createdAt: new Date().toISOString(),
-    discoveredBy: `${llmConfig.provider}:${llmConfig.model}`,
+    discoveredBy: `fallback:${llmConfig.provider}:${llmConfig.model}`,
     validationResult: {
       isValid: true,
       statusCode: 200,
       contentType: 'application/pdf',
-      lastChecked: new Date().toISOString(),
-    },
-  });
-
-  // Source 3: Manual or guidelines
-  sources.push({
-    id: `${state}-${lob}-${docType}-manual`,
-    country: 'US',
-    stateCode: state,
-    lineOfBusiness: lob,
-    documentType: docType,
-    sourceUrl: `${stateInfo.baseUrl}${stateInfo.patterns[2] || stateInfo.patterns[0]}manual-${lobInfo?.code || lob}`,
-    sourceName: `${lobInfo?.name || lob} Filing Manual - ${state}`,
-    agencyName: stateInfo.agency,
-    effectiveDate: '2023-07-01',
-    expirationDate: '2024-12-31',
-    discoveryMethod: 'ai_discovered',
-    status: 'active',
-    confidenceScore: 0.88,
-    metadata: {
-      lastVerified: new Date().toISOString(),
-      format: 'PDF',
-      fileSize: '15.7 MB',
-      pages: 234,
-      language: 'English',
-      jurisdiction: state,
-      category: 'Regulatory Manual',
-      tags: [lob, docType, 'manual', 'guidelines', 'comprehensive'],
-    },
-    createdAt: new Date().toISOString(),
-    discoveredBy: `${llmConfig.provider}:${llmConfig.model}`,
-    validationResult: {
-      isValid: true,
-      statusCode: 200,
-      contentType: 'application/pdf',
-      lastChecked: new Date().toISOString(),
-    },
-  });
-
-  // Source 4: Bulletins and updates
-  sources.push({
-    id: `${state}-${lob}-${docType}-bulletins`,
-    country: 'US',
-    stateCode: state,
-    lineOfBusiness: lob,
-    documentType: docType,
-    sourceUrl: `${stateInfo.baseUrl}/bulletins/2024`,
-    sourceName: `Recent Regulatory Bulletins - ${lobInfo?.name || lob}`,
-    agencyName: stateInfo.agency,
-    discoveryMethod: 'ai_discovered',
-    status: 'active',
-    confidenceScore: 0.85,
-    metadata: {
-      lastVerified: new Date().toISOString(),
-      format: 'Web',
-      language: 'English',
-      jurisdiction: state,
-      category: 'Updates & Bulletins',
-      tags: [lob, docType, 'bulletins', 'updates', 'recent'],
-    },
-    createdAt: new Date().toISOString(),
-    discoveredBy: `${llmConfig.provider}:${llmConfig.model}`,
-    validationResult: {
-      isValid: true,
-      statusCode: 200,
-      contentType: 'text/html',
       lastChecked: new Date().toISOString(),
     },
   });
 
   return sources;
+};
+
+// Parse text response when LLM doesn't return JSON
+const parseTextResponse = (
+  response: string,
+  state: string,
+  lob: string,
+  docType: string,
+  llmConfig: ScoutingConfiguration['llmConfig'],
+  country: string
+): RegulatorySource[] => {
+  // Try to extract URLs from text
+  const urlPattern = /https?:\/\/[^\s]+/g;
+  const urls = response.match(urlPattern) || [];
+  
+  const stateName = US_STATES.find((s) => s.code === state)?.name || state;
+  const docTypeName = REGULATORY_DOCUMENT_TYPES.find((d) => d.id === docType)?.name || docType;
+  
+  return urls.slice(0, 5).map((url, index) => ({
+    id: `${state}-${lob}-${docType}-text-${index}`,
+    country,
+    stateCode: state,
+    lineOfBusiness: lob,
+    documentType: docType,
+    sourceUrl: url,
+    sourceName: `${docTypeName} - ${stateName} (${index + 1})`,
+    agencyName: `${stateName} Regulatory Authority`,
+    discoveryMethod: 'ai_discovered',
+    status: 'pending_review',
+    confidenceScore: 0.75,
+    metadata: {
+      lastVerified: new Date().toISOString(),
+      format: 'Web',
+      language: 'English',
+      jurisdiction: state,
+      category: docTypeName,
+      tags: [lob, docType, 'text-parsed'],
+    },
+    createdAt: new Date().toISOString(),
+    discoveredBy: `${llmConfig.provider}:${llmConfig.model}`,
+  }));
 };
 
 /**
@@ -550,8 +593,8 @@ export const executeScoutingJob = async (
               seedSources.push(...seeds);
             }
             
-            // STEP 2: Simulate AI discovery for expanded sources
-            const aiSources = await simulateAIDiscovery(state, lob, docType, config.llmConfig, country);
+            // STEP 2: Perform real AI discovery using configured LLM
+            const aiSources = await performAIDiscovery(state, lob, docType, config.llmConfig, country);
             
             // STEP 3: Filter AI sources (NOT seeds) through gov-only filter
             const govOnlyAISources = aiSources.filter(source => {

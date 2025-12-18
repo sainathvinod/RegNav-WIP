@@ -1,8 +1,8 @@
 // Global application state management with Zustand
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { LLMConfiguration, ScoutingJob, RegulatorySource } from '../types';
-import { DEFAULT_LLM_CONFIG } from '../data/mockData';
+import { LLMConfiguration, ScoutingJob, RegulatorySource, ModuleName, ModuleLLMConfigurations } from '../types';
+import { DEFAULT_LLM_CONFIG, MODULE_DEFAULT_LLM_CONFIGS } from '../data/mockData';
 
 interface AppStore {
   // UI State
@@ -14,7 +14,8 @@ interface AppStore {
   selectedStates: string[];
   selectedLOB: string; // Single-select LOB
   selectedDocTypes: string[];
-  llmConfig: LLMConfiguration;
+  llmConfig: LLMConfiguration; // Global LLM config (for Settings page)
+  moduleLLMConfigs: ModuleLLMConfigurations; // Per-module LLM configs
   
   // Scouting
   currentScoutingJob: ScoutingJob | null;
@@ -32,6 +33,9 @@ interface AppStore {
   toggleDocType: (typeId: string) => void;
   setLLMConfig: (config: LLMConfiguration) => void;
   updateLLMConfig: (updates: Partial<LLMConfiguration>) => void;
+  getModuleLLMConfig: (module: ModuleName) => LLMConfiguration;
+  setModuleLLMConfig: (module: ModuleName, config: LLMConfiguration) => void;
+  updateModuleLLMConfig: (module: ModuleName, updates: Partial<LLMConfiguration>) => void;
   setCurrentScoutingJob: (job: ScoutingJob | null) => void;
   addScoutingJob: (job: ScoutingJob) => void;
   updateScoutingJob: (jobId: string, updates: Partial<ScoutingJob>) => void;
@@ -53,6 +57,7 @@ export const useAppStore = create<AppStore>()(
       selectedLOB: '', // Single LOB
       selectedDocTypes: [],
       llmConfig: DEFAULT_LLM_CONFIG as LLMConfiguration,
+      moduleLLMConfigs: MODULE_DEFAULT_LLM_CONFIGS as ModuleLLMConfigurations,
       currentScoutingJob: null,
       scoutingHistory: [],
       discoveredSources: [],
@@ -89,6 +94,24 @@ export const useAppStore = create<AppStore>()(
       updateLLMConfig: (updates) =>
         set((state) => ({
           llmConfig: { ...state.llmConfig, ...updates },
+        })),
+
+      getModuleLLMConfig: (module) => get().moduleLLMConfigs[module],
+
+      setModuleLLMConfig: (module, config) =>
+        set((state) => ({
+          moduleLLMConfigs: {
+            ...state.moduleLLMConfigs,
+            [module]: config,
+          },
+        })),
+
+      updateModuleLLMConfig: (module, updates) =>
+        set((state) => ({
+          moduleLLMConfigs: {
+            ...state.moduleLLMConfigs,
+            [module]: { ...state.moduleLLMConfigs[module], ...updates },
+          },
         })),
 
       setCurrentScoutingJob: (job) => set({ currentScoutingJob: job }),
@@ -149,6 +172,7 @@ export const useAppStore = create<AppStore>()(
         selectedLOB: state.selectedLOB,
         selectedDocTypes: state.selectedDocTypes,
         llmConfig: state.llmConfig,
+        moduleLLMConfigs: state.moduleLLMConfigs,
       }),
     }
   )
@@ -161,5 +185,6 @@ export const useSelectedStates = () => useAppStore((state) => state.selectedStat
 export const useSelectedLOB = () => useAppStore((state) => state.selectedLOB); // Single LOB
 export const useSelectedDocTypes = () => useAppStore((state) => state.selectedDocTypes);
 export const useLLMConfig = () => useAppStore((state) => state.llmConfig);
+export const useModuleLLMConfig = (module: ModuleName) => useAppStore((state) => state.moduleLLMConfigs[module]);
 export const useCurrentScoutingJob = () => useAppStore((state) => state.currentScoutingJob);
 export const useDiscoveredSources = () => useAppStore((state) => state.discoveredSources);
