@@ -3,6 +3,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { LLMConfiguration, ScoutingJob, RegulatorySource, ModuleName, ModuleLLMConfigurations } from '../types';
 import { DEFAULT_LLM_CONFIG, MODULE_DEFAULT_LLM_CONFIGS } from '../data/mockData';
+import { DEFAULT_REFERENCE_PROMPTS } from '../data/defaultReferencePrompts';
 
 interface AppStore {
   // UI State
@@ -16,6 +17,7 @@ interface AppStore {
   selectedDocTypes: string[];
   llmConfig: LLMConfiguration; // Global LLM config (for Settings page)
   moduleLLMConfigs: ModuleLLMConfigurations; // Per-module LLM configs
+  referencePrompts: Record<string, string>; // Reference prompts per doc type
   
   // Scouting
   currentScoutingJob: ScoutingJob | null;
@@ -36,6 +38,11 @@ interface AppStore {
   getModuleLLMConfig: (module: ModuleName) => LLMConfiguration;
   setModuleLLMConfig: (module: ModuleName, config: LLMConfiguration) => void;
   updateModuleLLMConfig: (module: ModuleName, updates: Partial<LLMConfiguration>) => void;
+  getReferencePrompt: (docType: string) => string;
+  updateReferencePrompt: (docType: string, prompt: string) => void;
+  resetReferencePrompt: (docType: string) => void;
+  exportReferencePrompts: () => string;
+  importReferencePrompts: (jsonData: string) => boolean;
   setCurrentScoutingJob: (job: ScoutingJob | null) => void;
   addScoutingJob: (job: ScoutingJob) => void;
   updateScoutingJob: (jobId: string, updates: Partial<ScoutingJob>) => void;
@@ -58,6 +65,7 @@ export const useAppStore = create<AppStore>()(
       selectedDocTypes: [],
       llmConfig: DEFAULT_LLM_CONFIG as LLMConfiguration,
       moduleLLMConfigs: MODULE_DEFAULT_LLM_CONFIGS as ModuleLLMConfigurations,
+      referencePrompts: DEFAULT_REFERENCE_PROMPTS,
       currentScoutingJob: null,
       scoutingHistory: [],
       discoveredSources: [],
@@ -113,6 +121,46 @@ export const useAppStore = create<AppStore>()(
             [module]: { ...state.moduleLLMConfigs[module], ...updates },
           },
         })),
+
+      getReferencePrompt: (docType) => {
+        const prompts = get().referencePrompts;
+        return prompts[docType] || DEFAULT_REFERENCE_PROMPTS[docType] || '';
+      },
+
+      updateReferencePrompt: (docType, prompt) =>
+        set((state) => ({
+          referencePrompts: {
+            ...state.referencePrompts,
+            [docType]: prompt,
+          },
+        })),
+
+      resetReferencePrompt: (docType) =>
+        set((state) => ({
+          referencePrompts: {
+            ...state.referencePrompts,
+            [docType]: DEFAULT_REFERENCE_PROMPTS[docType] || '',
+          },
+        })),
+
+      exportReferencePrompts: () => {
+        const prompts = get().referencePrompts;
+        return JSON.stringify(prompts, null, 2);
+      },
+
+      importReferencePrompts: (jsonData) => {
+        try {
+          const prompts = JSON.parse(jsonData);
+          if (typeof prompts !== 'object' || prompts === null) {
+            return false;
+          }
+          set({ referencePrompts: prompts });
+          return true;
+        } catch (error) {
+          console.error('Failed to import reference prompts:', error);
+          return false;
+        }
+      },
 
       setCurrentScoutingJob: (job) => set({ currentScoutingJob: job }),
 
@@ -173,6 +221,7 @@ export const useAppStore = create<AppStore>()(
         selectedDocTypes: state.selectedDocTypes,
         llmConfig: state.llmConfig,
         moduleLLMConfigs: state.moduleLLMConfigs,
+        referencePrompts: state.referencePrompts,
       }),
     }
   )

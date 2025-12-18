@@ -1,7 +1,8 @@
-// Settings - Module-Level LLM Configuration
+// Settings - Module-Level LLM Configuration & Reference Prompts
 import React, { useState } from 'react';
 import { AppLayout } from '../components/layout/AppLayout';
 import { LLMConfig } from '../components/LLMConfig';
+import { ReferencePromptEditor } from '../components/ReferencePromptEditor';
 import { useAppStore } from '../store/appStore';
 import { ModuleName } from '../types';
 import {
@@ -11,6 +12,7 @@ import {
   BeakerIcon,
   LightBulbIcon,
   ShieldCheckIcon,
+  CpuChipIcon,
 } from '@heroicons/react/24/outline';
 
 interface ModuleInfo {
@@ -65,8 +67,11 @@ const MODULES: ModuleInfo[] = [
   },
 ];
 
+type SettingsTab = 'llm' | 'prompts';
+
 export const Settings: React.FC = () => {
   const { getModuleLLMConfig, updateModuleLLMConfig } = useAppStore();
+  const [activeTab, setActiveTab] = useState<SettingsTab>('llm');
   const [selectedModule, setSelectedModule] = useState<ModuleName>('regscout');
 
   const currentModule = MODULES.find(m => m.id === selectedModule)!;
@@ -115,15 +120,54 @@ export const Settings: React.FC = () => {
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-50 flex items-center gap-3">
             <Cog6ToothIcon className="h-8 w-8 text-purple-500" />
-            LLM Configuration
+            Settings
           </h1>
           <p className="mt-2 text-gray-400">
-            Configure AI models for each RegNav module independently
+            Configure AI models and reference prompts for RegNav.AI
           </p>
         </div>
 
-        {/* Module Selector */}
-        <div className="mb-6">
+        {/* Tab Navigation */}
+        <div className="mb-8 border-b border-gray-700">
+          <div className="flex gap-1">
+            <button
+              onClick={() => setActiveTab('llm')}
+              className={`
+                px-6 py-3 font-semibold transition-all relative
+                ${activeTab === 'llm'
+                  ? 'text-purple-400 border-b-2 border-purple-500'
+                  : 'text-gray-400 hover:text-gray-300'
+                }
+              `}
+            >
+              <span className="flex items-center gap-2">
+                <CpuChipIcon className="w-5 h-5" />
+                LLM Configuration
+              </span>
+            </button>
+            <button
+              onClick={() => setActiveTab('prompts')}
+              className={`
+                px-6 py-3 font-semibold transition-all relative
+                ${activeTab === 'prompts'
+                  ? 'text-purple-400 border-b-2 border-purple-500'
+                  : 'text-gray-400 hover:text-gray-300'
+                }
+              `}
+            >
+              <span className="flex items-center gap-2">
+                <DocumentTextIcon className="w-5 h-5" />
+                Reference Prompts
+              </span>
+            </button>
+          </div>
+        </div>
+
+        {/* Tab Content */}
+        {activeTab === 'llm' && (
+          <>
+            {/* Module Selector */}
+            <div className="mb-6">
           <h2 className="text-sm font-semibold text-gray-300 mb-3">Select Module</h2>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
             {MODULES.map((module) => {
@@ -253,6 +297,12 @@ export const Settings: React.FC = () => {
             </table>
           </div>
         </div>
+          </>
+        )}
+
+        {activeTab === 'prompts' && (
+          <ReferencePromptEditor />
+        )}
       </div>
     </AppLayout>
   );

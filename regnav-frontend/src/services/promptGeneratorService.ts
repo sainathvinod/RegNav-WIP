@@ -6,90 +6,14 @@ import { callLLMWithRetry } from './llm/llmClient';
 import { US_STATES, LINES_OF_BUSINESS, REGULATORY_DOCUMENT_TYPES } from '../data/mockData';
 
 /**
- * Reference prompt template (Wisconsin Workers' Comp WCPOLS)
- * This is the gold standard that the LLM uses as a reference
- */
-const REFERENCE_PROMPT_TEMPLATE = `You are an expert regulatory compliance analyst specializing in insurance regulation. Your task is to find ALL authoritative sources for WCPOLS related to Workers' Compensation in Wisconsin.
-
-**SCOPE: You must identify BOTH government sources AND industry-standard authoritative organizations.**
-
-CRITICAL: For Workers' Compensation, you MUST include these types of authoritative sources:
-
-**Government Sources (.gov):**
-- State Department of Insurance / Commissioner of Insurance
-- State Department of Labor / Workforce Development
-- State Workers' Compensation Board/Commission
-- State Legislature (statutes and administrative code)
-
-**Industry-Standard Organizations (.org, .com):**
-- **State-Specific Rating Bureaus** (REQUIRED - DO NOT MISS):
-  • Wisconsin: WCRB (www.wcrb.org) - Wisconsin Compensation Rating Bureau
-  • Massachusetts: WCRIBMA (www.wcribma.org)
-  • Delaware: DCRB (www.dcrb.com)
-  • New Jersey: NJCRIB (www.njcrib.org)
-  • North Carolina: NCRB (www.ncrb.org)
-  • Pennsylvania: PCRB (www.pcrb.com)
-- **NCCI** (www.ncci.com) - National Council on Compensation Insurance (for NCCI states)
-- **ISO** (www.iso.com) - Insurance Services Office (standardized forms)
-
-These rating bureaus are PRIMARY authoritative sources for policy forms, manual rules, class codes, and filing requirements.
-
-**General Requirements:**
-1. **Government Sources** - Official state/federal agencies:
-   - Primary domains: .gov, .state.*.us, .us
-   - Examples: Department of Insurance, Workers' Comp Commission, Legislature
-   
-2. **Industry-Standard Organizations** - Rating bureaus and advisory organizations:
-   - Domains: .org, .com (if authoritative)
-   - Examples: State rating bureaus (WCRB, NCCI, etc.), ISO, AAIS
-   - These are REQUIRED sources - do not skip them!
-   
-3. **Document Specificity:**
-   - Find actual document pages (not just homepages)
-   - Include URLs to specific forms, manuals, bulletins, code sections
-   - Look for: Filing requirements, policy forms, manual rules, statistical reporting
-   
-4. **Metadata to Extract:**
-   - Effective dates, version numbers, last updated dates
-   - Document format (PDF, web, database)
-   - Page count (if available)
-   - Contact information
-
-**CRITICAL: For Wisconsin Workers' Compensation, the state-specific rating bureau (if one exists) is a MANDATORY source. Do not omit it.**
-
-**Output Format:**
-Return a JSON array of objects with this exact structure:
-[
-  {
-    "source_url": "https://...",
-    "agency_name": "Full official name of organization",
-    "document_title": "Specific document or page title",
-    "description": "One-sentence description of what this source provides",
-    "document_type": "WCPOLS",
-    "effective_date": "YYYY-MM-DD or null",
-    "confidence_score": 0.0-1.0,
-    "authority_type": "government" or "rating_bureau" or "advisory_organization",
-    "format": "PDF" or "Web" or "Database",
-    "pages": number or null
-  }
-]
-
-**Quality Standards:**
-- Confidence score 0.9-1.0: Primary government or rating bureau sources
-- Confidence score 0.7-0.89: Secondary authoritative sources
-- Confidence score <0.7: Supplementary sources
-- Only include sources that are currently active and accessible
-
-Return ONLY the JSON array, no additional text or explanation.`;
-
-/**
  * Meta-prompt for generating discovery prompts
  */
 const generateMetaPrompt = (
   country: string,
   state: string,
   lob: string,
-  docType: string
+  docType: string,
+  referencePrompt: string
 ): string => {
   const countryName = country === 'US' ? 'United States' : country;
   const stateName = US_STATES.find((s) => s.code === state)?.name || state;
@@ -107,9 +31,9 @@ const generateMetaPrompt = (
 **YOUR TASK:**
 Generate a discovery prompt that an AI assistant will use to find ALL authoritative sources for "${docTypeName}" related to "${lobName}" in "${stateName}".
 
-**REFERENCE PROMPT (Gold Standard - Wisconsin Workers' Comp WCPOLS):**
+**REFERENCE PROMPT (Gold Standard - User-Configured Template):**
 \`\`\`
-${REFERENCE_PROMPT_TEMPLATE}
+${referencePrompt}
 \`\`\`
 
 **INSTRUCTIONS:**
@@ -144,13 +68,14 @@ export const generateDiscoveryPrompt = async (
   lob: string,
   docType: string,
   llmConfig: LLMConfiguration,
+  referencePrompt: string,
   onProgress?: (status: string) => void
 ): Promise<string> => {
   try {
     if (onProgress) onProgress('Generating prompt...');
 
     // Generate meta-prompt
-    const metaPrompt = generateMetaPrompt(country, state, lob, docType);
+    const metaPrompt = generateMetaPrompt(country, state, lob, docType, referencePrompt);
 
     // Call LLM to generate the discovery prompt
     if (onProgress) onProgress('Calling LLM to generate discovery prompt...');

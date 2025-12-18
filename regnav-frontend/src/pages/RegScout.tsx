@@ -53,6 +53,7 @@ export const RegScout: React.FC = () => {
     addDiscoveredSource,
     removeDiscoveredSource,
     getModuleLLMConfig,
+    getReferencePrompt,
   } = useAppStore();
 
   // Get module-specific LLM config
@@ -178,12 +179,16 @@ export const RegScout: React.FC = () => {
       const firstState = selectedStates[0];
       const firstDocType = selectedDocTypes[0];
 
+      // Get the configured reference prompt for this doc type
+      const referencePrompt = getReferencePrompt(firstDocType);
+
       const prompt = await generateDiscoveryPrompt(
         selectedCountries[0],
         firstState,
         selectedLOB,
         firstDocType,
         llmConfig,
+        referencePrompt,
         (status) => setPromptGenerationStatus(status)
       );
 
