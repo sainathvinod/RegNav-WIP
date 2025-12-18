@@ -173,6 +173,38 @@ export interface ScoutingJob {
   executionTime?: number;
 }
 
+export interface DiscoveryProfile {
+  id: string;
+  name: string;
+  description?: string;
+  configuration: {
+    countries: string[];
+    states: string[];
+    linesOfBusiness: string;
+    documentTypes: string[];
+    searchDepth: 'shallow' | 'moderate' | 'deep';
+    confidenceThreshold: number;
+    maxResults: number;
+  };
+  sources: RegulatorySource[];
+  metadata: {
+    totalSources: number;
+    govAutoSources: number;
+    userAddedSources: number;
+    avgConfidence: number;
+  };
+  status: 'draft' | 'finalized' | 'used_for_rules';
+  tags?: string[];
+  createdAt: string;
+  updatedAt: string;
+  createdBy?: string;
+  usedInRuleMining?: {
+    jobId: string;
+    minedAt: string;
+    rulesGenerated: number;
+  };
+}
+
 export interface Document {
   id: string;
   sourceId?: string;

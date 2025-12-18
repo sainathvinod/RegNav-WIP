@@ -1,7 +1,7 @@
 // Global application state management with Zustand
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { LLMConfiguration, ScoutingJob, RegulatorySource, ModuleName, ModuleLLMConfigurations } from '../types';
+import { LLMConfiguration, ScoutingJob, RegulatorySource, ModuleName, ModuleLLMConfigurations, DiscoveryProfile } from '../types';
 import { DEFAULT_LLM_CONFIG, MODULE_DEFAULT_LLM_CONFIGS } from '../data/mockData';
 import { DEFAULT_REFERENCE_PROMPTS } from '../data/defaultReferencePrompts';
 
@@ -23,6 +23,9 @@ interface AppStore {
   currentScoutingJob: ScoutingJob | null;
   scoutingHistory: ScoutingJob[];
   discoveredSources: RegulatorySource[];
+  
+  // Profiles
+  discoveryProfiles: DiscoveryProfile[];
   
   // Actions
   toggleSidebar: () => void;
@@ -49,6 +52,10 @@ interface AppStore {
   setDiscoveredSources: (sources: RegulatorySource[]) => void;
   addDiscoveredSource: (source: RegulatorySource) => void;
   removeDiscoveredSource: (sourceId: string) => void;
+  createProfile: (profile: Omit<DiscoveryProfile, 'id' | 'createdAt' | 'updatedAt'>) => DiscoveryProfile;
+  updateProfile: (profileId: string, updates: Partial<DiscoveryProfile>) => void;
+  deleteProfile: (profileId: string) => void;
+  getProfile: (profileId: string) => DiscoveryProfile | undefined;
   clearSelections: () => void;
   reset: () => void;
 }
@@ -75,6 +82,7 @@ export const useAppStore = create<AppStore>()(
       currentScoutingJob: null,
       scoutingHistory: [],
       discoveredSources: [],
+      discoveryProfiles: [],
 
       // Actions
       toggleSidebar: () => set((state) => ({ sidebarCollapsed: !state.sidebarCollapsed })),
@@ -210,6 +218,37 @@ export const useAppStore = create<AppStore>()(
           discoveredSources: state.discoveredSources.filter(s => s.id !== sourceId),
         })),
 
+      createProfile: (profileData) => {
+        const newProfile: DiscoveryProfile = {
+          ...profileData,
+          id: `profile-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+        set((state) => ({
+          discoveryProfiles: [...state.discoveryProfiles, newProfile],
+        }));
+        return newProfile;
+      },
+
+      updateProfile: (profileId, updates) =>
+        set((state) => ({
+          discoveryProfiles: state.discoveryProfiles.map((profile) =>
+            profile.id === profileId
+              ? { ...profile, ...updates, updatedAt: new Date().toISOString() }
+              : profile
+          ),
+        })),
+
+      deleteProfile: (profileId) =>
+        set((state) => ({
+          discoveryProfiles: state.discoveryProfiles.filter((p) => p.id !== profileId),
+        })),
+
+      getProfile: (profileId) => {
+        return get().discoveryProfiles.find((p) => p.id === profileId);
+      },
+
       clearSelections: () =>
         set({
           selectedStates: [],
@@ -239,6 +278,7 @@ export const useAppStore = create<AppStore>()(
         llmConfig: state.llmConfig,
         moduleLLMConfigs: state.moduleLLMConfigs,
         moduleReferencePrompts: state.moduleReferencePrompts,
+        discoveryProfiles: state.discoveryProfiles,
       }),
     }
   )

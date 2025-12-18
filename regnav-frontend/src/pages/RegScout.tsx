@@ -5,6 +5,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { AppLayout } from '../components/layout/AppLayout';
 import { LLMIndicator } from '../components/LLMIndicator';
 import { PromptEditor } from '../components/PromptEditor';
+import { SaveProfileModal } from '../components/SaveProfileModal';
 import { useAppStore } from '../store/appStore';
 import { generateDiscoveryPrompt } from '../services/promptGeneratorService';
 import {
@@ -32,6 +33,7 @@ import {
   ArrowsUpDownIcon,
   DocumentTextIcon,
   ArrowLeftIcon,
+  FolderIcon,
 } from '@heroicons/react/24/outline';
 
 export const RegScout: React.FC = () => {
@@ -54,6 +56,7 @@ export const RegScout: React.FC = () => {
     removeDiscoveredSource,
     getModuleLLMConfig,
     getModuleReferencePrompt,
+    createProfile,
   } = useAppStore();
 
   // Get module-specific LLM config
@@ -87,6 +90,7 @@ export const RegScout: React.FC = () => {
   ]);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
+  const [showSaveProfileModal, setShowSaveProfileModal] = useState(false);
 
   // Get selected country details
   const selectedCountry = COUNTRIES.find(c => c.code === selectedCountries[0]) || COUNTRIES[0];
@@ -388,6 +392,13 @@ export const RegScout: React.FC = () => {
     });
 
     event.target.value = '';
+  };
+
+  const handleSaveProfile = (profileData: any) => {
+    const profile = createProfile(profileData);
+    setToastMessage(`Profile "${profile.name}" saved successfully!`);
+    setShowToast(true);
+    setTimeout(() => setShowToast(false), 3000);
   };
 
   // Quality check for results
@@ -1276,12 +1287,36 @@ export const RegScout: React.FC = () => {
             Back to Configuration
           </button>
           <button
+            onClick={() => setShowSaveProfileModal(true)}
+            className="flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-500 transition-all shadow-lg shadow-green-600/30"
+          >
+            <FolderIcon className="h-5 w-5" />
+            Save as Profile
+          </button>
+          <button
             onClick={handleRunDiscovery}
             className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-all shadow-lg shadow-purple-600/30"
           >
             Run Discovery Again
           </button>
         </div>
+
+        {/* Save Profile Modal */}
+        <SaveProfileModal
+          isOpen={showSaveProfileModal}
+          onClose={() => setShowSaveProfileModal(false)}
+          onSave={handleSaveProfile}
+          configuration={{
+            countries: selectedCountries,
+            states: selectedStates,
+            linesOfBusiness: selectedLOB,
+            documentTypes: selectedDocTypes,
+            searchDepth,
+            confidenceThreshold,
+            maxResults,
+          }}
+          sources={discoveredSources}
+        />
       </div>
     </AppLayout>
   );
