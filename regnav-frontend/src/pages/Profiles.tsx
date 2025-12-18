@@ -7,6 +7,7 @@
 
 import React, { useState } from 'react';
 import { AppLayout } from '../components/layout/AppLayout';
+import { ProfileDetailsModal } from '../components/ProfileDetailsModal';
 import { useAppStore } from '../store/appStore';
 import {
   FolderIcon,
@@ -20,16 +21,20 @@ import {
   ClockIcon,
   BeakerIcon,
 } from '@heroicons/react/24/outline';
+import { DiscoveryProfile } from '../types';
 import { useNavigate } from 'react-router-dom';
 
 export const Profiles: React.FC = () => {
-  const { discoveryProfiles, deleteProfile } = useAppStore();
+  const { discoveryProfiles, deleteProfile, updateProfile } = useAppStore();
   const navigate = useNavigate();
   
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState<'all' | 'draft' | 'finalized' | 'used_for_rules'>('all');
   const [sortBy, setSortBy] = useState<'name' | 'created' | 'updated'>('updated');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
+  const [selectedProfile, setSelectedProfile] = useState<DiscoveryProfile | null>(null);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [detailsMode, setDetailsMode] = useState<'view' | 'edit'>('view');
 
   // Filter and sort profiles
   const filteredProfiles = discoveryProfiles
@@ -61,6 +66,31 @@ export const Profiles: React.FC = () => {
   const handleDelete = (profileId: string) => {
     deleteProfile(profileId);
     setShowDeleteConfirm(null);
+  };
+
+  const handleView = (profile: DiscoveryProfile) => {
+    setSelectedProfile(profile);
+    setDetailsMode('view');
+    setShowDetailsModal(true);
+  };
+
+  const handleEdit = (profile: DiscoveryProfile) => {
+    setSelectedProfile(profile);
+    setDetailsMode('edit');
+    setShowDetailsModal(true);
+  };
+
+  const handleSaveProfile = (profileId: string, updates: Partial<DiscoveryProfile>) => {
+    updateProfile(profileId, updates);
+    // Update selectedProfile if it's the one being edited
+    if (selectedProfile && selectedProfile.id === profileId) {
+      setSelectedProfile({ ...selectedProfile, ...updates });
+    }
+  };
+
+  const handleCloseDetails = () => {
+    setShowDetailsModal(false);
+    setSelectedProfile(null);
   };
 
   const getStatusBadge = (status: string) => {
@@ -272,19 +302,23 @@ export const Profiles: React.FC = () => {
                 {/* Actions */}
                 <div className="flex gap-2">
                   <button
+                    onClick={() => handleView(profile)}
                     className="flex-1 px-3 py-2 bg-purple-600 text-white rounded hover:bg-purple-500 transition-colors text-sm flex items-center justify-center gap-1"
                   >
                     <EyeIcon className="w-4 h-4" />
                     View
                   </button>
                   <button
+                    onClick={() => handleEdit(profile)}
                     className="px-3 py-2 bg-gray-800 text-gray-300 rounded hover:bg-gray-700 transition-colors"
+                    title="Edit"
                   >
                     <PencilSquareIcon className="w-4 h-4" />
                   </button>
                   <button
                     onClick={() => setShowDeleteConfirm(profile.id)}
                     className="px-3 py-2 bg-gray-800 text-red-400 rounded hover:bg-red-900/30 transition-colors"
+                    title="Delete"
                   >
                     <TrashIcon className="w-4 h-4" />
                   </button>
@@ -319,6 +353,15 @@ export const Profiles: React.FC = () => {
             </div>
           </div>
         )}
+
+        {/* Profile Details Modal */}
+        <ProfileDetailsModal
+          isOpen={showDetailsModal}
+          onClose={handleCloseDetails}
+          profile={selectedProfile}
+          onSave={handleSaveProfile}
+          mode={detailsMode}
+        />
       </div>
     </AppLayout>
   );
