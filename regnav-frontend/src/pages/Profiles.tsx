@@ -184,13 +184,13 @@ export const Profiles: React.FC = () => {
             <FolderIcon className="w-8 h-8 text-purple-500" />
             Discovery Profiles
           </h1>
-          <p className="mt-2 text-gray-400">
+          <p className="mt-2" style={{ color: 'var(--muted)' }}>
             Manage your saved discovery configurations and curated source lists
           </p>
         </div>
 
         {/* Filters */}
-        <div className="bg-gray-900 border border-gray-800 rounded-lg p-6 mb-6">
+        <div className="rounded-lg border p-6 mb-6" style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)' }}>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* Search */}
             <div className="md:col-span-2">
@@ -201,7 +201,22 @@ export const Profiles: React.FC = () => {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search profiles by name, description, or tags..."
-                  className="w-full pl-10 pr-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  className="w-full pl-10 pr-4 py-2 rounded-lg transition-all"
+                  style={{ 
+                    backgroundColor: 'var(--surface-2)', 
+                    borderWidth: '1px',
+                    borderStyle: 'solid',
+                    borderColor: 'var(--border)', 
+                    color: 'var(--text)' 
+                  }}
+                  onFocus={(e) => {
+                    e.currentTarget.style.borderColor = 'rgb(var(--color-accent-primary))';
+                    e.currentTarget.style.boxShadow = `0 0 0 3px rgba(var(--color-accent-primary), 0.1)`;
+                  }}
+                  onBlur={(e) => {
+                    e.currentTarget.style.borderColor = 'var(--border)';
+                    e.currentTarget.style.boxShadow = 'none';
+                  }}
                 />
               </div>
             </div>
@@ -211,7 +226,22 @@ export const Profiles: React.FC = () => {
               <select
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value as any)}
-                className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                className="w-full px-4 py-2 rounded-lg transition-all"
+                style={{ 
+                  backgroundColor: 'var(--surface-2)', 
+                  borderWidth: '1px',
+                  borderStyle: 'solid',
+                  borderColor: 'var(--border)', 
+                  color: 'var(--text)' 
+                }}
+                onFocus={(e) => {
+                  e.currentTarget.style.borderColor = 'rgb(var(--color-accent-primary))';
+                  e.currentTarget.style.boxShadow = `0 0 0 3px rgba(var(--color-accent-primary), 0.1)`;
+                }}
+                onBlur={(e) => {
+                  e.currentTarget.style.borderColor = 'var(--border)';
+                  e.currentTarget.style.boxShadow = 'none';
+                }}
               >
                 <option value="all">All Statuses</option>
                 <option value="draft">Draft</option>
@@ -223,7 +253,7 @@ export const Profiles: React.FC = () => {
 
           {/* Sort */}
           <div className="mt-4 flex items-center gap-2">
-            <span className="text-sm text-gray-400">Sort by:</span>
+            <span className="text-sm" style={{ color: 'var(--muted)' }}>Sort by:</span>
             <button
               onClick={() => setSortBy('updated')}
               className={`px-3 py-1 rounded text-sm transition-colors ${

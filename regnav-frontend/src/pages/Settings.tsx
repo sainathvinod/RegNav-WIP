@@ -79,42 +79,6 @@ export const Settings: React.FC = () => {
   const currentModule = MODULES.find(m => m.id === selectedModule)!;
   const currentConfig = getModuleLLMConfig(selectedModule);
 
-  const getColorClasses = (color: string, selected: boolean) => {
-    const colors: Record<string, { border: string; bg: string; text: string; hover: string }> = {
-      purple: {
-        border: selected ? 'border-purple-500' : 'border-gray-700',
-        bg: selected ? 'bg-purple-500/20' : 'bg-gray-800',
-        text: selected ? 'text-purple-300' : 'text-gray-400',
-        hover: 'hover:border-purple-500/50',
-      },
-      blue: {
-        border: selected ? 'border-blue-500' : 'border-gray-700',
-        bg: selected ? 'bg-blue-500/20' : 'bg-gray-800',
-        text: selected ? 'text-blue-300' : 'text-gray-400',
-        hover: 'hover:border-blue-500/50',
-      },
-      green: {
-        border: selected ? 'border-green-500' : 'border-gray-700',
-        bg: selected ? 'bg-green-500/20' : 'bg-gray-800',
-        text: selected ? 'text-green-300' : 'text-gray-400',
-        hover: 'hover:border-green-500/50',
-      },
-      yellow: {
-        border: selected ? 'border-yellow-500' : 'border-gray-700',
-        bg: selected ? 'bg-yellow-500/20' : 'bg-gray-800',
-        text: selected ? 'text-yellow-300' : 'text-gray-400',
-        hover: 'hover:border-yellow-500/50',
-      },
-      red: {
-        border: selected ? 'border-red-500' : 'border-gray-700',
-        bg: selected ? 'bg-red-500/20' : 'bg-gray-800',
-        text: selected ? 'text-red-300' : 'text-gray-400',
-        hover: 'hover:border-red-500/50',
-      },
-    };
-    return colors[color];
-  };
-
   return (
     <AppLayout title="Settings">
       <div className="max-w-6xl mx-auto">
@@ -184,7 +148,6 @@ export const Settings: React.FC = () => {
             {MODULES.map((module) => {
               const Icon = module.icon;
               const selected = module.id === selectedModule;
-              const colors = getColorClasses(module.color, selected);
               const isDisabled = module.status === 'coming-soon';
 
               return (
@@ -192,20 +155,36 @@ export const Settings: React.FC = () => {
                   key={module.id}
                   onClick={() => !isDisabled && setSelectedModule(module.id)}
                   disabled={isDisabled}
-                  className={`relative p-4 rounded-lg border transition-all ${colors.border} ${colors.bg} ${
-                    isDisabled ? 'opacity-40 cursor-not-allowed' : `${colors.hover} cursor-pointer`
-                  }`}
+                  className="relative p-4 rounded-lg border transition-all"
+                  style={{
+                    backgroundColor: selected ? 'rgba(var(--color-accent-primary), 0.15)' : 'var(--surface)',
+                    borderColor: selected ? 'rgb(var(--color-accent-primary))' : 'var(--border)',
+                    opacity: isDisabled ? 0.4 : 1,
+                    cursor: isDisabled ? 'not-allowed' : 'pointer',
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isDisabled && !selected) {
+                      e.currentTarget.style.borderColor = 'rgba(var(--color-accent-primary), 0.5)';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isDisabled && !selected) {
+                      e.currentTarget.style.borderColor = 'var(--border)';
+                    }
+                  }}
                 >
                   {isDisabled && (
                     <div className="absolute top-1 right-1">
-                      <span className="text-xs bg-gray-700 text-gray-400 px-2 py-0.5 rounded">
+                      <span className="text-xs px-2 py-0.5 rounded" style={{ backgroundColor: 'var(--surface-2)', color: 'var(--muted)' }}>
                         Soon
                       </span>
                     </div>
                   )}
-                  <Icon className={`h-8 w-8 mx-auto mb-2 ${colors.text}`} />
-                  <div className={`text-sm font-medium ${colors.text}`}>{module.name}</div>
-                  <div className="text-xs mt-1" style={{ color: 'var(--color-text-muted)' }}>{module.description}</div>
+                  <div style={{ color: selected ? 'rgb(var(--color-accent-primary))' : 'var(--muted)' }}>
+                    <Icon className="h-8 w-8 mx-auto mb-2" />
+                  </div>
+                  <div className="text-sm font-medium" style={{ color: selected ? 'rgb(var(--color-accent-primary))' : 'var(--text)' }}>{module.name}</div>
+                  <div className="text-xs mt-1" style={{ color: 'var(--muted)' }}>{module.description}</div>
                 </button>
               );
             })}
