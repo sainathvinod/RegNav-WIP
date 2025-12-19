@@ -219,25 +219,37 @@ export const useAppStore = create<AppStore>()(
         })),
 
       createProfile: (profileData) => {
+        // DEEP CLONE to ensure complete data isolation
+        const deepClonedData = JSON.parse(JSON.stringify(profileData));
+        
         const newProfile: DiscoveryProfile = {
-          ...profileData,
+          ...deepClonedData,
           id: `profile-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         };
+        
         set((state) => ({
           discoveryProfiles: [...state.discoveryProfiles, newProfile],
         }));
+        
         return newProfile;
       },
 
       updateProfile: (profileId, updates) =>
         set((state) => ({
-          discoveryProfiles: state.discoveryProfiles.map((profile) =>
-            profile.id === profileId
-              ? { ...profile, ...updates, updatedAt: new Date().toISOString() }
-              : profile
-          ),
+          discoveryProfiles: state.discoveryProfiles.map((profile) => {
+            if (profile.id === profileId) {
+              // DEEP CLONE updates to prevent reference sharing
+              const deepClonedUpdates = JSON.parse(JSON.stringify(updates));
+              return { 
+                ...profile, 
+                ...deepClonedUpdates, 
+                updatedAt: new Date().toISOString() 
+              };
+            }
+            return profile;
+          }),
         })),
 
       deleteProfile: (profileId) =>
@@ -246,7 +258,9 @@ export const useAppStore = create<AppStore>()(
         })),
 
       getProfile: (profileId) => {
-        return get().discoveryProfiles.find((p) => p.id === profileId);
+        const profile = get().discoveryProfiles.find((p) => p.id === profileId);
+        // DEEP CLONE when retrieving to prevent external mutations
+        return profile ? JSON.parse(JSON.stringify(profile)) : undefined;
       },
 
       clearSelections: () =>

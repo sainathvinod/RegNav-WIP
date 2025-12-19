@@ -55,7 +55,8 @@ export const ProfileDetailsModal: React.FC<ProfileDetailsModalProps> = ({
       setDescription(profile.description || '');
       setTags(profile.tags?.join(', ') || '');
       setStatus(profile.status);
-      setSources(profile.sources);
+      // DEEP CLONE sources to prevent modifying original profile
+      setSources(JSON.parse(JSON.stringify(profile.sources)));
       setMode(initialMode);
     }
   }, [profile, initialMode]);
@@ -95,12 +96,13 @@ export const ProfileDetailsModal: React.FC<ProfileDetailsModalProps> = ({
   };
 
   const handleCancel = () => {
-    // Reset to original values
+    // Reset to original values with deep cloning
     setName(profile.name);
     setDescription(profile.description || '');
     setTags(profile.tags?.join(', ') || '');
     setStatus(profile.status);
-    setSources(profile.sources);
+    // DEEP CLONE sources to prevent modifying original profile
+    setSources(JSON.parse(JSON.stringify(profile.sources)));
     setMode('view');
     setError('');
   };

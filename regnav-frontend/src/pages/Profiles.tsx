@@ -75,22 +75,25 @@ export const Profiles: React.FC = () => {
   };
 
   const handleView = (profile: DiscoveryProfile) => {
-    setSelectedProfile(profile);
+    // Deep clone to prevent external mutations
+    setSelectedProfile(JSON.parse(JSON.stringify(profile)));
     setDetailsMode('view');
     setShowDetailsModal(true);
   };
 
   const handleEdit = (profile: DiscoveryProfile) => {
-    setSelectedProfile(profile);
+    // Deep clone to prevent external mutations
+    setSelectedProfile(JSON.parse(JSON.stringify(profile)));
     setDetailsMode('edit');
     setShowDetailsModal(true);
   };
 
   const handleSaveProfile = (profileId: string, updates: Partial<DiscoveryProfile>) => {
     updateProfile(profileId, updates);
-    // Update selectedProfile if it's the one being edited
+    // Update selectedProfile with deep cloning to prevent reference sharing
     if (selectedProfile && selectedProfile.id === profileId) {
-      setSelectedProfile({ ...selectedProfile, ...updates });
+      const updatedProfile = JSON.parse(JSON.stringify({ ...selectedProfile, ...updates }));
+      setSelectedProfile(updatedProfile);
     }
   };
 
