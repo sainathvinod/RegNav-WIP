@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Theme System - User Preferences */
+/* Theme System - Token-Driven (Light-First) */
 :root {
   /* User-configurable accent colors (default: purple) */
   --color-accent-primary: 147 51 234;   /* purple-600 RGB */
@@ -10,72 +10,72 @@
   --color-accent-light: 196 181 253;    /* purple-300 RGB */
 }
 
-/* Dark Theme (Default) */
-.theme-dark,
+/* Light Theme (Default) - Professional Enterprise UI */
+.theme-light,
 :root {
   /* Backgrounds */
-  --color-bg-app: #030712;          /* gray-950 - Main app background */
-  --color-bg-panel: #111827;        /* gray-900 - Cards/panels */
-  --color-bg-elevated: #1F2937;     /* gray-800 - Elevated elements */
-  --color-bg-hover: #374151;        /* gray-700 - Hover states */
+  --bg: #F3F4F6;                /* gray-100 - Page background */
+  --surface: #FFFFFF;           /* white - Cards/panels */
+  --surface-2: #F9FAFB;         /* gray-50 - Inputs/secondary surfaces */
+  --hover: #E5E7EB;             /* gray-200 - Hover states */
   
   /* Borders */
-  --color-border-subtle: #1F2937;   /* gray-800 - Subtle borders */
-  --color-border-default: #374151;  /* gray-700 - Default borders */
+  --border: #E5E7EB;            /* gray-200 - Default borders */
+  --border-subtle: #F3F4F6;     /* gray-100 - Subtle borders */
   
   /* Text */
-  --color-text-primary: #F9FAFB;    /* gray-50 - Primary text */
-  --color-text-secondary: #D1D5DB;  /* gray-300 - Secondary text */
-  --color-text-muted: #9CA3AF;      /* gray-400 - Muted text */
-  --color-text-disabled: #6B7280;   /* gray-500 - Disabled text */
+  --text: #111827;              /* gray-900 - Primary text */
+  --text-secondary: #374151;    /* gray-700 - Secondary text */
+  --muted: #6B7280;             /* gray-500 - Muted text */
+  --disabled: #9CA3AF;          /* gray-400 - Disabled text */
   
   /* Status Colors */
-  --color-success: #10B981;         /* green-500 */
-  --color-warning: #F59E0B;         /* yellow-500 */
-  --color-error: #EF4444;           /* red-500 */
-  --color-info: #3B82F6;            /* blue-500 */
+  --success: #059669;           /* green-600 */
+  --warning: #D97706;           /* yellow-600 */
+  --error: #DC2626;             /* red-600 */
+  --info: #2563EB;              /* blue-600 */
 }
 
-/* Light Theme - White + Purple */
-.theme-light {
+/* Dark Theme - True Dark/Black Palette */
+.theme-dark {
   /* Backgrounds */
-  --color-bg-app: #FFFFFF;          /* pure white - Main app background */
-  --color-bg-panel: #FFFFFF;        /* white - Cards/panels */
-  --color-bg-elevated: #F9FAFB;     /* gray-50 - Elevated elements/inputs */
-  --color-bg-hover: #F3F4F6;        /* gray-100 - Hover states */
+  --bg: #030712;                /* gray-950 - Page background */
+  --surface: #111827;           /* gray-900 - Cards/panels */
+  --surface-2: #1F2937;         /* gray-800 - Inputs/secondary surfaces */
+  --hover: #374151;             /* gray-700 - Hover states */
   
   /* Borders */
-  --color-border-subtle: #F3F4F6;   /* gray-100 - Subtle borders */
-  --color-border-default: #E5E7EB;  /* gray-200 - Default borders */
+  --border: #374151;            /* gray-700 - Default borders */
+  --border-subtle: #1F2937;     /* gray-800 - Subtle borders */
   
-  /* Text - Darker for better contrast on light backgrounds */
-  --color-text-primary: #111827;    /* gray-900 - Primary text */
-  --color-text-secondary: #374151;  /* gray-700 - Secondary text */
-  --color-text-muted: #4B5563;      /* gray-600 - Muted text (darker for light mode) */
-  --color-text-disabled: #6B7280;   /* gray-500 - Disabled text */
+  /* Text */
+  --text: #F9FAFB;              /* gray-50 - Primary text */
+  --text-secondary: #D1D5DB;    /* gray-300 - Secondary text */
+  --muted: #9CA3AF;             /* gray-400 - Muted text */
+  --disabled: #6B7280;          /* gray-500 - Disabled text */
   
   /* Status Colors */
-  --color-success: #059669;         /* green-600 */
-  --color-warning: #D97706;         /* yellow-600 */
-  --color-error: #DC2626;           /* red-600 */
-  --color-info: #2563EB;            /* blue-600 */
+  --success: #10B981;           /* green-500 */
+  --warning: #F59E0B;           /* yellow-500 */
+  --error: #EF4444;             /* red-500 */
+  --info: #3B82F6;              /* blue-500 */
 }
 
 @layer base {
   body {
-    background-color: var(--color-bg-app);
-    color: var(--color-text-primary);
+    background-color: var(--bg);
+    color: var(--text);
     transition: background-color 0.2s ease, color 0.2s ease;
     font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   }
   
   * {
-    border-color: var(--color-border-default);
+    border-color: var(--border);
   }
 }
 
 @layer components {
-  /* Buttons - Enterprise Theme (uses accent color) */
+  /* Buttons - Theme-Aware */
   .btn-primary {
     @apply text-white font-medium py-2 px-4 rounded-lg transition-all duration-200;
     background-color: rgb(var(--color-accent-primary));
@@ -89,33 +89,33 @@
   
   .btn-secondary {
     @apply font-medium py-2 px-4 rounded-lg border transition-all duration-200;
-    background-color: var(--color-bg-elevated);
-    border-color: var(--color-border-default);
-    color: var(--color-text-secondary);
+    background-color: var(--surface-2);
+    border-color: var(--border);
+    color: var(--text-secondary);
   }
   
   .btn-secondary:hover {
-    background-color: var(--color-bg-hover);
-    color: var(--color-text-primary);
+    background-color: var(--hover);
+    color: var(--text);
   }
   
-  /* Cards/Panels - Enterprise Theme */
+  /* Cards/Panels - Theme-Aware */
   .card {
-    @apply rounded-lg shadow-xl border p-6;
-    background-color: var(--color-bg-panel);
-    border-color: var(--color-border-subtle);
+    @apply rounded-lg shadow-lg border p-6;
+    background-color: var(--surface);
+    border-color: var(--border-subtle);
   }
   
-  /* Inputs - Enterprise Theme */
+  /* Inputs - Theme-Aware */
   .input {
     @apply w-full px-4 py-2 rounded-lg transition-all;
-    background-color: var(--color-bg-elevated);
-    border: 1px solid var(--color-border-default);
-    color: var(--color-text-primary);
+    background-color: var(--surface-2);
+    border: 1px solid var(--border);
+    color: var(--text);
   }
   
   .input::placeholder {
-    color: var(--color-text-disabled);
+    color: var(--disabled);
   }
   
   .input:focus {
@@ -124,40 +124,50 @@
     outline: none;
   }
   
-  /* Badges - Enterprise Dark Theme */
+  /* Badges - Theme-Aware */
   .badge {
     @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
   }
   
   .badge-success {
-    @apply bg-green-900/30 text-green-300 border border-green-800;
+    background-color: rgba(5, 150, 105, 0.1);
+    color: var(--success);
+    border: 1px solid var(--success);
   }
   
   .badge-warning {
-    @apply bg-yellow-900/30 text-yellow-300 border border-yellow-800;
+    background-color: rgba(217, 119, 6, 0.1);
+    color: var(--warning);
+    border: 1px solid var(--warning);
   }
   
   .badge-danger {
-    @apply bg-red-900/30 text-red-300 border border-red-800;
+    background-color: rgba(220, 38, 38, 0.1);
+    color: var(--error);
+    border: 1px solid var(--error);
   }
   
   .badge-info {
-    @apply bg-blue-900/30 text-blue-300 border border-blue-800;
+    background-color: rgba(37, 99, 235, 0.1);
+    color: var(--info);
+    border: 1px solid var(--info);
   }
   
   .badge-gray {
-    @apply bg-gray-800 text-gray-300 border border-gray-700;
+    background-color: var(--surface-2);
+    color: var(--text-secondary);
+    border: 1px solid var(--border);
   }
   
-  /* Sidebar - Enterprise Theme */
+  /* Sidebar - Theme-Aware */
   .sidebar-link {
     @apply flex items-center px-4 py-3 rounded-lg transition-all duration-150 cursor-pointer;
-    color: var(--color-text-secondary);
+    color: var(--text-secondary);
   }
   
   .sidebar-link:hover {
-    background-color: var(--color-bg-elevated);
-    color: var(--color-text-primary);
+    background-color: var(--surface-2);
+    color: var(--text);
   }
   
   .sidebar-link-active {
@@ -165,16 +175,16 @@
     background-color: rgb(var(--color-accent-primary));
   }
   
-  /* Tables - Enterprise Theme */
+  /* Tables - Theme-Aware */
   .table {
     @apply w-full text-sm text-left;
   }
   
   .table thead {
     @apply text-xs uppercase border-b;
-    color: var(--color-text-muted);
-    background-color: var(--color-bg-elevated);
-    border-color: var(--color-border-default);
+    color: var(--muted);
+    background-color: var(--surface-2);
+    border-color: var(--border);
   }
   
   .table th {
@@ -182,24 +192,24 @@
   }
   
   .table tbody {
-    border-top: 1px solid var(--color-border-subtle);
+    border-top: 1px solid var(--border-subtle);
   }
   
   .table tbody tr {
-    border-bottom: 1px solid var(--color-border-subtle);
+    border-bottom: 1px solid var(--border-subtle);
   }
   
   .table tr {
     @apply transition-colors;
-    background-color: var(--color-bg-panel);
+    background-color: var(--surface);
   }
   
   .table tr:hover {
-    background-color: var(--color-bg-elevated);
+    background-color: var(--surface-2);
   }
   
   .table td {
     @apply px-6 py-4;
-    color: var(--color-text-primary);
+    color: var(--text);
   }
 }

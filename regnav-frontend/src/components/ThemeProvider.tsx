@@ -64,7 +64,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     root.style.setProperty('--color-accent-hover', selectedAccent.hover);
     root.style.setProperty('--color-accent-light', selectedAccent.light);
     
-  }, [theme, accent, themeMode]); // Now properly depends on the actual theme value
+  }, [theme, accent, themeMode]);
   
   return <>{children}</>;
 };

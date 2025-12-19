@@ -1,7 +1,7 @@
 /**
  * Appearance Settings (Simplified)
  * 
- * Theme & Appearance controls only - uses CSS variables for theme-aware styling.
+ * Theme & Appearance controls only - uses theme tokens.
  */
 
 import React from 'react';
@@ -26,8 +26,8 @@ export const AppearanceSettings: React.FC = () => {
   return (
     <div className="space-y-8">
       {/* Theme & Appearance */}
-      <div className="rounded-lg border p-6" style={{ backgroundColor: 'var(--color-bg-panel)', borderColor: 'var(--color-border-subtle)' }}>
-        <h3 className="text-lg font-semibold mb-4 flex items-center gap-2" style={{ color: 'var(--color-text-primary)' }}>
+      <div className="rounded-lg border p-6" style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)' }}>
+        <h3 className="text-lg font-semibold mb-4 flex items-center gap-2" style={{ color: 'var(--text)' }}>
           <SunIcon className="w-5 h-5 text-purple-400" />
           Theme & Appearance
         </h3>
@@ -35,7 +35,7 @@ export const AppearanceSettings: React.FC = () => {
         <div className="space-y-6">
           {/* Theme Mode */}
           <div>
-            <label className="block text-sm font-medium mb-3" style={{ color: 'var(--color-text-secondary)' }}>
+            <label className="block text-sm font-medium mb-3" style={{ color: 'var(--text-secondary)' }}>
               Theme Mode
             </label>
             <div className="grid grid-cols-3 gap-3">
@@ -49,9 +49,9 @@ export const AppearanceSettings: React.FC = () => {
                   onClick={() => prefs.setThemeMode(mode.value as any)}
                   className="p-4 rounded-lg border-2 transition-all flex flex-col items-center gap-2"
                   style={{
-                    borderColor: prefs.themeMode === mode.value ? 'rgb(var(--color-accent-primary))' : 'var(--color-border-default)',
-                    backgroundColor: prefs.themeMode === mode.value ? 'rgba(var(--color-accent-primary), 0.1)' : 'var(--color-bg-elevated)',
-                    color: prefs.themeMode === mode.value ? 'rgb(var(--color-accent-primary))' : 'var(--color-text-muted)',
+                    borderColor: prefs.themeMode === mode.value ? 'rgb(var(--color-accent-primary))' : 'var(--border)',
+                    backgroundColor: prefs.themeMode === mode.value ? 'rgba(var(--color-accent-primary), 0.1)' : 'var(--surface-2)',
+                    color: prefs.themeMode === mode.value ? 'rgb(var(--color-accent-primary))' : 'var(--muted)',
                   }}
                 >
                   <mode.icon className="w-6 h-6" />
@@ -62,14 +62,14 @@ export const AppearanceSettings: React.FC = () => {
                 </button>
               ))}
             </div>
-            <p className="text-xs mt-2" style={{ color: 'var(--color-text-disabled)' }}>
+            <p className="text-xs mt-2" style={{ color: 'var(--disabled)' }}>
               System mode follows your operating system's theme preference
             </p>
           </div>
           
           {/* Accent Color */}
           <div>
-            <label className="block text-sm font-medium mb-3" style={{ color: 'var(--color-text-secondary)' }}>
+            <label className="block text-sm font-medium mb-3" style={{ color: 'var(--text-secondary)' }}>
               Accent Color
             </label>
             <div className="grid grid-cols-6 gap-3">
@@ -86,20 +86,20 @@ export const AppearanceSettings: React.FC = () => {
                   onClick={() => prefs.setAccent(accent.value as any)}
                   className="p-3 rounded-lg border-2 transition-all flex flex-col items-center gap-2"
                   style={{
-                    borderColor: prefs.accent === accent.value ? 'rgb(var(--color-accent-primary))' : 'var(--color-border-default)',
-                    backgroundColor: 'var(--color-bg-elevated)',
+                    borderColor: prefs.accent === accent.value ? 'rgb(var(--color-accent-primary))' : 'var(--border)',
+                    backgroundColor: 'var(--surface-2)',
                   }}
                   title={accent.label}
                 >
                   <div className={`w-8 h-8 rounded-full ${accent.color}`}></div>
-                  <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>{accent.label}</span>
+                  <span className="text-xs" style={{ color: 'var(--muted)' }}>{accent.label}</span>
                   {prefs.accent === accent.value && (
                     <CheckIcon className="w-3 h-3 text-purple-400" />
                   )}
                 </button>
               ))}
             </div>
-            <p className="text-xs mt-2" style={{ color: 'var(--color-text-disabled)' }}>
+            <p className="text-xs mt-2" style={{ color: 'var(--disabled)' }}>
               Accent color affects buttons, active navigation, and highlights
             </p>
           </div>
@@ -112,15 +112,15 @@ export const AppearanceSettings: React.FC = () => {
           onClick={handleReset}
           className="px-6 py-2 rounded-lg transition-colors flex items-center gap-2 border"
           style={{
-            backgroundColor: 'var(--color-bg-elevated)',
-            color: 'var(--color-text-secondary)',
-            borderColor: 'var(--color-border-default)',
+            backgroundColor: 'var(--surface-2)',
+            color: 'var(--text-secondary)',
+            borderColor: 'var(--border)',
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = 'var(--color-bg-hover)';
+            e.currentTarget.style.backgroundColor = 'var(--hover)';
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = 'var(--color-bg-elevated)';
+            e.currentTarget.style.backgroundColor = 'var(--surface-2)';
           }}
         >
           <ArrowPathIcon className="w-5 h-5" />

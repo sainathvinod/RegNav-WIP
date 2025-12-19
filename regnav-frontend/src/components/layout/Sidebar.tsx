@@ -31,14 +31,14 @@ export const Sidebar: React.FC = () => {
     <aside 
       className={`fixed left-0 top-0 h-screen border-r transition-all duration-300 z-40 flex flex-col ${collapsed ? 'w-20' : 'w-64'}`}
       style={{ 
-        backgroundColor: 'var(--color-bg-panel)', 
-        borderColor: 'var(--color-border-subtle)' 
+        backgroundColor: 'var(--surface)', 
+        borderColor: 'var(--border)' 
       }}
     >
       {/* Header */}
       <div 
         className="h-16 border-b flex items-center justify-between px-4"
-        style={{ borderColor: 'var(--color-border-subtle)' }}
+        style={{ borderColor: 'var(--border)' }}
       >
         {!collapsed && (
           <div className="flex items-center space-x-2">
@@ -49,8 +49,23 @@ export const Sidebar: React.FC = () => {
           </div>
         )}
         {collapsed && <span className="text-2xl mx-auto">🧭</span>}
-        <button onClick={toggleSidebar} className="p-1.5 hover:bg-gray-800 rounded-lg transition-colors">
-          <svg className="w-5 h-5 text-gray-400 hover:text-gray-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <button 
+          onClick={toggleSidebar} 
+          className="p-1.5 rounded-lg transition-colors"
+          style={{ 
+            backgroundColor: 'transparent',
+            color: 'var(--muted)'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = 'var(--surface-2)';
+            e.currentTarget.style.color = 'var(--text)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = 'transparent';
+            e.currentTarget.style.color = 'var(--muted)';
+          }}
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             {collapsed ? (
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" />
             ) : (
@@ -75,7 +90,14 @@ export const Sidebar: React.FC = () => {
                 <span className="text-2xl flex-shrink-0">{item.icon}</span>
                 {!collapsed && <span className="ml-3 flex-1">{item.label}</span>}
                 {collapsed && (
-                  <div className="absolute left-full ml-2 px-2 py-1 bg-gray-800 text-white text-sm rounded-md opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50 border border-gray-700 shadow-lg">
+                  <div 
+                    className="absolute left-full ml-2 px-2 py-1 text-sm rounded-md opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50 border shadow-lg"
+                    style={{ 
+                      backgroundColor: 'var(--surface)', 
+                      color: 'var(--text)',
+                      borderColor: 'var(--border)'
+                    }}
+                  >
                     {item.label}
                   </div>
                 )}
@@ -87,4 +109,3 @@ export const Sidebar: React.FC = () => {
     </aside>
   );
 };
-
