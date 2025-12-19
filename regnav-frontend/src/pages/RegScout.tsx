@@ -455,15 +455,15 @@ export const RegScout: React.FC = () => {
     return (
       <AppLayout title="RegScout - Document Discovery">
         <div className="max-w-7xl mx-auto">
-          {/* Modern Header with Purple Accent */}
+          {/* Modern Header */}
           <div className="mb-8">
             <div className="flex items-center gap-4 mb-3">
-              <div className="p-3 bg-purple-600 rounded-lg">
+              <div className="p-3 rounded-lg" style={{ backgroundColor: 'rgb(var(--color-accent-primary))' }}>
                 <MagnifyingGlassIcon className="h-8 w-8 text-white" />
               </div>
               <div>
-                <h1 className="text-3xl font-bold text-gray-100">RegScout</h1>
-                <p className="mt-1" style={{ color: 'var(--color-text-muted)' }}>
+                <h1 className="text-3xl font-bold" style={{ color: 'var(--text)' }}>RegScout</h1>
+                <p className="mt-1" style={{ color: 'var(--muted)' }}>
                   AI-powered discovery of authoritative regulatory documents
                 </p>
               </div>
@@ -485,19 +485,36 @@ export const RegScout: React.FC = () => {
                 Country
               </label>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                {COUNTRIES.map((country) => (
-                  <button
-                    key={country.code}
-                    onClick={() => setSelectedCountries([country.code])}
-                    className={`px-4 py-3 rounded-lg border-2 text-sm font-medium transition-all ${
-                      selectedCountries.includes(country.code)
-                        ? 'border-purple-500 bg-purple-600 text-white shadow-lg shadow-purple-500/30'
-                        : 'border-gray-700 bg-gray-800 text-gray-300 hover:border-purple-500 hover:text-white'
-                    }`}
-                  >
-                    {country.name}
-                  </button>
-                ))}
+                {COUNTRIES.map((country) => {
+                  const isSelected = selectedCountries.includes(country.code);
+                  return (
+                    <button
+                      key={country.code}
+                      onClick={() => setSelectedCountries([country.code])}
+                      className="px-4 py-3 rounded-lg border-2 text-sm font-medium transition-all"
+                      style={{
+                        backgroundColor: isSelected ? 'rgb(var(--color-accent-primary))' : 'var(--surface-2)',
+                        borderColor: isSelected ? 'rgb(var(--color-accent-primary))' : 'var(--border)',
+                        color: isSelected ? '#FFFFFF' : 'var(--muted)',
+                        boxShadow: isSelected ? `0 10px 25px -5px rgba(var(--color-accent-primary), 0.3)` : 'none',
+                      }}
+                      onMouseEnter={(e) => {
+                        if (!isSelected) {
+                          e.currentTarget.style.borderColor = 'rgb(var(--color-accent-primary))';
+                          e.currentTarget.style.color = 'var(--text)';
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (!isSelected) {
+                          e.currentTarget.style.borderColor = 'var(--border)';
+                          e.currentTarget.style.color = 'var(--muted)';
+                        }
+                      }}
+                    >
+                      {country.name}
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
@@ -508,40 +525,62 @@ export const RegScout: React.FC = () => {
               </label>
               {availableRegions.length > 0 ? (
                 <>
-                  <div className="grid grid-cols-4 md:grid-cols-8 lg:grid-cols-10 gap-2 max-h-64 overflow-y-auto p-4 rounded-lg border" style={{ backgroundColor: 'var(--color-bg-elevated)', borderColor: 'var(--color-border-default)' }}>
-                    {availableRegions.map((region) => (
-                      <button
-                        key={region.code}
-                        onClick={() => toggleState(region.code)}
-                        className={`px-3 py-2 rounded-md text-sm font-medium transition-all ${
-                          selectedStates.includes(region.code)
-                            ? 'bg-purple-600 text-white shadow-md'
-                            : 'bg-gray-700 text-gray-300 hover:bg-gray-600 hover:text-white'
-                        }`}
-                        title={region.name}
-                      >
-                        {region.code}
-                      </button>
-                    ))}
+                  <div className="grid grid-cols-4 md:grid-cols-8 lg:grid-cols-10 gap-2 max-h-64 overflow-y-auto p-4 rounded-lg border" style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)' }}>
+                    {availableRegions.map((region) => {
+                      const isSelected = selectedStates.includes(region.code);
+                      return (
+                        <button
+                          key={region.code}
+                          onClick={() => toggleState(region.code)}
+                          className="px-3 py-2 rounded-md text-sm font-medium transition-all"
+                          style={{
+                            backgroundColor: isSelected ? 'rgb(var(--color-accent-primary))' : 'var(--surface-2)',
+                            color: isSelected ? '#FFFFFF' : 'var(--muted)',
+                            boxShadow: isSelected ? '0 4px 6px -1px rgba(0, 0, 0, 0.1)' : 'none',
+                          }}
+                          onMouseEnter={(e) => {
+                            if (!isSelected) {
+                              e.currentTarget.style.backgroundColor = 'var(--hover)';
+                              e.currentTarget.style.color = 'var(--text)';
+                            }
+                          }}
+                          onMouseLeave={(e) => {
+                            if (!isSelected) {
+                              e.currentTarget.style.backgroundColor = 'var(--surface-2)';
+                              e.currentTarget.style.color = 'var(--muted)';
+                            }
+                          }}
+                          title={region.name}
+                        >
+                          {region.code}
+                        </button>
+                      );
+                    })}
                   </div>
                   <div className="mt-3 flex gap-3">
                     <button
                       onClick={() => setSelectedStates(availableRegions.map(s => s.code))}
-                      className="text-sm text-purple-400 hover:text-purple-300 transition-colors"
+                      className="text-sm transition-colors"
+                      style={{ color: 'rgb(var(--color-accent-primary))' }}
+                      onMouseEnter={(e) => e.currentTarget.style.opacity = '0.8'}
+                      onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
                     >
                       Select All
                     </button>
                     <button
                       onClick={() => setSelectedStates([])}
-                      className="text-sm text-gray-500 hover:text-gray-400 transition-colors"
+                      className="text-sm transition-colors"
+                      style={{ color: 'var(--muted)' }}
+                      onMouseEnter={(e) => e.currentTarget.style.color = 'var(--text-secondary)'}
+                      onMouseLeave={(e) => e.currentTarget.style.color = 'var(--muted)'}
                     >
                       Clear All
                     </button>
                   </div>
                 </>
               ) : (
-                <div className="p-6 rounded-lg border text-center" style={{ backgroundColor: 'var(--color-bg-elevated)', borderColor: 'var(--color-border-default)' }}>
-                  <p className="text-gray-400">
+                <div className="p-6 rounded-lg border text-center" style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)' }}>
+                  <p style={{ color: 'var(--muted)' }}>
                     {selectedCountry.label} data not yet available for {selectedCountry.name}
                   </p>
                 </div>
@@ -551,134 +590,202 @@ export const RegScout: React.FC = () => {
             {/* Lines of Business (Single-Select) */}
             <div className={`mb-8 ${!isUSSelected ? 'opacity-60' : ''}`}>
               <div className="flex items-center gap-3 mb-3">
-                <label className="block text-sm font-medium" style={{ color: 'var(--color-text-secondary)' }}>
+                <label className="block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
                   Line of Business {isUSSelected && selectedLOB && (
-                    <span className="text-purple-400">(1 selected)</span>
+                    <span style={{ color: 'rgb(var(--color-accent-primary))' }}>(1 selected)</span>
                   )}
                   {isUSSelected && selectedStates.length > 0 && !selectedLOB && (
-                    <span className="ml-2 text-xs text-purple-400">
+                    <span className="ml-2 text-xs" style={{ color: 'rgb(var(--color-accent-primary))' }}>
                       (Showing only LOBs valid for ALL selected {selectedCountry?.label?.toLowerCase()})
                     </span>
                   )}
                 </label>
                 {!isUSSelected && (
-                  <span className="px-3 py-1 text-xs font-medium bg-yellow-900/30 text-yellow-300 border border-yellow-800 rounded-full">
+                  <span className="px-3 py-1 text-xs font-medium rounded-full border" style={{ 
+                    backgroundColor: 'rgba(var(--color-accent-primary), 0.1)',
+                    color: 'rgb(var(--color-accent-primary))',
+                    borderColor: 'rgb(var(--color-accent-primary))'
+                  }}>
                     Coming Soon
                   </span>
                 )}
               </div>
               
               {!isUSSelected && (
-                <div className="mb-4 p-3 border rounded-lg" style={{ backgroundColor: 'var(--color-bg-elevated)', borderColor: 'var(--color-border-default)', opacity: 0.7 }}>
-                  <p className="text-sm text-gray-400">
+                <div className="mb-4 p-3 border rounded-lg" style={{ backgroundColor: 'var(--surface-2)', borderColor: 'var(--border)', opacity: 0.7 }}>
+                  <p className="text-sm" style={{ color: 'var(--muted)' }}>
                     LOB and document-type discovery for {selectedCountry.name} is coming soon. For now, select {selectedCountry.label?.toLowerCase()} only.
                   </p>
                 </div>
               )}
               
               <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 ${!isUSSelected ? 'pointer-events-none' : ''}`}>
-                {availableLOBs.slice(0, 6).map((lob) => (
-                  <button
-                    key={lob.id}
-                    onClick={() => isUSSelected && setSelectedLOB(lob.id)}
-                    disabled={!isUSSelected}
-                    className={`px-4 py-3 rounded-lg border-2 text-left transition-all ${
-                      !isUSSelected 
-                        ? 'border-gray-700 bg-gray-800/50 text-gray-500 cursor-not-allowed'
-                        : selectedLOB === lob.id
-                        ? 'border-purple-500 bg-purple-600/20 text-purple-300'
-                        : 'border-gray-700 bg-gray-800 text-gray-300 hover:border-purple-500 hover:text-white'
-                    }`}
-                  >
-                    <div className="flex items-start gap-2">
-                      <span className="text-2xl flex-shrink-0">{lob.icon}</span>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="text-sm font-medium text-white">
-                            {lob.name}
-                          </span>
-                          {lob.code && (
-                            <span className="px-1.5 py-0.5 text-xs bg-gray-700 text-gray-400 rounded">
-                              {lob.code}
+                {availableLOBs.slice(0, 6).map((lob) => {
+                  const isSelected = selectedLOB === lob.id;
+                  const isDisabled = !isUSSelected;
+                  
+                  return (
+                    <button
+                      key={lob.id}
+                      onClick={() => isUSSelected && setSelectedLOB(lob.id)}
+                      disabled={isDisabled}
+                      className="px-4 py-3 rounded-lg border-2 text-left transition-all"
+                      style={{
+                        backgroundColor: isDisabled 
+                          ? 'var(--surface-2)' 
+                          : isSelected 
+                          ? `rgba(var(--color-accent-primary), 0.15)` 
+                          : 'var(--surface)',
+                        borderColor: isDisabled
+                          ? 'var(--border-subtle)'
+                          : isSelected
+                          ? 'rgb(var(--color-accent-primary))'
+                          : 'var(--border)',
+                        color: isDisabled
+                          ? 'var(--disabled)'
+                          : isSelected
+                          ? 'rgb(var(--color-accent-primary))'
+                          : 'var(--muted)',
+                        opacity: isDisabled ? 0.5 : 1,
+                        cursor: isDisabled ? 'not-allowed' : 'pointer',
+                      }}
+                      onMouseEnter={(e) => {
+                        if (!isDisabled && !isSelected) {
+                          e.currentTarget.style.borderColor = 'rgb(var(--color-accent-primary))';
+                          e.currentTarget.style.color = 'var(--text)';
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (!isDisabled && !isSelected) {
+                          e.currentTarget.style.borderColor = 'var(--border)';
+                          e.currentTarget.style.color = 'var(--muted)';
+                        }
+                      }}
+                    >
+                      <div className="flex items-start gap-2">
+                        <span className="text-2xl flex-shrink-0">{lob.icon}</span>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="text-sm font-medium" style={{ color: 'var(--text)' }}>
+                              {lob.name}
                             </span>
-                          )}
+                            {lob.code && (
+                              <span className="px-1.5 py-0.5 text-xs rounded" style={{ backgroundColor: 'var(--surface-2)', color: 'var(--muted)' }}>
+                                {lob.code}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs leading-relaxed" style={{ color: 'var(--muted)' }}>
+                            {lob.description}
+                          </p>
                         </div>
-                        <p className="text-xs text-gray-500 leading-relaxed">
-                          {lob.description}
-                        </p>
+                        {isUSSelected && isSelected && (
+                          <CheckCircleIcon className="h-5 w-5 flex-shrink-0 mt-1" style={{ color: 'rgb(var(--color-accent-primary))' }} />
+                        )}
                       </div>
-                      {isUSSelected && selectedLOB === lob.id && (
-                        <CheckCircleIcon className="h-5 w-5 text-purple-400 flex-shrink-0 mt-1" />
-                      )}
-                    </div>
-                  </button>
-                ))}
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
             {/* Document Types */}
             <div className={`mb-8 ${!isUSSelected ? 'opacity-60' : ''}`}>
               <div className="flex items-center gap-3 mb-3">
-                <label className="block text-sm font-medium" style={{ color: 'var(--color-text-secondary)' }}>
+                <label className="block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
                   Regulatory Document Types ({isUSSelected ? selectedDocTypes.length : 0} selected)
                   {isUSSelected && selectedStates.length > 0 && (
-                    <span className="ml-2 text-xs text-purple-400">
+                    <span className="ml-2 text-xs" style={{ color: 'rgb(var(--color-accent-primary))' }}>
                       (Showing only types valid for ALL selected states)
                     </span>
                   )}
                 </label>
                 {!isUSSelected && (
-                  <span className="px-3 py-1 text-xs font-medium bg-yellow-900/30 text-yellow-300 border border-yellow-800 rounded-full">
+                  <span className="px-3 py-1 text-xs font-medium rounded-full border" style={{ 
+                    backgroundColor: 'rgba(var(--color-accent-primary), 0.1)',
+                    color: 'rgb(var(--color-accent-primary))',
+                    borderColor: 'rgb(var(--color-accent-primary))'
+                  }}>
                     Coming Soon
                   </span>
                 )}
               </div>
               
               <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 ${!isUSSelected ? 'pointer-events-none' : ''}`}>
-                {availableDocTypes.map((docType) => (
-                  <button
-                    key={docType.id}
-                    onClick={() => isUSSelected && toggleDocType(docType.id)}
-                    disabled={!isUSSelected}
-                    className={`px-4 py-3 rounded-lg border-2 text-left transition-all ${
-                      !isUSSelected
-                        ? 'border-gray-700 bg-gray-800/50 text-gray-500 cursor-not-allowed'
-                        : selectedDocTypes.includes(docType.id)
-                        ? 'border-purple-500 bg-purple-600/20 text-purple-300'
-                        : 'border-gray-700 bg-gray-800 text-gray-300 hover:border-purple-500 hover:text-white'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-medium text-white">{docType.name}</span>
-                          <span className="px-2 py-0.5 text-xs bg-gray-700 text-gray-300 rounded">
-                            {docType.code}
-                          </span>
+                {availableDocTypes.map((docType) => {
+                  const isSelected = selectedDocTypes.includes(docType.id);
+                  const isDisabled = !isUSSelected;
+                  
+                  return (
+                    <button
+                      key={docType.id}
+                      onClick={() => isUSSelected && toggleDocType(docType.id)}
+                      disabled={isDisabled}
+                      className="px-4 py-3 rounded-lg border-2 text-left transition-all"
+                      style={{
+                        backgroundColor: isDisabled 
+                          ? 'var(--surface-2)' 
+                          : isSelected 
+                          ? `rgba(var(--color-accent-primary), 0.15)` 
+                          : 'var(--surface)',
+                        borderColor: isDisabled
+                          ? 'var(--border-subtle)'
+                          : isSelected
+                          ? 'rgb(var(--color-accent-primary))'
+                          : 'var(--border)',
+                        color: isDisabled
+                          ? 'var(--disabled)'
+                          : isSelected
+                          ? 'rgb(var(--color-accent-primary))'
+                          : 'var(--muted)',
+                        opacity: isDisabled ? 0.5 : 1,
+                        cursor: isDisabled ? 'not-allowed' : 'pointer',
+                      }}
+                      onMouseEnter={(e) => {
+                        if (!isDisabled && !isSelected) {
+                          e.currentTarget.style.borderColor = 'rgb(var(--color-accent-primary))';
+                          e.currentTarget.style.color = 'var(--text)';
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (!isDisabled && !isSelected) {
+                          e.currentTarget.style.borderColor = 'var(--border)';
+                          e.currentTarget.style.color = 'var(--muted)';
+                        }
+                      }}
+                    >
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-medium" style={{ color: 'var(--text)' }}>{docType.name}</span>
+                            <span className="px-2 py-0.5 text-xs rounded" style={{ backgroundColor: 'var(--surface-2)', color: 'var(--muted)' }}>
+                              {docType.code}
+                            </span>
+                          </div>
+                          <div className="text-xs mt-1 truncate" style={{ color: 'var(--muted)' }}>{docType.description}</div>
                         </div>
-                        <div className="text-xs text-gray-400 mt-1 truncate">{docType.description}</div>
+                        {isUSSelected && isSelected && (
+                          <CheckCircleIcon className="h-5 w-5 flex-shrink-0" style={{ color: 'rgb(var(--color-accent-primary))' }} />
+                        )}
                       </div>
-                      {isUSSelected && selectedDocTypes.includes(docType.id) && (
-                        <CheckCircleIcon className="h-5 w-5 text-purple-400 flex-shrink-0" />
-                      )}
-                    </div>
-                  </button>
-                ))}
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
             {/* WI-Only: Authority FYI */}
             {isWIOnly && selectedLOB === 'workers_comp' && (
-              <div className="mb-6 p-3 border rounded-lg" style={{ backgroundColor: 'var(--color-bg-elevated)', borderColor: 'var(--color-border-default)', opacity: 0.8 }}>
-                <p className="text-xs text-gray-400">
-                  <strong className="text-gray-300">FYI:</strong> Common WI Workers' Compensation authorities include WI DWD (Department of Workforce Development), WI OCI (Office of the Commissioner of Insurance), and WI Legislature.
+              <div className="mb-6 p-3 border rounded-lg" style={{ backgroundColor: 'var(--surface-2)', borderColor: 'var(--border)', opacity: 0.8 }}>
+                <p className="text-xs" style={{ color: 'var(--muted)' }}>
+                  <strong style={{ color: 'var(--text-secondary)' }}>FYI:</strong> Common WI Workers' Compensation authorities include WI DWD (Department of Workforce Development), WI OCI (Office of the Commissioner of Insurance), and WI Legislature.
                 </p>
               </div>
             )}
 
             {/* Advanced Options */}
-            <div className="border-t border-gray-800 pt-6 mt-6">
-              <h3 className="text-sm font-semibold text-gray-300 mb-4">Advanced Options</h3>
+            <div className="border-t pt-6 mt-6" style={{ borderColor: 'var(--border)' }}>
+              <h3 className="text-sm font-semibold mb-4" style={{ color: 'var(--text-secondary)' }}>Advanced Options</h3>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Search Depth */}
@@ -689,8 +796,20 @@ export const RegScout: React.FC = () => {
                   <select
                     value={searchDepth}
                     onChange={(e) => setSearchDepth(e.target.value as any)}
-                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                    style={{ backgroundColor: 'var(--color-bg-elevated)', borderColor: 'var(--color-border-default)', color: 'var(--color-text-primary)' }}
+                    className="w-full px-3 py-2 border rounded-lg transition-all"
+                    style={{ 
+                      backgroundColor: 'var(--surface-2)', 
+                      borderColor: 'var(--border)', 
+                      color: 'var(--text)'
+                    }}
+                    onFocus={(e) => {
+                      e.currentTarget.style.borderColor = 'rgb(var(--color-accent-primary))';
+                      e.currentTarget.style.boxShadow = `0 0 0 3px rgba(var(--color-accent-primary), 0.1)`;
+                    }}
+                    onBlur={(e) => {
+                      e.currentTarget.style.borderColor = 'var(--border)';
+                      e.currentTarget.style.boxShadow = 'none';
+                    }}
                   >
                     <option value="shallow">Shallow (Primary sources only)</option>
                     <option value="moderate">Moderate (Recommended)</option>
@@ -774,18 +893,19 @@ export const RegScout: React.FC = () => {
   if (regScoutView === 'loading') {
     return (
       <AppLayout title="RegScout - Discovering Sources">
-        <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-50">
+        <div className="fixed inset-0 backdrop-blur-sm flex items-center justify-center z-50" style={{ backgroundColor: 'rgba(0, 0, 0, 0.9)' }}>
           <div className="max-w-2xl w-full mx-4">
-            <div className="rounded-2xl border p-12 shadow-2xl" style={{ backgroundColor: 'var(--color-bg-panel)', borderColor: 'var(--color-border-subtle)' }}>
+            <div className="rounded-2xl border p-12 shadow-2xl" style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border-subtle)' }}>
               {/* Progress Circle */}
               <div className="flex justify-center mb-8">
                 <div className="relative">
-                  <div className="w-32 h-32 rounded-full border-8 border-gray-800"></div>
+                  <div className="w-32 h-32 rounded-full border-8" style={{ borderColor: 'var(--border)' }}></div>
                   <div 
-                    className="absolute inset-0 w-32 h-32 rounded-full border-8 border-purple-500 border-t-transparent animate-spin"
+                    className="absolute inset-0 w-32 h-32 rounded-full border-8 border-t-transparent animate-spin"
+                    style={{ borderColor: 'rgb(var(--color-accent-primary))' }}
                   ></div>
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-3xl font-bold text-white">{discoveryProgress.percent}%</span>
+                    <span className="text-3xl font-bold" style={{ color: 'var(--text)' }}>{discoveryProgress.percent}%</span>
                   </div>
                 </div>
               </div>
@@ -804,20 +924,27 @@ export const RegScout: React.FC = () => {
                   
                   return (
                     <div key={item.step} className="flex items-center gap-4">
-                      <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center font-semibold ${
-                        isComplete ? 'bg-purple-600 text-white' :
-                        isActive ? 'bg-purple-500 text-white animate-pulse' :
-                        'bg-gray-800 text-gray-500'
-                      }`}>
+                      <div 
+                        className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center font-semibold"
+                        style={{
+                          backgroundColor: isComplete 
+                            ? 'rgb(var(--color-accent-primary))' 
+                            : isActive 
+                            ? 'rgba(var(--color-accent-primary), 0.8)' 
+                            : 'var(--surface-2)',
+                          color: isComplete || isActive ? '#FFFFFF' : 'var(--disabled)',
+                        }}
+                      >
                         {isComplete ? <CheckCircleIcon className="h-5 w-5" /> : index + 1}
                       </div>
-                      <div className={`flex-1 text-sm font-medium ${
-                        isComplete || isActive ? 'text-white' : 'text-gray-500'
-                      }`}>
+                      <div 
+                        className="flex-1 text-sm font-medium"
+                        style={{ color: isComplete || isActive ? 'var(--text)' : 'var(--disabled)' }}
+                      >
                         {item.label}
                       </div>
                       {isActive && (
-                        <ArrowPathIcon className="h-5 w-5 text-purple-400 animate-spin" />
+                        <ArrowPathIcon className="h-5 w-5 animate-spin" style={{ color: 'rgb(var(--color-accent-primary))' }} />
                       )}
                     </div>
                   );
@@ -835,18 +962,18 @@ export const RegScout: React.FC = () => {
     <AppLayout title="RegScout - Discovery Results">
       <div className="max-w-7xl mx-auto">
         {/* Header with Selection Summary */}
-        <div className="sticky top-0 z-10 bg-black/80 backdrop-blur-sm border-b border-gray-800 -mx-6 px-6 py-4 mb-6">
+        <div className="sticky top-0 z-10 backdrop-blur-sm border-b -mx-6 px-6 py-4 mb-6" style={{ backgroundColor: 'rgba(var(--color-bg-panel), 0.9)', borderColor: 'var(--border)' }}>
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-white mb-2">Discovery Results</h1>
-              <div className="flex items-center gap-4 text-sm text-gray-400">
-                <span>Country: <span className="text-purple-400">{selectedCountry.name}</span></span>
+              <h1 className="text-2xl font-bold mb-2" style={{ color: 'var(--text)' }}>Discovery Results</h1>
+              <div className="flex items-center gap-4 text-sm" style={{ color: 'var(--muted)' }}>
+                <span>Country: <span style={{ color: 'rgb(var(--color-accent-primary))' }}>{selectedCountry.name}</span></span>
                 <span>•</span>
-                <span>{selectedCountry.label}: <span className="text-purple-400">{selectedStates.join(', ')}</span></span>
+                <span>{selectedCountry.label}: <span style={{ color: 'rgb(var(--color-accent-primary))' }}>{selectedStates.join(', ')}</span></span>
                 <span>•</span>
-                <span>LOB: <span className="text-purple-400">{selectedLOB ? getLOBDetails(selectedLOB)?.name : 'None'}</span></span>
+                <span>LOB: <span style={{ color: 'rgb(var(--color-accent-primary))' }}>{selectedLOB ? getLOBDetails(selectedLOB)?.name : 'None'}</span></span>
                 <span>•</span>
-                <span>Doc Types: <span className="text-purple-400">{selectedDocTypes.length}</span></span>
+                <span>Doc Types: <span style={{ color: 'rgb(var(--color-accent-primary))' }}>{selectedDocTypes.length}</span></span>
               </div>
             </div>
             <div className="flex items-center gap-3">
@@ -942,7 +1069,7 @@ export const RegScout: React.FC = () => {
                 
                 <button
                   onClick={addSourceBlock}
-                  className="flex items-center gap-2 text-sm text-purple-400 hover:text-purple-300 transition-colors"
+                  className="flex items-center gap-2 text-sm __ACCENT_COLOR__ hover:text-purple-300 transition-colors"
                 >
                   <PencilSquareIcon className="h-4 w-4" />
                   + Add another source
@@ -1054,7 +1181,7 @@ export const RegScout: React.FC = () => {
                         href={source.sourceUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center gap-1 text-sm text-purple-400 hover:text-purple-300 transition-colors"
+                        className="flex items-center gap-1 text-sm __ACCENT_COLOR__ hover:text-purple-300 transition-colors"
                       >
                         <LinkIcon className="h-4 w-4" />
                         {source.sourceUrl}
@@ -1106,7 +1233,7 @@ export const RegScout: React.FC = () => {
                         href={source.sourceUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center gap-1 text-sm text-purple-400 hover:text-purple-300 transition-colors"
+                        className="flex items-center gap-1 text-sm __ACCENT_COLOR__ hover:text-purple-300 transition-colors"
                       >
                         <LinkIcon className="h-4 w-4" />
                         {source.sourceUrl}
@@ -1259,7 +1386,7 @@ export const RegScout: React.FC = () => {
                           href={source.sourceUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-purple-400 hover:text-purple-300 transition-colors truncate block max-w-xs"
+                          className="__ACCENT_COLOR__ hover:text-purple-300 transition-colors truncate block max-w-xs"
                           title={source.sourceUrl}
                         >
                           {source.sourceUrl}

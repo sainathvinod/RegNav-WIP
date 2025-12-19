@@ -28,7 +28,7 @@ export const AppearanceSettings: React.FC = () => {
       {/* Theme & Appearance */}
       <div className="rounded-lg border p-6" style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)' }}>
         <h3 className="text-lg font-semibold mb-4 flex items-center gap-2" style={{ color: 'var(--text)' }}>
-          <SunIcon className="w-5 h-5 text-purple-400" />
+          <SunIcon className="w-5 h-5" style={{ color: 'var(--muted)' }} />
           Theme & Appearance
         </h3>
         
@@ -94,7 +94,7 @@ export const AppearanceSettings: React.FC = () => {
                   <div className={`w-8 h-8 rounded-full ${accent.color}`}></div>
                   <span className="text-xs" style={{ color: 'var(--muted)' }}>{accent.label}</span>
                   {prefs.accent === accent.value && (
-                    <CheckIcon className="w-3 h-3 text-purple-400" />
+                    <CheckIcon className="w-3 h-3" style={{ color: 'rgb(var(--color-accent-primary))' }} />
                   )}
                 </button>
               ))}

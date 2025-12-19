@@ -1,5 +1,5 @@
 import React from 'react';
-import { SunIcon, MoonIcon } from '@heroicons/react/24/outline';
+import { SunIcon, MoonIcon, ComputerDesktopIcon } from '@heroicons/react/24/outline';
 import { useUserPreferences } from '../../store/userPreferencesStore';
 
 interface TopBarProps {
@@ -7,12 +7,18 @@ interface TopBarProps {
 }
 
 export const TopBar: React.FC<TopBarProps> = ({ title }) => {
-  const { setThemeMode, effectiveTheme } = useUserPreferences();
+  const { themeMode, setThemeMode, effectiveTheme } = useUserPreferences();
   const currentTheme = effectiveTheme();
   
   const toggleTheme = () => {
-    // Toggle directly between light and dark (override system)
-    setThemeMode(currentTheme === 'dark' ? 'light' : 'dark');
+    // Cycle: system → light → dark → system
+    if (themeMode === 'system') {
+      setThemeMode('light');
+    } else if (themeMode === 'light') {
+      setThemeMode('dark');
+    } else {
+      setThemeMode('system');
+    }
   };
   
   return (
@@ -60,9 +66,17 @@ export const TopBar: React.FC<TopBarProps> = ({ title }) => {
               e.currentTarget.style.backgroundColor = 'var(--surface-2)';
               e.currentTarget.style.color = 'var(--muted)';
             }}
-            title={currentTheme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+            title={
+              themeMode === 'system' 
+                ? `System (currently ${currentTheme}) - Click to switch to Light`
+                : themeMode === 'light'
+                ? 'Light Mode - Click to switch to Dark'
+                : 'Dark Mode - Click to switch to System'
+            }
           >
-            {currentTheme === 'dark' ? (
+            {themeMode === 'system' ? (
+              <ComputerDesktopIcon className="w-5 h-5" />
+            ) : themeMode === 'light' ? (
               <SunIcon className="w-5 h-5" />
             ) : (
               <MoonIcon className="w-5 h-5" />

@@ -2,7 +2,15 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Theme System - Token-Driven (Light-First) */
+/* 
+ * CANONICAL THEME SYSTEM - SINGLE SOURCE OF TRUTH
+ * 
+ * Two themes only: Light and Dark
+ * System mode resolves to one of these based on OS preference
+ * All colors derived from semantic tokens
+ * No hardcoded colors anywhere in components
+ */
+
 :root {
   /* User-configurable accent colors (default: purple) */
   --color-accent-primary: 147 51 234;   /* purple-600 RGB */
@@ -10,9 +18,13 @@
   --color-accent-light: 196 181 253;    /* purple-300 RGB */
 }
 
-/* Light Theme (Default) - Professional Enterprise UI */
+/* 
+ * LIGHT THEME (Default)
+ * Professional enterprise UI: light grey background, white cards, dark text, purple accent
+ */
 .theme-light,
-:root {
+:root,
+[data-theme="light"] {
   /* Backgrounds */
   --bg: #F3F4F6;                /* gray-100 - Page background */
   --surface: #FFFFFF;           /* white - Cards/panels */
@@ -36,8 +48,12 @@
   --info: #2563EB;              /* blue-600 */
 }
 
-/* Dark Theme - True Dark/Black Palette */
-.theme-dark {
+/* 
+ * DARK THEME
+ * True dark palette: near-black background, dark grey cards, light text, purple accent
+ */
+.theme-dark,
+[data-theme="dark"] {
   /* Backgrounds */
   --bg: #030712;                /* gray-950 - Page background */
   --surface: #111827;           /* gray-900 - Cards/panels */

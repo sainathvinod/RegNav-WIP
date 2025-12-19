@@ -28,7 +28,7 @@ interface UserPreferencesStore extends UserPreferences {
 }
 
 const DEFAULT_PREFERENCES: UserPreferences = {
-  themeMode: 'dark',
+  themeMode: 'system', // Default to system preference
   accent: 'purple',
 };
 
