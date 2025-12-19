@@ -984,7 +984,20 @@ export const RegScout: React.FC = () => {
                 <PencilSquareIcon className="h-5 w-5" />
                 Add Source
               </button>
-              <label className="flex items-center gap-2 px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-700 transition-all border border-gray-700 cursor-pointer">
+              <label 
+                className="flex items-center gap-2 px-4 py-2 rounded-lg transition-all border cursor-pointer"
+                style={{
+                  backgroundColor: 'var(--surface-2)',
+                  color: 'var(--text)',
+                  borderColor: 'var(--border)'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = 'var(--hover)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'var(--surface-2)';
+                }}
+              >
                 <input
                   type="file"
                   accept=".pdf,.docx,.txt"
@@ -1009,19 +1022,22 @@ export const RegScout: React.FC = () => {
 
         {/* Add Source Modal */}
         {showAddSourceModal && (
-          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <div className="border rounded-lg max-w-2xl w-full p-6 max-h-[80vh] overflow-y-auto" style={{ backgroundColor: 'var(--color-bg-panel)', borderColor: 'var(--color-border-subtle)' }}>
+          <div className="fixed inset-0 backdrop-blur-sm z-50 flex items-center justify-center p-4" style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}>
+            <div className="border rounded-lg max-w-2xl w-full p-6 max-h-[80vh] overflow-y-auto" style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)' }}>
               <h2 className="text-xl font-semibold text-white mb-4">Add Sources</h2>
               
               <div className="space-y-6 mb-6">
                 {sourceBlocks.map((block, index) => (
                   <div key={block.id} className="border rounded-lg p-4" style={{ backgroundColor: 'var(--color-bg-elevated)', borderColor: 'var(--color-border-default)', opacity: 0.9 }}>
                     <div className="flex items-center justify-between mb-3">
-                      <span className="text-sm font-medium text-gray-400">Source {index + 1}</span>
+                      <span className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>Source {index + 1}</span>
                       {sourceBlocks.length > 1 && (
                         <button
                           onClick={() => removeSourceBlock(block.id)}
-                          className="text-gray-500 hover:text-red-400 transition-colors"
+                          className="transition-colors"
+                          style={{ color: 'var(--muted)' }}
+                          onMouseEnter={(e) => e.currentTarget.style.color = 'var(--error)'}
+                          onMouseLeave={(e) => e.currentTarget.style.color = 'var(--muted)'}
                         >
                           <TrashIcon className="h-4 w-4" />
                         </button>
@@ -1125,10 +1141,10 @@ export const RegScout: React.FC = () => {
         {/* Quality Warning */}
         {qualityCheck.warning && (
           <div className="mb-6 p-4 bg-yellow-900/20 border border-yellow-700 rounded-lg flex items-start gap-3">
-            <ExclamationTriangleIcon className="h-6 w-6 text-yellow-400 flex-shrink-0 mt-0.5" />
+            <ExclamationTriangleIcon className="h-6 w-6 flex-shrink-0 mt-0.5" style={{ color: 'var(--warning)' }} />
             <div>
-              <div className="font-medium text-yellow-300 mb-1">Quality Check</div>
-              <div className="text-sm text-yellow-200">{qualityCheck.warning}</div>
+              <div className="font-medium mb-1" style={{ color: 'var(--warning)' }}>Quality Check</div>
+              <div className="text-sm" style={{ color: 'var(--text-secondary)' }}>{qualityCheck.warning}</div>
             </div>
           </div>
         )}
@@ -1143,7 +1159,7 @@ export const RegScout: React.FC = () => {
                   Government-Authorized Sources ({govAutoSources.length})
                 </h2>
               </div>
-              <p className="text-sm text-gray-400 ml-8">
+              <p className="text-sm ml-8" style={{ color: 'var(--muted)' }}>
                 Auto-discovered and government-authorized for your selection.
               </p>
             </div>
@@ -1153,7 +1169,7 @@ export const RegScout: React.FC = () => {
               
               {selectedSourceIds.size > 0 && (
                 <div className="flex items-center gap-3">
-                  <span className="text-sm text-gray-400">{selectedSourceIds.size} selected</span>
+                  <span className="text-sm" style={{ color: 'var(--muted)' }}>{selectedSourceIds.size} selected</span>
                   <button
                     onClick={handleBulkDelete}
                     className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all"
@@ -1166,12 +1182,22 @@ export const RegScout: React.FC = () => {
             </div>
             
             <div className="mb-3">
-              <label className="flex items-center gap-2 text-sm text-gray-400 cursor-pointer hover:text-gray-300">
+              <label 
+                className="flex items-center gap-2 text-sm cursor-pointer transition-colors"
+                style={{ color: 'var(--muted)' }}
+                onMouseEnter={(e) => e.currentTarget.style.color = 'var(--text-secondary)'}
+                onMouseLeave={(e) => e.currentTarget.style.color = 'var(--muted)'}
+              >
                 <input
                   type="checkbox"
                   checked={govAutoSources.length > 0 && govAutoSources.every(s => selectedSourceIds.has(s.id))}
                   onChange={toggleAllGovSources}
-                  className="w-4 h-4 rounded border-gray-700 bg-gray-800 text-purple-600 focus:ring-purple-500"
+                  className="w-4 h-4 rounded"
+                  style={{
+                    borderColor: 'var(--border)',
+                    backgroundColor: 'var(--surface-2)',
+                    accentColor: 'rgb(var(--color-accent-primary))'
+                  }}
                 />
                 Select All
               </label>
@@ -1181,14 +1207,27 @@ export const RegScout: React.FC = () => {
               {govAutoSources.map((source) => (
                 <div
                   key={source.id}
-                  className="bg-gray-900 border border-green-800/30 rounded-lg p-4 hover:border-green-600/50 transition-all"
+                  className="border rounded-lg p-4 transition-all"
+                  style={{
+                    backgroundColor: 'var(--surface)',
+                    borderColor: 'var(--success)',
+                    borderWidth: '1px',
+                    borderStyle: 'solid'
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.boxShadow = `0 0 0 1px var(--success)`}
+                  onMouseLeave={(e) => e.currentTarget.style.boxShadow = 'none'}
                 >
                   <div className="flex items-start gap-3">
                     <input
                       type="checkbox"
                       checked={selectedSourceIds.has(source.id)}
                       onChange={() => toggleSourceSelection(source.id)}
-                      className="mt-1 w-4 h-4 rounded border-gray-700 bg-gray-800 text-purple-600 focus:ring-purple-500"
+                      className="mt-1 w-4 h-4 rounded"
+                      style={{
+                        borderColor: 'var(--border)',
+                        backgroundColor: 'var(--surface-2)',
+                        accentColor: 'rgb(var(--color-accent-primary))'
+                      }}
                     />
                     <CheckCircleIcon className="h-6 w-6 text-green-400 flex-shrink-0 mt-1" />
                     <div className="flex-1 min-w-0">
@@ -1201,7 +1240,7 @@ export const RegScout: React.FC = () => {
                           Gov Auto
                         </span>
                       </div>
-                      <p className="text-sm text-gray-400 mb-2">{source.agencyName}</p>
+                      <p className="text-sm mb-2" style={{ color: 'var(--muted)' }}>{source.agencyName}</p>
                       <a
                         href={source.sourceUrl}
                         target="_blank"
@@ -1217,7 +1256,16 @@ export const RegScout: React.FC = () => {
                     </div>
                     <button
                       onClick={() => removeDiscoveredSource(source.id)}
-                      className="p-2 text-gray-500 hover:text-red-400 hover:bg-red-900/20 rounded-lg transition-all"
+                      className="p-2 rounded-lg transition-all"
+                      style={{ color: 'var(--muted)' }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.color = 'var(--error)';
+                        e.currentTarget.style.backgroundColor = 'rgba(220, 38, 38, 0.1)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.color = 'var(--muted)';
+                        e.currentTarget.style.backgroundColor = 'transparent';
+                      }}
                     >
                       <TrashIcon className="h-5 w-5" />
                     </button>
@@ -1233,12 +1281,12 @@ export const RegScout: React.FC = () => {
           <div className="mb-8">
             <div className="mb-6">
               <div className="flex items-center gap-2 mb-2">
-                <ExclamationTriangleIcon className="h-6 w-6 text-yellow-400" />
-                <h2 className="text-xl font-semibold text-white">
+                <ExclamationTriangleIcon className="h-6 w-6" style={{ color: 'var(--warning)' }} />
+                <h2 className="text-xl font-semibold" style={{ color: 'var(--text)' }}>
                   User-Added Sources ({userAddedSources.length})
                 </h2>
               </div>
-              <p className="text-sm text-gray-400 ml-8">
+              <p className="text-sm ml-8" style={{ color: 'var(--muted)' }}>
                 Manually added sources (may include internal or non-government resources).
               </p>
             </div>
@@ -1246,14 +1294,22 @@ export const RegScout: React.FC = () => {
               {userAddedSources.map((source) => (
                 <div
                   key={source.id}
-                  className="bg-gray-900 border border-yellow-800/30 rounded-lg p-4 hover:border-yellow-600/50 transition-all"
+                  className="border rounded-lg p-4 transition-all"
+                  style={{
+                    backgroundColor: 'var(--surface)',
+                    borderColor: 'var(--warning)',
+                    borderWidth: '1px',
+                    borderStyle: 'solid'
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.boxShadow = `0 0 0 1px var(--warning)`}
+                  onMouseLeave={(e) => e.currentTarget.style.boxShadow = 'none'}
                 >
                   <div className="flex items-start gap-3">
-                    <ExclamationTriangleIcon className="h-6 w-6 text-yellow-400 flex-shrink-0 mt-1" />
+                    <ExclamationTriangleIcon className="h-6 w-6 flex-shrink-0 mt-1" style={{ color: 'var(--warning)' }} />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-2">
-                        <h3 className="text-sm font-semibold text-white">{source.sourceName}</h3>
-                        <span className="px-2 py-0.5 text-xs bg-yellow-900 text-yellow-200 rounded">
+                        <h3 className="text-sm font-semibold" style={{ color: 'var(--text)' }}>{source.sourceName}</h3>
+                        <span className="px-2 py-0.5 text-xs rounded" style={{ backgroundColor: 'rgba(var(--color-accent-primary), 0.1)', color: 'var(--warning)' }}>
                           {getNonGovWarning(source.sourceUrl)}
                         </span>
                       </div>
@@ -1272,7 +1328,16 @@ export const RegScout: React.FC = () => {
                     </div>
                     <button
                       onClick={() => removeDiscoveredSource(source.id)}
-                      className="p-2 text-gray-500 hover:text-red-400 hover:bg-red-900/20 rounded-lg transition-all"
+                      className="p-2 rounded-lg transition-all"
+                      style={{ color: 'var(--muted)' }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.color = 'var(--error)';
+                        e.currentTarget.style.backgroundColor = 'rgba(220, 38, 38, 0.1)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.color = 'var(--muted)';
+                        e.currentTarget.style.backgroundColor = 'transparent';
+                      }}
                     >
                       <TrashIcon className="h-5 w-5" />
                     </button>
@@ -1285,13 +1350,13 @@ export const RegScout: React.FC = () => {
 
         {/* Empty State */}
         {discoveredSources.length === 0 && (
-          <div className="rounded-lg border p-12 text-center" style={{ backgroundColor: 'var(--color-bg-panel)', borderColor: 'var(--color-border-subtle)' }}>
-            <XCircleIcon className="h-16 w-16 text-gray-600 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-white mb-2">No Sources Found</h3>
-            <p className="text-gray-400 mb-6">
+          <div className="rounded-lg border p-12 text-center" style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)' }}>
+            <XCircleIcon className="h-16 w-16 mx-auto mb-4" style={{ color: 'var(--muted)' }} />
+            <h3 className="text-lg font-medium mb-2" style={{ color: 'var(--text)' }}>No Sources Found</h3>
+            <p className="mb-6" style={{ color: 'var(--muted)' }}>
               No government-authorized sources were discovered. You can:
             </p>
-            <ul className="text-sm text-gray-400 space-y-1">
+            <ul className="text-sm space-y-1" style={{ color: 'var(--muted)' }}>
               <li>• Add sources manually using the "Add Source" button above</li>
               <li>• Upload documents using the "Upload File" button above</li>
             </ul>
@@ -1300,10 +1365,10 @@ export const RegScout: React.FC = () => {
 
         {/* Summary Table Section */}
         {filteredSources.length > 0 && (
-          <div className="rounded-lg border p-6" style={{ backgroundColor: 'var(--color-bg-panel)', borderColor: 'var(--color-border-subtle)' }}>
+          <div className="rounded-lg border p-6" style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)' }}>
             <div className="mb-6">
-              <h2 className="text-xl font-semibold mb-2" style={{ color: 'var(--color-text-primary)' }}>Summary Table (Current Working Set)</h2>
-              <p className="text-sm text-gray-400">
+              <h2 className="text-xl font-semibold mb-2" style={{ color: 'var(--text)' }}>Summary Table (Current Working Set)</h2>
+              <p className="text-sm" style={{ color: 'var(--muted)' }}>
                 This table always reflects the sources currently selected above.
               </p>
             </div>
@@ -1313,11 +1378,16 @@ export const RegScout: React.FC = () => {
               <div className="flex items-center gap-4">
                 {/* Filter */}
                 <div className="flex items-center gap-2">
-                  <FunnelIcon className="h-5 w-5 text-gray-400" />
+                  <FunnelIcon className="h-5 w-5" style={{ color: 'var(--muted)' }} />
                   <select
                     value={filterType}
                     onChange={(e) => setFilterType(e.target.value as any)}
-                    className="px-3 py-1.5 bg-gray-800 border border-gray-700 text-gray-200 rounded text-sm"
+                    className="px-3 py-1.5 border rounded text-sm"
+                    style={{
+                      backgroundColor: 'var(--surface-2)',
+                      borderColor: 'var(--border)',
+                      color: 'var(--text)'
+                    }}
                   >
                     <option value="all">All Sources</option>
                     <option value="gov-auto">Gov Auto Only</option>
@@ -1330,10 +1400,13 @@ export const RegScout: React.FC = () => {
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-gray-800">
+                  <tr className="border-b" style={{ borderColor: 'var(--border)' }}>
                     <th 
-                      className="text-left py-3 px-4 text-sm font-medium text-gray-300 cursor-pointer hover:text-white"
+                      className="text-left py-3 px-4 text-sm font-medium cursor-pointer transition-colors"
+                      style={{ color: 'var(--text-secondary)' }}
                       onClick={() => toggleSort('name')}
+                      onMouseEnter={(e) => e.currentTarget.style.color = 'var(--text)'}
+                      onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-secondary)'}
                     >
                       <div className="flex items-center gap-2">
                         Document Name
@@ -1342,21 +1415,24 @@ export const RegScout: React.FC = () => {
                         )}
                       </div>
                     </th>
-                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-300">
+                    <th className="text-left py-3 px-4 text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
                       Description
                     </th>
-                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-300">
+                    <th className="text-left py-3 px-4 text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
                       Doc Type
                     </th>
-                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-300">
+                    <th className="text-left py-3 px-4 text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
                       Authority/Agency
                     </th>
-                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-300">
+                    <th className="text-left py-3 px-4 text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
                       Jurisdiction
                     </th>
                     <th 
-                      className="text-left py-3 px-4 text-sm font-medium text-gray-300 cursor-pointer hover:text-white"
+                      className="text-left py-3 px-4 text-sm font-medium cursor-pointer transition-colors"
+                      style={{ color: 'var(--text-secondary)' }}
                       onClick={() => toggleSort('pages')}
+                      onMouseEnter={(e) => e.currentTarget.style.color = 'var(--text)'}
+                      onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-secondary)'}
                     >
                       <div className="flex items-center gap-2">
                         Pages
@@ -1365,50 +1441,57 @@ export const RegScout: React.FC = () => {
                         )}
                       </div>
                     </th>
-                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-300">
+                    <th className="text-left py-3 px-4 text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
                       Confidence
                     </th>
-                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-300">
+                    <th className="text-left py-3 px-4 text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
                       Source URL
                     </th>
-                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-300">
+                    <th className="text-left py-3 px-4 text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
                       Source Type
                     </th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredSources.map((source) => (
-                    <tr key={source.id} className="border-b border-gray-800 hover:bg-gray-800/50">
-                      <td className="py-3 px-4 text-sm text-white font-medium">
+                    <tr 
+                      key={source.id} 
+                      className="border-b transition-colors" 
+                      style={{ borderColor: 'var(--border-subtle)' }}
+                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--surface-2)'}
+                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                    >
+                      <td className="py-3 px-4 text-sm font-medium" style={{ color: 'var(--text)' }}>
                         {source.sourceName}
                       </td>
-                      <td className="py-3 px-4 text-sm text-gray-400 max-w-sm">
+                      <td className="py-3 px-4 text-sm max-w-sm" style={{ color: 'var(--text-secondary)' }}>
                         {source.metadata?.generatedSummary || 'Official regulatory document'}
                       </td>
                       <td className="py-3 px-4 text-sm">
-                        <span className="px-2 py-1 bg-blue-900/30 text-blue-300 rounded text-xs">
+                        <span className="px-2 py-1 rounded text-xs" style={{ 
+                          backgroundColor: 'rgba(var(--color-accent-primary), 0.1)', 
+                          color: 'rgb(var(--color-accent-primary))' 
+                        }}>
                           {source.metadata?.category?.replace(/_/g, ' ') || 'Unknown'}
                         </span>
                       </td>
-                      <td className="py-3 px-4 text-sm text-gray-300">
+                      <td className="py-3 px-4 text-sm" style={{ color: 'var(--text)' }}>
                         {source.agencyName || '—'}
                       </td>
-                      <td className="py-3 px-4 text-sm text-gray-400">
+                      <td className="py-3 px-4 text-sm" style={{ color: 'var(--muted)' }}>
                         {source.metadata?.jurisdiction || `State: ${source.stateCode}`}
                       </td>
-                      <td className="py-3 px-4 text-sm text-gray-400 text-center">
+                      <td className="py-3 px-4 text-sm text-center" style={{ color: 'var(--muted)' }}>
                         {source.metadata?.pages || '—'}
                       </td>
                       <td className="py-3 px-4 text-sm text-center">
-                        <span className={`font-semibold ${
-                          source.confidenceScore === 1.0 
-                            ? 'text-green-400'
-                            : source.confidenceScore >= 0.9
-                            ? 'text-green-300'
+                        <span className="font-semibold" style={{
+                          color: source.confidenceScore >= 0.9
+                            ? 'var(--success)'
                             : source.confidenceScore >= 0.8
-                            ? 'text-yellow-300'
-                            : 'text-gray-400'
-                        }`}>
+                            ? 'var(--warning)'
+                            : 'var(--muted)'
+                        }}>
                           {Math.round(source.confidenceScore * 100)}%
                         </span>
                       </td>
@@ -1427,11 +1510,18 @@ export const RegScout: React.FC = () => {
                         </a>
                       </td>
                       <td className="py-3 px-4 text-sm">
-                        <span className={`px-2 py-1 rounded text-xs font-medium ${
-                          source.trustLevel === 'gov-auto'
-                            ? 'bg-green-900 text-green-200'
-                            : 'bg-yellow-900 text-yellow-200'
-                        }`}>
+                        <span 
+                          className="px-2 py-1 rounded text-xs font-medium"
+                          style={{
+                            backgroundColor: source.trustLevel === 'gov-auto' 
+                              ? 'rgba(5, 150, 105, 0.1)' 
+                              : 'rgba(217, 119, 6, 0.1)',
+                            color: source.trustLevel === 'gov-auto' 
+                              ? 'var(--success)' 
+                              : 'var(--warning)',
+                            border: `1px solid ${source.trustLevel === 'gov-auto' ? 'var(--success)' : 'var(--warning)'}`
+                          }}
+                        >
                           {source.trustLevel === 'gov-auto' ? 'Gov Auto' : 'User-Added'}
                         </span>
                       </td>
@@ -1447,7 +1537,22 @@ export const RegScout: React.FC = () => {
         <div className="mt-8 flex justify-center gap-4">
           <button
             onClick={() => setRegScoutView('config')}
-            className="flex items-center gap-2 px-6 py-3 bg-gray-900 text-gray-300 rounded-lg hover:bg-gray-800 border border-gray-700 hover:border-purple-600 transition-all"
+            className="flex items-center gap-2 px-6 py-3 rounded-lg border transition-all"
+            style={{ 
+              backgroundColor: 'var(--surface)', 
+              color: 'var(--text-secondary)', 
+              borderColor: 'var(--border)' 
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = 'var(--surface-2)';
+              e.currentTarget.style.borderColor = 'rgb(var(--color-accent-primary))';
+              e.currentTarget.style.color = 'var(--text)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'var(--surface)';
+              e.currentTarget.style.borderColor = 'var(--border)';
+              e.currentTarget.style.color = 'var(--text-secondary)';
+            }}
           >
             <ArrowLeftIcon className="h-5 w-5" />
             Back to Configuration

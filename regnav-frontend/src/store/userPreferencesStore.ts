@@ -28,7 +28,7 @@ interface UserPreferencesStore extends UserPreferences {
 }
 
 const DEFAULT_PREFERENCES: UserPreferences = {
-  themeMode: 'system', // Default to system preference
+  themeMode: 'light', // Product default is Light theme
   accent: 'purple',
 };
 
@@ -46,7 +46,7 @@ export const useUserPreferences = create<UserPreferencesStore>()(
           if (typeof window !== 'undefined' && window.matchMedia) {
             return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
           }
-          return 'dark'; // fallback
+          return 'light'; // fallback to light (product default)
         }
         return prefs.themeMode;
       },
