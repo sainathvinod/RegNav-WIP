@@ -120,27 +120,25 @@ export const Settings: React.FC = () => {
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-50 flex items-center gap-3">
+          <h1 className="text-3xl font-bold flex items-center gap-3" style={{ color: 'var(--color-text-primary)' }}>
             <Cog6ToothIcon className="h-8 w-8 text-purple-500" />
             Settings
           </h1>
-          <p className="mt-2 text-gray-400">
+          <p className="mt-2" style={{ color: 'var(--color-text-muted)' }}>
             Configure AI models and meta prompts for RegNav.AI
           </p>
         </div>
 
         {/* Tab Navigation */}
-        <div className="mb-8 border-b border-gray-700">
+        <div className="mb-8 border-b" style={{ borderColor: 'var(--color-border-default)' }}>
           <div className="flex gap-1">
             <button
               onClick={() => setActiveTab('llm')}
-              className={`
-                px-6 py-3 font-semibold transition-all relative
-                ${activeTab === 'llm'
-                  ? 'text-purple-400 border-b-2 border-purple-500'
-                  : 'text-gray-400 hover:text-gray-300'
-                }
-              `}
+              className="px-6 py-3 font-semibold transition-all relative"
+              style={{
+                color: activeTab === 'llm' ? 'rgb(var(--color-accent-primary))' : 'var(--color-text-muted)',
+                borderBottom: activeTab === 'llm' ? '2px solid rgb(var(--color-accent-primary))' : 'none',
+              }}
             >
               <span className="flex items-center gap-2">
                 <CpuChipIcon className="w-5 h-5" />
@@ -149,13 +147,11 @@ export const Settings: React.FC = () => {
             </button>
             <button
               onClick={() => setActiveTab('prompts')}
-              className={`
-                px-6 py-3 font-semibold transition-all relative
-                ${activeTab === 'prompts'
-                  ? 'text-purple-400 border-b-2 border-purple-500'
-                  : 'text-gray-400 hover:text-gray-300'
-                }
-              `}
+              className="px-6 py-3 font-semibold transition-all relative"
+              style={{
+                color: activeTab === 'prompts' ? 'rgb(var(--color-accent-primary))' : 'var(--color-text-muted)',
+                borderBottom: activeTab === 'prompts' ? '2px solid rgb(var(--color-accent-primary))' : 'none',
+              }}
             >
               <span className="flex items-center gap-2">
                 <DocumentTextIcon className="w-5 h-5" />
@@ -164,13 +160,11 @@ export const Settings: React.FC = () => {
             </button>
             <button
               onClick={() => setActiveTab('appearance')}
-              className={`
-                px-6 py-3 font-semibold transition-all relative
-                ${activeTab === 'appearance'
-                  ? 'text-purple-400 border-b-2 border-purple-500'
-                  : 'text-gray-400 hover:text-gray-300'
-                }
-              `}
+              className="px-6 py-3 font-semibold transition-all relative"
+              style={{
+                color: activeTab === 'appearance' ? 'rgb(var(--color-accent-primary))' : 'var(--color-text-muted)',
+                borderBottom: activeTab === 'appearance' ? '2px solid rgb(var(--color-accent-primary))' : 'none',
+              }}
             >
               <span className="flex items-center gap-2">
                 <SwatchIcon className="w-5 h-5" />
@@ -185,7 +179,7 @@ export const Settings: React.FC = () => {
           <>
             {/* Module Selector */}
             <div className="mb-6">
-          <h2 className="text-sm font-semibold text-gray-300 mb-3">Select Module</h2>
+          <h2 className="text-sm font-semibold mb-3" style={{ color: 'var(--color-text-secondary)' }}>Select Module</h2>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
             {MODULES.map((module) => {
               const Icon = module.icon;
@@ -211,7 +205,7 @@ export const Settings: React.FC = () => {
                   )}
                   <Icon className={`h-8 w-8 mx-auto mb-2 ${colors.text}`} />
                   <div className={`text-sm font-medium ${colors.text}`}>{module.name}</div>
-                  <div className="text-xs text-gray-500 mt-1">{module.description}</div>
+                  <div className="text-xs mt-1" style={{ color: 'var(--color-text-muted)' }}>{module.description}</div>
                 </button>
               );
             })}
@@ -222,10 +216,10 @@ export const Settings: React.FC = () => {
         <div className="mb-6">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h2 className="text-xl font-semibold text-gray-50">
+              <h2 className="text-xl font-semibold" style={{ color: 'var(--color-text-primary)' }}>
                 {currentModule.name} AI Configuration
               </h2>
-              <p className="text-sm text-gray-400 mt-1">
+              <p className="text-sm mt-1" style={{ color: 'var(--color-text-muted)' }}>
                 This configuration will be used whenever {currentModule.name} runs
               </p>
             </div>
@@ -249,7 +243,7 @@ export const Settings: React.FC = () => {
             </div>
             <div className="flex-1">
               <h3 className="text-sm font-semibold text-blue-300 mb-2">How Module Configuration Works</h3>
-              <ul className="text-sm text-gray-300 space-y-1">
+              <ul className="text-sm space-y-1" style={{ color: 'var(--color-text-secondary)' }}>
                 <li>• Each module (RegScout, RegIngest, etc.) has its own independent LLM configuration</li>
                 <li>• Configure the AI model once here, and it will be used automatically in that module</li>
                 <li>• API keys are stored securely in your browser's local storage</li>

@@ -463,7 +463,7 @@ export const RegScout: React.FC = () => {
               </div>
               <div>
                 <h1 className="text-3xl font-bold text-gray-100">RegScout</h1>
-                <p className="text-gray-400 mt-1">
+                <p className="mt-1" style={{ color: 'var(--color-text-muted)' }}>
                   AI-powered discovery of authoritative regulatory documents
                 </p>
               </div>
@@ -481,7 +481,7 @@ export const RegScout: React.FC = () => {
 
             {/* Country Selection */}
             <div className="mb-8">
-              <label className="block text-sm font-medium text-gray-300 mb-3">
+              <label className="block text-sm font-medium mb-3" style={{ color: 'var(--color-text-secondary)' }}>
                 Country
               </label>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -503,7 +503,7 @@ export const RegScout: React.FC = () => {
 
             {/* Region Selection (Dynamic label based on country) */}
             <div className="mb-8">
-              <label className="block text-sm font-medium text-gray-300 mb-3">
+              <label className="block text-sm font-medium mb-3" style={{ color: 'var(--color-text-secondary)' }}>
                 {selectedCountry?.label || 'Region'} ({selectedStates.length} selected)
               </label>
               {availableRegions.length > 0 ? (
@@ -551,7 +551,7 @@ export const RegScout: React.FC = () => {
             {/* Lines of Business (Single-Select) */}
             <div className={`mb-8 ${!isUSSelected ? 'opacity-60' : ''}`}>
               <div className="flex items-center gap-3 mb-3">
-                <label className="block text-sm font-medium text-gray-300">
+                <label className="block text-sm font-medium" style={{ color: 'var(--color-text-secondary)' }}>
                   Line of Business {isUSSelected && selectedLOB && (
                     <span className="text-purple-400">(1 selected)</span>
                   )}
@@ -619,7 +619,7 @@ export const RegScout: React.FC = () => {
             {/* Document Types */}
             <div className={`mb-8 ${!isUSSelected ? 'opacity-60' : ''}`}>
               <div className="flex items-center gap-3 mb-3">
-                <label className="block text-sm font-medium text-gray-300">
+                <label className="block text-sm font-medium" style={{ color: 'var(--color-text-secondary)' }}>
                   Regulatory Document Types ({isUSSelected ? selectedDocTypes.length : 0} selected)
                   {isUSSelected && selectedStates.length > 0 && (
                     <span className="ml-2 text-xs text-purple-400">
@@ -683,7 +683,7 @@ export const RegScout: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Search Depth */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                  <label className="block text-sm font-medium mb-2" style={{ color: 'var(--color-text-secondary)' }}>
                     Search Depth
                   </label>
                   <select
@@ -700,7 +700,7 @@ export const RegScout: React.FC = () => {
 
                 {/* Confidence Threshold */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                  <label className="block text-sm font-medium mb-2" style={{ color: 'var(--color-text-secondary)' }}>
                     Confidence Threshold: {(confidenceThreshold * 100).toFixed(0)}%
                   </label>
                   <input
@@ -903,7 +903,7 @@ export const RegScout: React.FC = () => {
                     
                     <div className="space-y-3">
                       <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-2">
+                        <label className="block text-sm font-medium mb-2" style={{ color: 'var(--color-text-secondary)' }}>
                           Source Name
                         </label>
                         <input
@@ -917,7 +917,7 @@ export const RegScout: React.FC = () => {
                       </div>
                       
                       <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-2">
+                        <label className="block text-sm font-medium mb-2" style={{ color: 'var(--color-text-secondary)' }}>
                           Source URL *
                         </label>
                         <input
