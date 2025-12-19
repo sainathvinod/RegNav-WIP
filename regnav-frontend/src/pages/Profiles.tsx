@@ -27,7 +27,7 @@ import { DiscoveryProfile } from '../types';
 import { useNavigate } from 'react-router-dom';
 
 export const Profiles: React.FC = () => {
-  const { discoveryProfiles: rawProfiles, deleteProfile, updateProfile, createProfile } = useAppStore();
+  const { discoveryProfiles: rawProfiles, deleteProfile, updateProfile, createProfile, loadProfileForEditing } = useAppStore();
   const navigate = useNavigate();
   
   const [searchQuery, setSearchQuery] = useState('');
@@ -88,10 +88,9 @@ export const Profiles: React.FC = () => {
   };
 
   const handleEdit = (profile: DiscoveryProfile) => {
-    // Deep clone to prevent external mutations
-    setSelectedProfile(JSON.parse(JSON.stringify(profile)));
-    setDetailsMode('edit');
-    setShowDetailsModal(true);
+    // Load profile for editing and navigate to RegScout
+    loadProfileForEditing(profile.id);
+    navigate('/regscout');
   };
 
   const handleSaveProfile = (profileId: string, updates: Partial<DiscoveryProfile>) => {
@@ -176,16 +175,16 @@ export const Profiles: React.FC = () => {
   };
 
   return (
-    <AppLayout title="Discovery Profiles">
+    <AppLayout title="Regulatory Portfolios">
       <div className="max-w-[1600px] mx-auto">
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-white flex items-center gap-3">
             <FolderIcon className="w-8 h-8 text-purple-500" />
-            Discovery Profiles
+            Regulatory Portfolios
           </h1>
           <p className="mt-2" style={{ color: 'var(--muted)' }}>
-            Manage your saved discovery configurations and curated source lists
+            Manage your saved discovery configurations and curated regulatory source portfolios
           </p>
         </div>
 

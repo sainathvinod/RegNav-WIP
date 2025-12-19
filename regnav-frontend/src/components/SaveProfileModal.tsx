@@ -1,7 +1,7 @@
 /**
- * Save Profile Modal
+ * Save Regulatory Portfolio Modal
  * 
- * Allows users to save their curated discovery results as a named profile
+ * Allows users to save their curated discovery results as a named regulatory portfolio
  * for later use in rule mining and validation.
  */
 
@@ -28,6 +28,7 @@ interface SaveProfileModalProps {
     maxResults: number;
   };
   sources: RegulatorySource[];
+  isEditing?: boolean;
 }
 
 export const SaveProfileModal: React.FC<SaveProfileModalProps> = ({
@@ -36,6 +37,7 @@ export const SaveProfileModal: React.FC<SaveProfileModalProps> = ({
   onSave,
   configuration,
   sources,
+  isEditing = false,
 }) => {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -53,7 +55,7 @@ export const SaveProfileModal: React.FC<SaveProfileModalProps> = ({
 
   const handleSave = () => {
     if (!name.trim()) {
-      setError('Profile name is required');
+      setError('Portfolio name is required');
       return;
     }
 
@@ -107,9 +109,11 @@ export const SaveProfileModal: React.FC<SaveProfileModalProps> = ({
               <FolderIcon className="w-6 h-6 text-purple-400" />
             </div>
             <div>
-              <h2 className="text-xl font-semibold text-white">Save as Profile</h2>
+              <h2 className="text-xl font-semibold text-white">
+                {isEditing ? 'Update Regulatory Portfolio' : 'Save as Regulatory Portfolio'}
+              </h2>
               <p className="text-sm text-gray-400 mt-0.5">
-                Create a named configuration for later use
+                {isEditing ? 'Update your portfolio details' : 'Create a named portfolio for later use'}
               </p>
             </div>
           </div>
@@ -123,10 +127,10 @@ export const SaveProfileModal: React.FC<SaveProfileModalProps> = ({
 
         {/* Content */}
         <div className="p-6 space-y-6">
-          {/* Profile Name */}
+          {/* Portfolio Name */}
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-2">
-              Profile Name <span className="text-red-400">*</span>
+              Portfolio Name <span className="text-red-400">*</span>
             </label>
             <input
               type="text"
@@ -149,7 +153,7 @@ export const SaveProfileModal: React.FC<SaveProfileModalProps> = ({
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Add notes about this profile..."
+              placeholder="Add notes about this portfolio..."
               rows={3}
               className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
             />
@@ -214,7 +218,7 @@ export const SaveProfileModal: React.FC<SaveProfileModalProps> = ({
             <div className="flex items-start gap-2 mb-3">
               <InformationCircleIcon className="w-5 h-5 text-purple-400 flex-shrink-0 mt-0.5" />
               <div className="text-sm text-purple-200 font-medium">
-                Profile Summary
+                Portfolio Summary
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4 text-sm">
@@ -251,7 +255,7 @@ export const SaveProfileModal: React.FC<SaveProfileModalProps> = ({
             className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-500 transition-colors flex items-center gap-2 font-semibold"
           >
             <CheckCircleIcon className="w-5 h-5" />
-            Save Profile
+            {isEditing ? 'Update Portfolio' : 'Save Portfolio'}
           </button>
         </div>
       </div>

@@ -44,6 +44,7 @@ export const RegScout: React.FC = () => {
     selectedDocTypes,
     regScoutView,
     discoveredSources,
+    editingProfileId,
     setRegScoutView,
     setSelectedCountries,
     setSelectedStates,
@@ -57,6 +58,8 @@ export const RegScout: React.FC = () => {
     getModuleLLMConfig,
     getModuleReferencePrompt,
     createProfile,
+    updateProfile,
+    clearEditingProfile,
   } = useAppStore();
 
   // Get module-specific LLM config
@@ -395,8 +398,34 @@ export const RegScout: React.FC = () => {
   };
 
   const handleSaveProfile = (profileData: any) => {
-    const profile = createProfile(profileData);
-    setToastMessage(`Profile "${profile.name}" saved successfully!`);
+    if (editingProfileId) {
+      // Update existing portfolio
+      updateProfile(editingProfileId, {
+        ...profileData,
+        sources: discoveredSources,
+        configuration: {
+          countries: selectedCountries,
+          states: selectedStates,
+          linesOfBusiness: selectedLOB,
+          documentTypes: selectedDocTypes,
+          searchDepth,
+          confidenceThreshold,
+          maxResults,
+        },
+        metadata: {
+          ...profileData.metadata,
+          totalSources: discoveredSources.length,
+          govAutoSources: discoveredSources.filter(s => s.trustLevel === 'gov-auto').length,
+          userAddedSources: discoveredSources.filter(s => s.trustLevel === 'user-added').length,
+        },
+      });
+      setToastMessage(`Portfolio "${profileData.name}" updated successfully!`);
+      clearEditingProfile();
+    } else {
+      // Create new portfolio
+      const profile = createProfile(profileData);
+      setToastMessage(`Portfolio "${profile.name}" saved successfully!`);
+    }
     setShowToast(true);
     setTimeout(() => setShowToast(false), 3000);
   };
@@ -1562,7 +1591,7 @@ export const RegScout: React.FC = () => {
             className="flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-500 transition-all shadow-lg shadow-green-600/30"
           >
             <FolderIcon className="h-5 w-5" />
-            Save as Profile
+            {editingProfileId ? 'Update Portfolio' : 'Save as Regulatory Portfolio'}
           </button>
           <button
             onClick={handleRunDiscovery}
@@ -1572,7 +1601,7 @@ export const RegScout: React.FC = () => {
           </button>
         </div>
 
-        {/* Save Profile Modal */}
+        {/* Save Portfolio Modal */}
         <SaveProfileModal
           isOpen={showSaveProfileModal}
           onClose={() => setShowSaveProfileModal(false)}
@@ -1587,6 +1616,7 @@ export const RegScout: React.FC = () => {
             maxResults,
           }}
           sources={discoveredSources}
+          isEditing={!!editingProfileId}
         />
       </div>
     </AppLayout>

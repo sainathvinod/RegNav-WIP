@@ -26,6 +26,7 @@ interface AppStore {
   
   // Profiles
   discoveryProfiles: DiscoveryProfile[];
+  editingProfileId: string | null; // Track which profile is being edited
   
   // Actions
   toggleSidebar: () => void;
@@ -56,6 +57,8 @@ interface AppStore {
   updateProfile: (profileId: string, updates: Partial<DiscoveryProfile>) => void;
   deleteProfile: (profileId: string) => void;
   getProfile: (profileId: string) => DiscoveryProfile | undefined;
+  loadProfileForEditing: (profileId: string) => void;
+  clearEditingProfile: () => void;
   clearSelections: () => void;
   reset: () => void;
 }
@@ -83,6 +86,7 @@ export const useAppStore = create<AppStore>()(
       scoutingHistory: [],
       discoveredSources: [],
       discoveryProfiles: [],
+      editingProfileId: null,
 
       // Actions
       toggleSidebar: () => set((state) => ({ sidebarCollapsed: !state.sidebarCollapsed })),
@@ -282,6 +286,27 @@ export const useAppStore = create<AppStore>()(
         // DEEP CLONE when retrieving to prevent external mutations
         return profile ? JSON.parse(JSON.stringify(profile)) : undefined;
       },
+
+      loadProfileForEditing: (profileId) => {
+        const profile = get().discoveryProfiles.find((p) => p.id === profileId);
+        if (profile) {
+          // Load profile data into RegScout state
+          set({
+            editingProfileId: profileId,
+            selectedCountries: profile.configuration.countries || ['US'],
+            selectedStates: profile.configuration.states || [],
+            selectedLOB: profile.configuration.linesOfBusiness || '',
+            selectedDocTypes: profile.configuration.documentTypes || [],
+            discoveredSources: JSON.parse(JSON.stringify(profile.sources)), // Deep clone
+            regScoutView: 'results', // Go directly to results view
+          });
+        }
+      },
+
+      clearEditingProfile: () =>
+        set({
+          editingProfileId: null,
+        }),
 
       clearSelections: () =>
         set({
