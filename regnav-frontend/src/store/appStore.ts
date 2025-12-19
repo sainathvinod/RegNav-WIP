@@ -240,13 +240,13 @@ export const useAppStore = create<AppStore>()(
         set((state) => ({
           discoveryProfiles: state.discoveryProfiles.map((profile) => {
             if (profile.id === profileId) {
-              // DEEP CLONE updates to prevent reference sharing
-              const deepClonedUpdates = JSON.parse(JSON.stringify(updates));
-              return { 
+              // DEEP CLONE the ENTIRE merged result to prevent ANY reference sharing
+              const merged = { 
                 ...profile, 
-                ...deepClonedUpdates, 
+                ...updates, 
                 updatedAt: new Date().toISOString() 
               };
+              return JSON.parse(JSON.stringify(merged));
             }
             return profile;
           }),

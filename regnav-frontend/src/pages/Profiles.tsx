@@ -5,7 +5,7 @@
  * Profiles can be loaded into RegScout or used for rule mining.
  */
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { AppLayout } from '../components/layout/AppLayout';
 import { ProfileDetailsModal } from '../components/ProfileDetailsModal';
 import { DuplicateProfileModal } from '../components/DuplicateProfileModal';
@@ -27,7 +27,7 @@ import { DiscoveryProfile } from '../types';
 import { useNavigate } from 'react-router-dom';
 
 export const Profiles: React.FC = () => {
-  const { discoveryProfiles, deleteProfile, updateProfile, createProfile } = useAppStore();
+  const { discoveryProfiles: rawProfiles, deleteProfile, updateProfile, createProfile } = useAppStore();
   const navigate = useNavigate();
   
   const [searchQuery, setSearchQuery] = useState('');
@@ -41,6 +41,12 @@ export const Profiles: React.FC = () => {
   const [toastMessage, setToastMessage] = useState('');
   const [showDuplicateModal, setShowDuplicateModal] = useState(false);
   const [profileToDuplicate, setProfileToDuplicate] = useState<DiscoveryProfile | null>(null);
+
+  // CRITICAL: Deep clone all profiles from store to prevent reference sharing
+  const discoveryProfiles = useMemo(
+    () => JSON.parse(JSON.stringify(rawProfiles)) as DiscoveryProfile[],
+    [rawProfiles]
+  );
 
   // Filter and sort profiles
   const filteredProfiles = discoveryProfiles
