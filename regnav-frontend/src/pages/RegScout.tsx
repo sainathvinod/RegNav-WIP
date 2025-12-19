@@ -1052,15 +1052,25 @@ export const RegScout: React.FC = () => {
                           value={block.url}
                           onChange={(e) => updateSourceBlock(block.id, 'url', e.target.value)}
                           placeholder="https://..."
-                          className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                          className="w-full px-4 py-2 border rounded-lg transition-all"
                           style={{ 
-                            backgroundColor: 'var(--color-bg-elevated)', 
-                            borderColor: block.error ? 'var(--color-error)' : 'var(--color-border-default)', 
-                            color: 'var(--color-text-primary)' 
+                            backgroundColor: 'var(--surface-2)', 
+                            borderColor: block.error ? 'var(--error)' : 'var(--border)', 
+                            color: 'var(--text)' 
+                          }}
+                          onFocus={(e) => {
+                            if (!block.error) {
+                              e.currentTarget.style.borderColor = 'rgb(var(--color-accent-primary))';
+                              e.currentTarget.style.boxShadow = `0 0 0 3px rgba(var(--color-accent-primary), 0.1)`;
+                            }
+                          }}
+                          onBlur={(e) => {
+                            e.currentTarget.style.borderColor = block.error ? 'var(--error)' : 'var(--border)';
+                            e.currentTarget.style.boxShadow = 'none';
                           }}
                         />
                         {block.error && (
-                          <p className="text-sm text-red-400 mt-1">{block.error}</p>
+                          <p className="text-sm mt-1" style={{ color: 'var(--error)' }}>{block.error}</p>
                         )}
                       </div>
                     </div>
@@ -1069,7 +1079,10 @@ export const RegScout: React.FC = () => {
                 
                 <button
                   onClick={addSourceBlock}
-                  className="flex items-center gap-2 text-sm __ACCENT_COLOR__ hover:text-purple-300 transition-colors"
+                  className="flex items-center gap-2 text-sm transition-colors"
+                  style={{ color: 'rgb(var(--color-accent-primary))' }}
+                  onMouseEnter={(e) => e.currentTarget.style.opacity = '0.8'}
+                  onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
                 >
                   <PencilSquareIcon className="h-4 w-4" />
                   + Add another source
@@ -1082,13 +1095,25 @@ export const RegScout: React.FC = () => {
                     setShowAddSourceModal(false);
                     setSourceBlocks([{ id: '1', name: '', url: '' }]);
                   }}
-                  className="px-4 py-2 bg-gray-800 text-gray-300 rounded-lg hover:bg-gray-700 transition-all"
+                  className="px-4 py-2 rounded-lg transition-all"
+                  style={{ backgroundColor: 'var(--surface-2)', color: 'var(--text-secondary)' }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = 'var(--hover)';
+                    e.currentTarget.style.color = 'var(--text)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'var(--surface-2)';
+                    e.currentTarget.style.color = 'var(--text-secondary)';
+                  }}
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleAddSource}
-                  className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-all"
+                  className="px-4 py-2 text-white rounded-lg transition-all"
+                  style={{ backgroundColor: 'rgb(var(--color-accent-primary))' }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgb(var(--color-accent-hover))'}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgb(var(--color-accent-primary))'}
                 >
                   Add {sourceBlocks.filter(b => b.url.trim()).length > 0 ? `${sourceBlocks.filter(b => b.url.trim()).length} ` : ''}Source{sourceBlocks.filter(b => b.url.trim()).length > 1 ? 's' : ''}
                 </button>
@@ -1181,7 +1206,10 @@ export const RegScout: React.FC = () => {
                         href={source.sourceUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center gap-1 text-sm __ACCENT_COLOR__ hover:text-purple-300 transition-colors"
+                        className="flex items-center gap-1 text-sm transition-colors"
+                        style={{ color: 'rgb(var(--color-accent-primary))' }}
+                        onMouseEnter={(e) => e.currentTarget.style.opacity = '0.8'}
+                        onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
                       >
                         <LinkIcon className="h-4 w-4" />
                         {source.sourceUrl}
@@ -1233,7 +1261,10 @@ export const RegScout: React.FC = () => {
                         href={source.sourceUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center gap-1 text-sm __ACCENT_COLOR__ hover:text-purple-300 transition-colors"
+                        className="flex items-center gap-1 text-sm transition-colors"
+                        style={{ color: 'rgb(var(--color-accent-primary))' }}
+                        onMouseEnter={(e) => e.currentTarget.style.opacity = '0.8'}
+                        onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
                       >
                         <LinkIcon className="h-4 w-4" />
                         {source.sourceUrl}
@@ -1386,7 +1417,10 @@ export const RegScout: React.FC = () => {
                           href={source.sourceUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="__ACCENT_COLOR__ hover:text-purple-300 transition-colors truncate block max-w-xs"
+                          className="transition-colors truncate block max-w-xs"
+                          style={{ color: 'rgb(var(--color-accent-primary))' }}
+                          onMouseEnter={(e) => e.currentTarget.style.opacity = '0.8'}
+                          onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
                           title={source.sourceUrl}
                         >
                           {source.sourceUrl}
