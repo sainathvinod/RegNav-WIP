@@ -12,8 +12,6 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const {
     effectiveTheme,
     accent,
-    fontFamily,
-    fontSize,
   } = useUserPreferences();
   
   useEffect(() => {
@@ -36,20 +34,25 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         hover: '29 78 216', // blue-700
         light: '147 197 253', // blue-300
       },
-      teal: {
-        primary: '20 184 166', // teal-600
-        hover: '17 94 89', // teal-700
-        light: '94 234 212', // teal-300
-      },
       green: {
         primary: '22 163 74', // green-600
         hover: '21 128 61', // green-700
         light: '134 239 172', // green-300
       },
-      orange: {
-        primary: '234 88 12', // orange-600
-        hover: '194 65 12', // orange-700
-        light: '253 186 116', // orange-300
+      teal: {
+        primary: '20 184 166', // teal-600
+        hover: '17 94 89', // teal-700
+        light: '94 234 212', // teal-300
+      },
+      red: {
+        primary: '220 38 38', // red-600
+        hover: '185 28 28', // red-700
+        light: '252 165 165', // red-300
+      },
+      yellow: {
+        primary: '202 138 4', // yellow-600
+        hover: '161 98 7', // yellow-700
+        light: '253 224 71', // yellow-300
       },
     };
     
@@ -58,23 +61,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     root.style.setProperty('--color-accent-hover', selectedAccent.hover);
     root.style.setProperty('--color-accent-light', selectedAccent.light);
     
-    // Apply font family
-    const fontFamilies = {
-      inter: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
-      roboto: '"Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
-      system: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif',
-    };
-    root.style.setProperty('--font-family-base', fontFamilies[fontFamily]);
-    
-    // Apply font size
-    const fontSizes = {
-      sm: '14px',
-      md: '16px',
-      lg: '18px',
-    };
-    root.style.setProperty('--font-size-base', fontSizes[fontSize]);
-    
-  }, [effectiveTheme, accent, fontFamily, fontSize]);
+  }, [effectiveTheme, accent]);
   
   return <>{children}</>;
 };
