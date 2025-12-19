@@ -475,9 +475,9 @@ export const RegScout: React.FC = () => {
             <LLMIndicator config={llmConfig} moduleName="RegScout" />
           </div>
 
-          {/* Configuration Panel - Dark Theme */}
-          <div className="bg-gray-900 rounded-xl border border-gray-800 p-8 mb-6 shadow-2xl">
-            <h2 className="text-xl font-semibold text-gray-100 mb-6">Discovery Configuration</h2>
+          {/* Configuration Panel */}
+          <div className="rounded-xl border p-8 mb-6 shadow-2xl" style={{ backgroundColor: 'var(--color-bg-panel)', borderColor: 'var(--color-border-subtle)' }}>
+            <h2 className="text-xl font-semibold mb-6" style={{ color: 'var(--color-text-primary)' }}>Discovery Configuration</h2>
 
             {/* Country Selection */}
             <div className="mb-8">
@@ -508,7 +508,7 @@ export const RegScout: React.FC = () => {
               </label>
               {availableRegions.length > 0 ? (
                 <>
-                  <div className="grid grid-cols-4 md:grid-cols-8 lg:grid-cols-10 gap-2 max-h-64 overflow-y-auto p-4 bg-gray-800 rounded-lg border border-gray-700">
+                  <div className="grid grid-cols-4 md:grid-cols-8 lg:grid-cols-10 gap-2 max-h-64 overflow-y-auto p-4 rounded-lg border" style={{ backgroundColor: 'var(--color-bg-elevated)', borderColor: 'var(--color-border-default)' }}>
                     {availableRegions.map((region) => (
                       <button
                         key={region.code}
@@ -540,7 +540,7 @@ export const RegScout: React.FC = () => {
                   </div>
                 </>
               ) : (
-                <div className="p-6 bg-gray-800 rounded-lg border border-gray-700 text-center">
+                <div className="p-6 rounded-lg border text-center" style={{ backgroundColor: 'var(--color-bg-elevated)', borderColor: 'var(--color-border-default)' }}>
                   <p className="text-gray-400">
                     {selectedCountry.label} data not yet available for {selectedCountry.name}
                   </p>
@@ -569,7 +569,7 @@ export const RegScout: React.FC = () => {
               </div>
               
               {!isUSSelected && (
-                <div className="mb-4 p-3 bg-gray-800/50 border border-gray-700 rounded-lg">
+                <div className="mb-4 p-3 border rounded-lg" style={{ backgroundColor: 'var(--color-bg-elevated)', borderColor: 'var(--color-border-default)', opacity: 0.7 }}>
                   <p className="text-sm text-gray-400">
                     LOB and document-type discovery for {selectedCountry.name} is coming soon. For now, select {selectedCountry.label?.toLowerCase()} only.
                   </p>
@@ -669,7 +669,7 @@ export const RegScout: React.FC = () => {
 
             {/* WI-Only: Authority FYI */}
             {isWIOnly && selectedLOB === 'workers_comp' && (
-              <div className="mb-6 p-3 bg-gray-800/30 border border-gray-700 rounded-lg">
+              <div className="mb-6 p-3 border rounded-lg" style={{ backgroundColor: 'var(--color-bg-elevated)', borderColor: 'var(--color-border-default)', opacity: 0.8 }}>
                 <p className="text-xs text-gray-400">
                   <strong className="text-gray-300">FYI:</strong> Common WI Workers' Compensation authorities include WI DWD (Department of Workforce Development), WI OCI (Office of the Commissioner of Insurance), and WI Legislature.
                 </p>
@@ -689,7 +689,8 @@ export const RegScout: React.FC = () => {
                   <select
                     value={searchDepth}
                     onChange={(e) => setSearchDepth(e.target.value as any)}
-                    className="w-full px-3 py-2 bg-gray-800 border border-gray-700 text-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                    style={{ backgroundColor: 'var(--color-bg-elevated)', borderColor: 'var(--color-border-default)', color: 'var(--color-text-primary)' }}
                   >
                     <option value="shallow">Shallow (Primary sources only)</option>
                     <option value="moderate">Moderate (Recommended)</option>
@@ -775,7 +776,7 @@ export const RegScout: React.FC = () => {
       <AppLayout title="RegScout - Discovering Sources">
         <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-50">
           <div className="max-w-2xl w-full mx-4">
-            <div className="bg-gray-900 rounded-2xl border border-gray-800 p-12 shadow-2xl">
+            <div className="rounded-2xl border p-12 shadow-2xl" style={{ backgroundColor: 'var(--color-bg-panel)', borderColor: 'var(--color-border-subtle)' }}>
               {/* Progress Circle */}
               <div className="flex justify-center mb-8">
                 <div className="relative">
@@ -882,12 +883,12 @@ export const RegScout: React.FC = () => {
         {/* Add Source Modal */}
         {showAddSourceModal && (
           <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <div className="bg-gray-900 border border-gray-800 rounded-lg max-w-2xl w-full p-6 max-h-[80vh] overflow-y-auto">
+            <div className="border rounded-lg max-w-2xl w-full p-6 max-h-[80vh] overflow-y-auto" style={{ backgroundColor: 'var(--color-bg-panel)', borderColor: 'var(--color-border-subtle)' }}>
               <h2 className="text-xl font-semibold text-white mb-4">Add Sources</h2>
               
               <div className="space-y-6 mb-6">
                 {sourceBlocks.map((block, index) => (
-                  <div key={block.id} className="border border-gray-800 rounded-lg p-4 bg-gray-800/50">
+                  <div key={block.id} className="border rounded-lg p-4" style={{ backgroundColor: 'var(--color-bg-elevated)', borderColor: 'var(--color-border-default)', opacity: 0.9 }}>
                     <div className="flex items-center justify-between mb-3">
                       <span className="text-sm font-medium text-gray-400">Source {index + 1}</span>
                       {sourceBlocks.length > 1 && (
@@ -910,7 +911,8 @@ export const RegScout: React.FC = () => {
                           value={block.name}
                           onChange={(e) => updateSourceBlock(block.id, 'name', e.target.value)}
                           placeholder="e.g., Wisconsin OCI Bulletin 2024"
-                          className="w-full px-4 py-2 bg-gray-900 border border-gray-700 text-white rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                          className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                          style={{ backgroundColor: 'var(--color-bg-elevated)', borderColor: 'var(--color-border-default)', color: 'var(--color-text-primary)' }}
                         />
                       </div>
                       
@@ -923,9 +925,12 @@ export const RegScout: React.FC = () => {
                           value={block.url}
                           onChange={(e) => updateSourceBlock(block.id, 'url', e.target.value)}
                           placeholder="https://..."
-                          className={`w-full px-4 py-2 bg-gray-900 border ${
-                            block.error ? 'border-red-500' : 'border-gray-700'
-                          } text-white rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent`}
+                          className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                          style={{ 
+                            backgroundColor: 'var(--color-bg-elevated)', 
+                            borderColor: block.error ? 'var(--color-error)' : 'var(--color-border-default)', 
+                            color: 'var(--color-text-primary)' 
+                          }}
                         />
                         {block.error && (
                           <p className="text-sm text-red-400 mt-1">{block.error}</p>
@@ -1122,7 +1127,7 @@ export const RegScout: React.FC = () => {
 
         {/* Empty State */}
         {discoveredSources.length === 0 && (
-          <div className="bg-gray-900 rounded-lg border border-gray-800 p-12 text-center">
+          <div className="rounded-lg border p-12 text-center" style={{ backgroundColor: 'var(--color-bg-panel)', borderColor: 'var(--color-border-subtle)' }}>
             <XCircleIcon className="h-16 w-16 text-gray-600 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-white mb-2">No Sources Found</h3>
             <p className="text-gray-400 mb-6">
@@ -1137,9 +1142,9 @@ export const RegScout: React.FC = () => {
 
         {/* Summary Table Section */}
         {filteredSources.length > 0 && (
-          <div className="bg-gray-900 rounded-lg border border-gray-800 p-6">
+          <div className="rounded-lg border p-6" style={{ backgroundColor: 'var(--color-bg-panel)', borderColor: 'var(--color-border-subtle)' }}>
             <div className="mb-6">
-              <h2 className="text-xl font-semibold text-white mb-2">Summary Table (Current Working Set)</h2>
+              <h2 className="text-xl font-semibold mb-2" style={{ color: 'var(--color-text-primary)' }}>Summary Table (Current Working Set)</h2>
               <p className="text-sm text-gray-400">
                 This table always reflects the sources currently selected above.
               </p>

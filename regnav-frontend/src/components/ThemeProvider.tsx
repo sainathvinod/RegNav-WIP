@@ -10,12 +10,15 @@ import { useUserPreferences } from '../store/userPreferencesStore';
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const {
+    themeMode,
     effectiveTheme,
     accent,
   } = useUserPreferences();
   
+  // Calculate theme outside effect so we can use it in dependencies
+  const theme = effectiveTheme();
+  
   useEffect(() => {
-    const theme = effectiveTheme();
     const root = document.documentElement;
     
     // Apply theme class
@@ -61,7 +64,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     root.style.setProperty('--color-accent-hover', selectedAccent.hover);
     root.style.setProperty('--color-accent-light', selectedAccent.light);
     
-  }, [effectiveTheme, accent]);
+  }, [theme, accent, themeMode]); // Now properly depends on the actual theme value
   
   return <>{children}</>;
 };

@@ -1,7 +1,7 @@
 /**
  * Appearance Settings (Simplified)
  * 
- * Theme & Appearance controls only.
+ * Theme & Appearance controls only - uses CSS variables for theme-aware styling.
  */
 
 import React from 'react';
@@ -26,8 +26,8 @@ export const AppearanceSettings: React.FC = () => {
   return (
     <div className="space-y-8">
       {/* Theme & Appearance */}
-      <div className="bg-gray-900 border border-gray-800 rounded-lg p-6">
-        <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+      <div className="rounded-lg border p-6" style={{ backgroundColor: 'var(--color-bg-panel)', borderColor: 'var(--color-border-subtle)' }}>
+        <h3 className="text-lg font-semibold mb-4 flex items-center gap-2" style={{ color: 'var(--color-text-primary)' }}>
           <SunIcon className="w-5 h-5 text-purple-400" />
           Theme & Appearance
         </h3>
@@ -35,7 +35,7 @@ export const AppearanceSettings: React.FC = () => {
         <div className="space-y-6">
           {/* Theme Mode */}
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-3">
+            <label className="block text-sm font-medium mb-3" style={{ color: 'var(--color-text-secondary)' }}>
               Theme Mode
             </label>
             <div className="grid grid-cols-3 gap-3">
@@ -47,30 +47,29 @@ export const AppearanceSettings: React.FC = () => {
                 <button
                   key={mode.value}
                   onClick={() => prefs.setThemeMode(mode.value as any)}
-                  className={`
-                    p-4 rounded-lg border-2 transition-all flex flex-col items-center gap-2
-                    ${prefs.themeMode === mode.value
-                      ? 'border-purple-500 bg-purple-900/20 text-purple-400'
-                      : 'border-gray-700 bg-gray-800 text-gray-400 hover:border-gray-600'
-                    }
-                  `}
+                  className="p-4 rounded-lg border-2 transition-all flex flex-col items-center gap-2"
+                  style={{
+                    borderColor: prefs.themeMode === mode.value ? 'rgb(var(--color-accent-primary))' : 'var(--color-border-default)',
+                    backgroundColor: prefs.themeMode === mode.value ? 'rgba(var(--color-accent-primary), 0.1)' : 'var(--color-bg-elevated)',
+                    color: prefs.themeMode === mode.value ? 'rgb(var(--color-accent-primary))' : 'var(--color-text-muted)',
+                  }}
                 >
                   <mode.icon className="w-6 h-6" />
                   <span className="font-medium">{mode.label}</span>
                   {prefs.themeMode === mode.value && (
-                    <CheckIcon className="w-4 h-4 text-purple-400" />
+                    <CheckIcon className="w-4 h-4" />
                   )}
                 </button>
               ))}
             </div>
-            <p className="text-xs text-gray-500 mt-2">
+            <p className="text-xs mt-2" style={{ color: 'var(--color-text-disabled)' }}>
               System mode follows your operating system's theme preference
             </p>
           </div>
           
           {/* Accent Color */}
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-3">
+            <label className="block text-sm font-medium mb-3" style={{ color: 'var(--color-text-secondary)' }}>
               Accent Color
             </label>
             <div className="grid grid-cols-6 gap-3">
@@ -85,24 +84,22 @@ export const AppearanceSettings: React.FC = () => {
                 <button
                   key={accent.value}
                   onClick={() => prefs.setAccent(accent.value as any)}
-                  className={`
-                    p-3 rounded-lg border-2 transition-all flex flex-col items-center gap-2
-                    ${prefs.accent === accent.value
-                      ? 'border-gray-500 bg-gray-800'
-                      : 'border-gray-700 bg-gray-900 hover:border-gray-600'
-                    }
-                  `}
+                  className="p-3 rounded-lg border-2 transition-all flex flex-col items-center gap-2"
+                  style={{
+                    borderColor: prefs.accent === accent.value ? 'rgb(var(--color-accent-primary))' : 'var(--color-border-default)',
+                    backgroundColor: 'var(--color-bg-elevated)',
+                  }}
                   title={accent.label}
                 >
                   <div className={`w-8 h-8 rounded-full ${accent.color}`}></div>
-                  <span className="text-xs text-gray-400">{accent.label}</span>
+                  <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>{accent.label}</span>
                   {prefs.accent === accent.value && (
                     <CheckIcon className="w-3 h-3 text-purple-400" />
                   )}
                 </button>
               ))}
             </div>
-            <p className="text-xs text-gray-500 mt-2">
+            <p className="text-xs mt-2" style={{ color: 'var(--color-text-disabled)' }}>
               Accent color affects buttons, active navigation, and highlights
             </p>
           </div>
@@ -113,7 +110,18 @@ export const AppearanceSettings: React.FC = () => {
       <div className="flex justify-end">
         <button
           onClick={handleReset}
-          className="px-6 py-2 bg-gray-800 text-gray-300 rounded-lg hover:bg-gray-700 transition-colors flex items-center gap-2 border border-gray-700"
+          className="px-6 py-2 rounded-lg transition-colors flex items-center gap-2 border"
+          style={{
+            backgroundColor: 'var(--color-bg-elevated)',
+            color: 'var(--color-text-secondary)',
+            borderColor: 'var(--color-border-default)',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = 'var(--color-bg-hover)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = 'var(--color-bg-elevated)';
+          }}
         >
           <ArrowPathIcon className="w-5 h-5" />
           Reset to Defaults
