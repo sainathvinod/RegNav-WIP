@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AppLayout } from './components/layout/AppLayout';
+import { ThemeProvider } from './components/ThemeProvider';
 import { RegScout } from './pages/RegScout';
 import { Settings } from './pages/Settings';
 import { Profiles } from './pages/Profiles';
@@ -126,22 +127,24 @@ const PlaceholderPage: React.FC<{ title: string }> = ({ title }) => {
 
 function App() {
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<Dashboard />} />
-        <Route path="/organizations" element={<PlaceholderPage title="Organizations" />} />
-        <Route path="/configuration" element={<PlaceholderPage title="Configuration" />} />
-        <Route path="/profiles" element={<Profiles />} />
-        <Route path="/regscout" element={<RegScout />} />
-        <Route path="/regingest" element={<PlaceholderPage title="RegIngest - Document Repository" />} />
-        <Route path="/ruleminer" element={<PlaceholderPage title="RuleMiner - Rule Extraction" />} />
-        <Route path="/rulesense" element={<PlaceholderPage title="RuleSense - AI Insights" />} />
-        <Route path="/regvalidate" element={<PlaceholderPage title="RegValidate - File Validation" />} />
-        <Route path="/analytics" element={<PlaceholderPage title="Analytics" />} />
-        <Route path="/reports" element={<PlaceholderPage title="Reports" />} />
-        <Route path="/settings" element={<Settings />} />
-      </Routes>
-    </Router>
+    <ThemeProvider>
+      <Router>
+        <Routes>
+          <Route path="/" element={<Dashboard />} />
+          <Route path="/organizations" element={<PlaceholderPage title="Organizations" />} />
+          <Route path="/configuration" element={<PlaceholderPage title="Configuration" />} />
+          <Route path="/profiles" element={<Profiles />} />
+          <Route path="/regscout" element={<RegScout />} />
+          <Route path="/regingest" element={<PlaceholderPage title="RegIngest - Document Repository" />} />
+          <Route path="/ruleminer" element={<PlaceholderPage title="RuleMiner - Rule Extraction" />} />
+          <Route path="/rulesense" element={<PlaceholderPage title="RuleSense - AI Insights" />} />
+          <Route path="/regvalidate" element={<PlaceholderPage title="RegValidate - File Validation" />} />
+          <Route path="/analytics" element={<PlaceholderPage title="Analytics" />} />
+          <Route path="/reports" element={<PlaceholderPage title="Reports" />} />
+          <Route path="/settings" element={<Settings />} />
+        </Routes>
+      </Router>
+    </ThemeProvider>
   );
 }
 

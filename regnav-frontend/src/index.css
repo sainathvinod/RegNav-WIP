@@ -2,7 +2,20 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Enterprise Dark Theme - Global Tokens */
+/* Theme System - User Preferences */
+:root {
+  /* User-configurable accent colors (default: purple) */
+  --color-accent-primary: 147 51 234;   /* purple-600 RGB */
+  --color-accent-hover: 126 34 206;     /* purple-700 RGB */
+  --color-accent-light: 196 181 253;    /* purple-300 RGB */
+  
+  /* User-configurable font */
+  --font-family-base: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-size-base: 16px;
+}
+
+/* Dark Theme (Default) */
+.theme-dark,
 :root {
   /* Backgrounds */
   --color-bg-app: #030712;          /* gray-950 - Main app background */
@@ -20,12 +33,6 @@
   --color-text-muted: #9CA3AF;      /* gray-400 - Muted text */
   --color-text-disabled: #6B7280;   /* gray-500 - Disabled text */
   
-  /* Accent (Purple) */
-  --color-accent: #9333EA;          /* purple-600 - Primary accent */
-  --color-accent-hover: #7E22CE;    /* purple-700 - Accent hover */
-  --color-accent-light: #A855F7;    /* purple-500 - Light accent */
-  --color-accent-bg: #581C87;       /* purple-900 - Accent background */
-  
   /* Status Colors */
   --color-success: #10B981;         /* green-500 */
   --color-warning: #F59E0B;         /* yellow-500 */
@@ -33,15 +40,45 @@
   --color-info: #3B82F6;            /* blue-500 */
 }
 
+/* Light Theme */
+.theme-light {
+  /* Backgrounds */
+  --color-bg-app: #FFFFFF;          /* white - Main app background */
+  --color-bg-panel: #F9FAFB;        /* gray-50 - Cards/panels */
+  --color-bg-elevated: #F3F4F6;     /* gray-100 - Elevated elements */
+  --color-bg-hover: #E5E7EB;        /* gray-200 - Hover states */
+  
+  /* Borders */
+  --color-border-subtle: #E5E7EB;   /* gray-200 - Subtle borders */
+  --color-border-default: #D1D5DB;  /* gray-300 - Default borders */
+  
+  /* Text */
+  --color-text-primary: #111827;    /* gray-900 - Primary text */
+  --color-text-secondary: #374151;  /* gray-700 - Secondary text */
+  --color-text-muted: #6B7280;      /* gray-500 - Muted text */
+  --color-text-disabled: #9CA3AF;   /* gray-400 - Disabled text */
+  
+  /* Status Colors */
+  --color-success: #059669;         /* green-600 */
+  --color-warning: #D97706;         /* yellow-600 */
+  --color-error: #DC2626;           /* red-600 */
+  --color-info: #2563EB;            /* blue-600 */
+}
+
 @layer base {
+  html {
+    font-family: var(--font-family-base);
+    font-size: var(--font-size-base);
+  }
+  
   body {
-    @apply bg-gray-950 text-gray-50;
     background-color: var(--color-bg-app);
     color: var(--color-text-primary);
+    transition: background-color 0.2s ease, color 0.2s ease;
   }
   
   * {
-    @apply border-gray-800;
+    border-color: var(--color-border-default);
   }
 }
 

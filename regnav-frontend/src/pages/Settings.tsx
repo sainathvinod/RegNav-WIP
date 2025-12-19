@@ -1,8 +1,9 @@
-// Settings - Module-Level LLM Configuration & Meta Prompts
+// Settings - Module-Level LLM Configuration & Meta Prompts & Appearance
 import React, { useState } from 'react';
 import { AppLayout } from '../components/layout/AppLayout';
 import { LLMConfig } from '../components/LLMConfig';
 import { ReferencePromptEditor } from '../components/ReferencePromptEditor';
+import { AppearanceSettings } from '../components/AppearanceSettings';
 import { useAppStore } from '../store/appStore';
 import { ModuleName } from '../types';
 import {
@@ -13,6 +14,7 @@ import {
   LightBulbIcon,
   ShieldCheckIcon,
   CpuChipIcon,
+  SwatchIcon,
 } from '@heroicons/react/24/outline';
 
 interface ModuleInfo {
@@ -67,7 +69,7 @@ const MODULES: ModuleInfo[] = [
   },
 ];
 
-type SettingsTab = 'llm' | 'prompts';
+type SettingsTab = 'llm' | 'prompts' | 'appearance';
 
 export const Settings: React.FC = () => {
   const { getModuleLLMConfig, updateModuleLLMConfig } = useAppStore();
@@ -158,6 +160,21 @@ export const Settings: React.FC = () => {
               <span className="flex items-center gap-2">
                 <DocumentTextIcon className="w-5 h-5" />
                 Meta Prompts
+              </span>
+            </button>
+            <button
+              onClick={() => setActiveTab('appearance')}
+              className={`
+                px-6 py-3 font-semibold transition-all relative
+                ${activeTab === 'appearance'
+                  ? 'text-purple-400 border-b-2 border-purple-500'
+                  : 'text-gray-400 hover:text-gray-300'
+                }
+              `}
+            >
+              <span className="flex items-center gap-2">
+                <SwatchIcon className="w-5 h-5" />
+                Appearance & Preferences
               </span>
             </button>
           </div>
@@ -302,6 +319,10 @@ export const Settings: React.FC = () => {
 
         {activeTab === 'prompts' && (
           <ReferencePromptEditor />
+        )}
+        
+        {activeTab === 'appearance' && (
+          <AppearanceSettings />
         )}
       </div>
     </AppLayout>
