@@ -28,9 +28,18 @@ export const Sidebar: React.FC = () => {
   };
 
   return (
-    <aside className={`fixed left-0 top-0 h-screen bg-gray-900 border-r border-gray-800 transition-all duration-300 z-40 flex flex-col ${collapsed ? 'w-20' : 'w-64'}`}>
+    <aside 
+      className={`fixed left-0 top-0 h-screen border-r transition-all duration-300 z-40 flex flex-col ${collapsed ? 'w-20' : 'w-64'}`}
+      style={{ 
+        backgroundColor: 'var(--color-bg-panel)', 
+        borderColor: 'var(--color-border-subtle)' 
+      }}
+    >
       {/* Header */}
-      <div className="h-16 border-b border-gray-800 flex items-center justify-between px-4">
+      <div 
+        className="h-16 border-b flex items-center justify-between px-4"
+        style={{ borderColor: 'var(--color-border-subtle)' }}
+      >
         {!collapsed && (
           <div className="flex items-center space-x-2">
             <span className="text-2xl">🧭</span>

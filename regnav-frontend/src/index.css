@@ -83,18 +83,20 @@
 }
 
 @layer components {
-  /* Buttons - Enterprise Dark Theme */
+  /* Buttons - Enterprise Theme (uses accent color) */
   .btn-primary {
-    @apply bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-lg transition-all duration-200 shadow-lg shadow-purple-600/30 hover:shadow-purple-600/50;
-    background-color: var(--color-accent);
+    @apply text-white font-medium py-2 px-4 rounded-lg transition-all duration-200;
+    background-color: rgb(var(--color-accent-primary));
+    box-shadow: 0 10px 15px -3px rgba(var(--color-accent-primary), 0.3);
   }
   
   .btn-primary:hover {
-    background-color: var(--color-accent-hover);
+    background-color: rgb(var(--color-accent-hover));
+    box-shadow: 0 10px 15px -3px rgba(var(--color-accent-primary), 0.5);
   }
   
   .btn-secondary {
-    @apply bg-gray-800 hover:bg-gray-700 text-gray-200 font-medium py-2 px-4 rounded-lg border border-gray-700 transition-all duration-200;
+    @apply font-medium py-2 px-4 rounded-lg border transition-all duration-200;
     background-color: var(--color-bg-elevated);
     border-color: var(--color-border-default);
     color: var(--color-text-secondary);
@@ -102,26 +104,32 @@
   
   .btn-secondary:hover {
     background-color: var(--color-bg-hover);
+    color: var(--color-text-primary);
   }
   
-  /* Cards/Panels - Enterprise Dark Theme */
+  /* Cards/Panels - Enterprise Theme */
   .card {
-    @apply bg-gray-900 rounded-lg shadow-xl border border-gray-800 p-6;
+    @apply rounded-lg shadow-xl border p-6;
     background-color: var(--color-bg-panel);
     border-color: var(--color-border-subtle);
   }
   
-  /* Inputs - Enterprise Dark Theme */
+  /* Inputs - Enterprise Theme */
   .input {
-    @apply w-full px-4 py-2 bg-gray-800 border border-gray-700 text-gray-100 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all placeholder-gray-500;
+    @apply w-full px-4 py-2 rounded-lg transition-all;
     background-color: var(--color-bg-elevated);
-    border-color: var(--color-border-default);
+    border: 1px solid var(--color-border-default);
     color: var(--color-text-primary);
   }
   
+  .input::placeholder {
+    color: var(--color-text-disabled);
+  }
+  
   .input:focus {
-    border-color: var(--color-accent);
-    box-shadow: 0 0 0 3px rgba(147, 51, 234, 0.1);
+    border-color: rgb(var(--color-accent-primary));
+    box-shadow: 0 0 0 3px rgba(var(--color-accent-primary), 0.1);
+    outline: none;
   }
   
   /* Badges - Enterprise Dark Theme */
@@ -149,27 +157,32 @@
     @apply bg-gray-800 text-gray-300 border border-gray-700;
   }
   
-  /* Sidebar - Enterprise Dark Theme */
+  /* Sidebar - Enterprise Theme */
   .sidebar-link {
-    @apply flex items-center px-4 py-3 text-gray-300 hover:bg-gray-800 hover:text-white rounded-lg transition-all duration-150 cursor-pointer;
+    @apply flex items-center px-4 py-3 rounded-lg transition-all duration-150 cursor-pointer;
+    color: var(--color-text-secondary);
   }
   
   .sidebar-link:hover {
     background-color: var(--color-bg-elevated);
+    color: var(--color-text-primary);
   }
   
   .sidebar-link-active {
-    @apply bg-purple-600 text-white font-medium shadow-md;
-    background-color: var(--color-accent);
+    @apply text-white font-medium shadow-md;
+    background-color: rgb(var(--color-accent-primary));
   }
   
-  /* Tables - Enterprise Dark Theme */
+  /* Tables - Enterprise Theme */
   .table {
     @apply w-full text-sm text-left;
   }
   
   .table thead {
-    @apply text-xs text-gray-400 uppercase bg-gray-800 border-b border-gray-700;
+    @apply text-xs uppercase border-b;
+    color: var(--color-text-muted);
+    background-color: var(--color-bg-elevated);
+    border-color: var(--color-border-default);
   }
   
   .table th {
@@ -177,14 +190,24 @@
   }
   
   .table tbody {
-    @apply divide-y divide-gray-800;
+    border-top: 1px solid var(--color-border-subtle);
+  }
+  
+  .table tbody tr {
+    border-bottom: 1px solid var(--color-border-subtle);
   }
   
   .table tr {
-    @apply bg-gray-900 hover:bg-gray-800 transition-colors;
+    @apply transition-colors;
+    background-color: var(--color-bg-panel);
+  }
+  
+  .table tr:hover {
+    background-color: var(--color-bg-elevated);
   }
   
   .table td {
     @apply px-6 py-4;
+    color: var(--color-text-primary);
   }
 }

@@ -16,19 +16,25 @@ export const TopBar: React.FC<TopBarProps> = ({ title }) => {
   };
   
   return (
-    <div className="bg-gray-900 border-b border-gray-800 sticky top-0 z-30">
+    <div 
+      className="border-b sticky top-0 z-30"
+      style={{ 
+        backgroundColor: 'var(--color-bg-panel)', 
+        borderColor: 'var(--color-border-subtle)' 
+      }}
+    >
       <div className="px-6 py-4">
         <div className="flex items-center justify-between">
           <div>
             {title && (
-              <h1 className="text-2xl font-bold text-gray-50">{title}</h1>
+              <h1 className="text-2xl font-bold" style={{ color: 'var(--color-text-primary)' }}>{title}</h1>
             )}
             <div className="mt-4 flex items-center space-x-6">
-              <div className="flex items-center space-x-2 text-sm text-gray-400">
+              <div className="flex items-center space-x-2 text-sm" style={{ color: 'var(--color-text-muted)' }}>
                 <span className="font-medium">Status:</span>
                 <span className="badge badge-success">All Systems Operational</span>
               </div>
-              <div className="flex items-center space-x-2 text-sm text-gray-400">
+              <div className="flex items-center space-x-2 text-sm" style={{ color: 'var(--color-text-muted)' }}>
                 <span className="font-medium">API:</span>
                 <span className="flex items-center">
                   <span className="w-2 h-2 bg-green-500 rounded-full mr-1.5 animate-pulse"></span>
@@ -41,7 +47,19 @@ export const TopBar: React.FC<TopBarProps> = ({ title }) => {
           {/* Global Light/Dark Mode Toggle */}
           <button
             onClick={toggleTheme}
-            className="p-2 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white transition-colors"
+            className="p-2 rounded-lg transition-colors"
+            style={{ 
+              backgroundColor: 'var(--color-bg-elevated)',
+              color: 'var(--color-text-muted)'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = 'var(--color-bg-hover)';
+              e.currentTarget.style.color = 'var(--color-text-primary)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'var(--color-bg-elevated)';
+              e.currentTarget.style.color = 'var(--color-text-muted)';
+            }}
             title={currentTheme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
           >
             {currentTheme === 'dark' ? (

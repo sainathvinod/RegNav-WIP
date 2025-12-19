@@ -12,13 +12,13 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children, title }) => {
   const collapsed = useAppStore((state) => state.sidebarCollapsed);
 
   return (
-    <div className="min-h-screen bg-gray-950">
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--color-bg-app)' }}>
       <Sidebar />
       
       <div className={`transition-all duration-300 ${collapsed ? 'ml-20' : 'ml-64'}`}>
         <TopBar title={title} />
         
-        <main className="p-6 bg-gray-950">
+        <main className="p-6" style={{ backgroundColor: 'var(--color-bg-app)' }}>
           <div className="max-w-7xl mx-auto">
             {children}
           </div>
