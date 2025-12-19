@@ -52,7 +52,7 @@ interface AppStore {
   setDiscoveredSources: (sources: RegulatorySource[]) => void;
   addDiscoveredSource: (source: RegulatorySource) => void;
   removeDiscoveredSource: (sourceId: string) => void;
-  createProfile: (profile: Omit<DiscoveryProfile, 'id' | 'createdAt' | 'updatedAt'>) => DiscoveryProfile;
+  createProfile: (profile: Omit<DiscoveryProfile, 'id' | 'createdAt' | 'updatedAt'>, insertBeforeId?: string) => DiscoveryProfile;
   updateProfile: (profileId: string, updates: Partial<DiscoveryProfile>) => void;
   deleteProfile: (profileId: string) => void;
   getProfile: (profileId: string) => DiscoveryProfile | undefined;
@@ -218,7 +218,7 @@ export const useAppStore = create<AppStore>()(
           discoveredSources: state.discoveredSources.filter(s => s.id !== sourceId),
         })),
 
-      createProfile: (profileData) => {
+      createProfile: (profileData, insertBeforeId) => {
         // DEEP CLONE to ensure complete data isolation
         const deepClonedData = JSON.parse(JSON.stringify(profileData));
         
@@ -229,9 +229,29 @@ export const useAppStore = create<AppStore>()(
           updatedAt: new Date().toISOString(),
         };
         
-        set((state) => ({
-          discoveryProfiles: [...state.discoveryProfiles, newProfile],
-        }));
+        set((state) => {
+          let newProfiles: DiscoveryProfile[];
+          
+          if (insertBeforeId) {
+            // Insert before the specified profile (copy on left, original on right)
+            const insertIndex = state.discoveryProfiles.findIndex(p => p.id === insertBeforeId);
+            if (insertIndex >= 0) {
+              newProfiles = [
+                ...state.discoveryProfiles.slice(0, insertIndex),
+                newProfile,
+                ...state.discoveryProfiles.slice(insertIndex),
+              ];
+            } else {
+              // If not found, append to end
+              newProfiles = [...state.discoveryProfiles, newProfile];
+            }
+          } else {
+            // Default: append to end
+            newProfiles = [...state.discoveryProfiles, newProfile];
+          }
+          
+          return { discoveryProfiles: newProfiles };
+        });
         
         return newProfile;
       },

@@ -101,6 +101,12 @@ export const Profiles: React.FC = () => {
       const updatedProfile = JSON.parse(JSON.stringify({ ...selectedProfile, ...updates }));
       setSelectedProfile(updatedProfile);
     }
+    
+    // Show success toast with profile name
+    const profileName = updates.name || selectedProfile?.name || 'Profile';
+    setToastMessage(`Successfully saved "${profileName}"`);
+    setShowToast(true);
+    setTimeout(() => setShowToast(false), 3000);
   };
 
   const handleCloseDetails = () => {
@@ -118,6 +124,7 @@ export const Profiles: React.FC = () => {
     if (!profileToDuplicate) return;
 
     // Deep copy to ensure complete isolation from original
+    // Insert copy BEFORE original (copy on left, original on right)
     const copiedProfile = createProfile({
       name: newName,
       description: newDescription || profileToDuplicate.description,
@@ -129,7 +136,7 @@ export const Profiles: React.FC = () => {
       metadata: JSON.parse(JSON.stringify(profileToDuplicate.metadata)),
       status: 'draft', // Reset status to draft for new copy
       tags: profileToDuplicate.tags ? JSON.parse(JSON.stringify(profileToDuplicate.tags)) : [],
-    });
+    }, profileToDuplicate.id); // Insert before original
 
     // Show toast notification
     setToastMessage(`Profile "${copiedProfile.name}" created successfully!`);
@@ -432,9 +439,9 @@ export const Profiles: React.FC = () => {
         {/* Toast Notification */}
         {showToast && (
           <div className="fixed bottom-4 right-4 z-50 animate-fade-in">
-            <div className="bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-2">
-              <CheckCircleIcon className="w-5 h-5" />
-              {toastMessage}
+            <div className="bg-purple-900/30 backdrop-blur-sm border border-purple-500/50 text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-2">
+              <CheckCircleIcon className="w-5 h-5 text-purple-400" />
+              <span className="text-gray-100">{toastMessage}</span>
             </div>
           </div>
         )}
