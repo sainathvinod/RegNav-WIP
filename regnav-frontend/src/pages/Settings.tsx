@@ -81,7 +81,7 @@ export const Settings: React.FC = () => {
 
   return (
     <AppLayout title="Settings">
-      <div className="max-w-6xl mx-auto">
+      <div className="max-w-[1600px] mx-auto">
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold flex items-center gap-3" style={{ color: 'var(--color-text-primary)' }}>

@@ -454,7 +454,7 @@ export const RegScout: React.FC = () => {
   if (regScoutView === 'config') {
     return (
       <AppLayout title="RegScout - Document Discovery">
-        <div className="max-w-7xl mx-auto">
+        <div className="max-w-[1600px] mx-auto">
           {/* Modern Header */}
           <div className="mb-8">
             <div className="flex items-center gap-4 mb-3">
@@ -960,7 +960,7 @@ export const RegScout: React.FC = () => {
   // Render RESULTS view
   return (
     <AppLayout title="RegScout - Discovery Results">
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-[1600px] mx-auto">
         {/* Header with Selection Summary */}
         <div className="sticky top-0 z-10 backdrop-blur-sm border-b -mx-6 px-6 py-4 mb-6" style={{ backgroundColor: 'rgba(var(--color-bg-panel), 0.9)', borderColor: 'var(--border)' }}>
           <div className="flex items-center justify-between">

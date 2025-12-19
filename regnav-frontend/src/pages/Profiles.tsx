@@ -177,7 +177,7 @@ export const Profiles: React.FC = () => {
 
   return (
     <AppLayout title="Discovery Profiles">
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-[1600px] mx-auto">
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-white flex items-center gap-3">

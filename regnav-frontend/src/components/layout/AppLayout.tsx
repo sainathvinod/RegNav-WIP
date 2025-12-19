@@ -18,8 +18,8 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children, title }) => {
       <div className={`transition-all duration-300 ${collapsed ? 'ml-20' : 'ml-64'}`}>
         <TopBar title={title} />
         
-        <main className="p-6" style={{ backgroundColor: 'var(--bg)' }}>
-          <div className="max-w-7xl mx-auto">
+        <main className="px-4 py-4" style={{ backgroundColor: 'var(--bg)' }}>
+          <div className="max-w-[1800px] mx-auto">
             {children}
           </div>
         </main>
