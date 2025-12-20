@@ -122,7 +122,20 @@ export const useAppStore = create<AppStore>()(
           llmConfig: { ...state.llmConfig, ...updates },
         })),
 
-      getModuleLLMConfig: (module) => get().moduleLLMConfigs[module],
+      getModuleLLMConfig: (module) => {
+        const moduleConfig = get().moduleLLMConfigs[module];
+        const globalConfig = get().llmConfig;
+        
+        // If module config doesn't have API key, inherit from global config
+        if (!moduleConfig.apiKey && globalConfig.apiKey) {
+          return {
+            ...moduleConfig,
+            apiKey: globalConfig.apiKey,
+          };
+        }
+        
+        return moduleConfig;
+      },
 
       setModuleLLMConfig: (module, config) =>
         set((state) => ({
