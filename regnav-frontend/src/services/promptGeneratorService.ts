@@ -87,11 +87,17 @@ export const generateDiscoveryPrompt = async (
 
     // Call LLM to generate the discovery prompt
     if (onProgress) onProgress('Calling LLM to generate discovery prompt...');
+    
+    console.log('🚀 About to call LLM with meta prompt');
+    console.log('  LLM Config:', { provider: llmConfig.provider, model: llmConfig.model, hasApiKey: !!llmConfig.apiKey });
+    
     const generatedPrompt = await callLLMWithRetry(metaPrompt, {
       ...llmConfig,
       temperature: 0.3, // Lower for consistent prompt generation
       maxTokens: 3000,  // Prompts can be long
     });
+
+    console.log('✅ LLM call successful, prompt length:', generatedPrompt.length);
 
     if (onProgress) onProgress('Prompt generated successfully');
 
@@ -103,12 +109,19 @@ export const generateDiscoveryPrompt = async (
     
     return cleanPrompt;
   } catch (error: any) {
-    console.error('Failed to generate discovery prompt:', error);
+    console.error('❌ Failed to generate discovery prompt:', error);
+    console.error('Error details:', {
+      message: error.message,
+      stack: error.stack,
+      name: error.name
+    });
     
     // Fallback to a basic prompt if generation fails
     const stateName = US_STATES.find((s) => s.code === state)?.name || state;
     const lobName = LINES_OF_BUSINESS.find((l) => l.id === lob)?.name || lob;
     const docTypeName = REGULATORY_DOCUMENT_TYPES.find((d) => d.id === docType)?.name || docType;
+    
+    console.warn('⚠️ Using fallback prompt due to error');
     
     return `You are an expert regulatory compliance analyst. Find ALL authoritative sources for ${docTypeName} related to ${lobName} in ${stateName}.
 
