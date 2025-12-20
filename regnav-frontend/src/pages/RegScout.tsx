@@ -188,6 +188,11 @@ export const RegScout: React.FC = () => {
 
       // Get the configured meta prompt for this doc type (RegScout module)
       const referencePrompt = getModuleReferencePrompt('regscout', firstDocType);
+      
+      console.log('🔍 DEBUG - Prompt Generation:');
+      console.log('  Doc Type ID:', firstDocType);
+      console.log('  Reference Prompt Length:', referencePrompt?.length || 0);
+      console.log('  Reference Prompt Preview:', referencePrompt?.substring(0, 150));
 
       const prompt = await generateDiscoveryPrompt(
         selectedCountries[0],

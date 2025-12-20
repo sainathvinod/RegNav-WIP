@@ -142,7 +142,18 @@ export const useAppStore = create<AppStore>()(
 
       getModuleReferencePrompt: (module, docType) => {
         const modulePrompts = get().moduleReferencePrompts[module];
-        return modulePrompts?.[docType] || DEFAULT_REFERENCE_PROMPTS[docType] || '';
+        const prompt = modulePrompts?.[docType] || DEFAULT_REFERENCE_PROMPTS[docType] || '';
+        
+        console.log('📝 getModuleReferencePrompt:', { 
+          module, 
+          docType, 
+          hasModulePrompt: !!modulePrompts?.[docType],
+          hasDefaultPrompt: !!DEFAULT_REFERENCE_PROMPTS[docType],
+          promptLength: prompt.length,
+          availableDocTypes: Object.keys(DEFAULT_REFERENCE_PROMPTS)
+        });
+        
+        return prompt;
       },
 
       updateModuleReferencePrompt: (module, docType, prompt) =>
