@@ -74,8 +74,16 @@ export const generateDiscoveryPrompt = async (
   try {
     if (onProgress) onProgress('Generating prompt...');
 
+    console.log('🎯 generateDiscoveryPrompt called with:');
+    console.log('  State:', state, 'LOB:', lob, 'DocType:', docType);
+    console.log('  Reference Prompt Length:', referencePrompt?.length || 0);
+    console.log('  Reference Prompt Preview:', referencePrompt?.substring(0, 100) + '...');
+
     // Generate meta-prompt
     const metaPrompt = generateMetaPrompt(country, state, lob, docType, referencePrompt);
+    
+    console.log('  Generated Meta Prompt Length:', metaPrompt.length);
+    console.log('  Meta Prompt includes reference?', metaPrompt.includes(referencePrompt.substring(0, 50)));
 
     // Call LLM to generate the discovery prompt
     if (onProgress) onProgress('Calling LLM to generate discovery prompt...');
