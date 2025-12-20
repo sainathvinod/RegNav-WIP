@@ -1,6 +1,11 @@
 // Anthropic Claude API Client
 import { LLMConfiguration, LLMTestResult } from '../../types';
 
+// Use proxy server to avoid CORS issues
+const USE_PROXY = true;
+const PROXY_URL = 'http://localhost:3001/api/anthropic';
+const DIRECT_URL = 'https://api.anthropic.com/v1/messages';
+
 export interface AnthropicMessage {
   role: 'user' | 'assistant';
   content: string;
@@ -43,6 +48,8 @@ export const callAnthropicAPI = async (
 
   const startTime = Date.now();
 
+  const apiUrl = USE_PROXY ? PROXY_URL : DIRECT_URL;
+
   const requestBody: AnthropicRequest = {
     model: config.model,
     max_tokens: config.maxTokens,
@@ -56,16 +63,34 @@ export const callAnthropicAPI = async (
     ],
   };
 
-  const response = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': config.apiKey,
-      'anthropic-version': '2023-06-01',
-    },
-    body: JSON.stringify(requestBody),
-    signal: AbortSignal.timeout(config.timeout * 1000),
-  });
+  // Add API key to body for proxy, or headers for direct call
+  const proxyRequestBody = USE_PROXY
+    ? { ...requestBody, apiKey: config.apiKey }
+    : requestBody;
+
+  let response;
+  try {
+    response = await fetch(apiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(USE_PROXY ? {} : {
+          'x-api-key': config.apiKey,
+          'anthropic-version': '2023-06-01',
+        }),
+      },
+      body: JSON.stringify(proxyRequestBody),
+      signal: AbortSignal.timeout(config.timeout * 1000),
+    });
+  } catch (error: any) {
+    if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
+      const errorMsg = USE_PROXY
+        ? `Cannot connect to proxy server at ${PROXY_URL}. Make sure it's running with: node proxy-server.js`
+        : 'CORS Error: Cannot call Anthropic API directly from browser. Start the proxy server with: node proxy-server.js';
+      throw new Error(errorMsg);
+    }
+    throw error;
+  }
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
