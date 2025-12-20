@@ -370,7 +370,7 @@ export const LLM_PROVIDERS: LLMProvider[] = [
     maxContextWindow: 200000,
     models: [
       {
-        id: 'claude-3-5-sonnet-20241022',
+        id: 'claude-sonnet-4-20250514',
         name: 'Claude Sonnet 4.5 (Latest)',
         description: 'Most advanced Claude model, superior reasoning and analysis',
         maxTokens: 8192,
@@ -379,9 +379,18 @@ export const LLM_PROVIDERS: LLMProvider[] = [
         qualityRating: 'high',
       },
       {
-        id: 'claude-3-5-sonnet-20240620',
-        name: 'Claude 3.5 Sonnet',
+        id: 'claude-3-5-sonnet-20241022',
+        name: 'Claude 3.5 Sonnet (Oct 2024)',
         description: 'Previous Sonnet version, excellent performance',
+        maxTokens: 8192,
+        costPerToken: 0.000003,
+        speedRating: 'fast',
+        qualityRating: 'high',
+      },
+      {
+        id: 'claude-3-5-sonnet-20240620',
+        name: 'Claude 3.5 Sonnet (Jun 2024)',
+        description: 'Earlier Sonnet version, still very capable',
         maxTokens: 8192,
         costPerToken: 0.000003,
         speedRating: 'fast',
@@ -556,7 +565,7 @@ export const DEFAULT_LLM_CONFIG = {
 export const MODULE_DEFAULT_LLM_CONFIGS = {
   regscout: {
     provider: 'anthropic',
-    model: 'claude-3-5-sonnet-20241022', // Claude Sonnet 4.5
+    model: 'claude-sonnet-4-20250514', // Claude Sonnet 4.5
     temperature: 0.3, // Lower for factual accuracy
     maxTokens: 4000,
     topP: 1.0,
@@ -582,7 +591,7 @@ export const MODULE_DEFAULT_LLM_CONFIGS = {
   },
   ruleminer: {
     provider: 'anthropic',
-    model: 'claude-3-5-sonnet-20241022',
+    model: 'claude-sonnet-4-20250514',
     temperature: 0.1, // Very low for precise extraction
     maxTokens: 8000,
     topP: 1.0,
