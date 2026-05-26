@@ -1,0 +1,64 @@
+# Local development stack for RegNav.AI.
+#
+# Brings up Postgres (with pgvector), Redis, and the FastAPI backend.
+# The frontend is run separately via `npm run dev` inside
+# `regnav-frontend/` to keep HMR fast.
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: regnav-postgres
+    environment:
+      POSTGRES_USER: regnav
+      POSTGRES_PASSWORD: regnav
+      POSTGRES_DB: regnav
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U regnav -d regnav"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: regnav-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: regnav-backend
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      APP_ENV: development
+      DEBUG: "true"
+      DATABASE_URL: postgresql+asyncpg://regnav:regnav@postgres:5432/regnav
+      REDIS_URL: redis://redis:6379/0
+      CORS_ALLOWED_ORIGINS: '["http://localhost:3000"]'
+      LOG_LEVEL: DEBUG
+      LOG_JSON: "false"
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend/app:/app/app:ro
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+
+volumes:
+  postgres_data:
+  redis_data:
