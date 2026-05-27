@@ -35,10 +35,10 @@ test.describe('RuleMiner', () => {
     await expect(page.getByText('TX-WC-0001')).toBeVisible();
     await expect(page.getByText('Coverage must include all employees')).toBeVisible();
 
-    // The status badge has class border-yellow-700 for draft status.
+    // The status badge has class status-warning for draft status.
     // The description paragraph also contains a <span>draft</span> (text-yellow-400)
-    // but no border class, so scoping by the badge's border colour is unique.
-    await expect(page.locator('span.border-yellow-700').filter({ hasText: 'draft' })).toBeVisible();
+    // but no status class, so scoping by the badge's status class is unique.
+    await expect(page.locator('.status-warning').filter({ hasText: 'draft' })).toBeVisible();
 
     // Expand the rule row
     await page.getByText('Coverage must include all employees').click();
@@ -55,12 +55,12 @@ test.describe('RuleMiner', () => {
     await expect(approveBtn).toBeVisible();
     await approveBtn.click();
 
-    // After approval the badge re-renders with green border (approved).
-    // The yellow-border draft badge must be gone; the description-text
-    // <span class="text-yellow-400">draft</span> never has a border class,
-    // so toHaveCount(0) on span.border-yellow-700 is unambiguous.
-    await expect(page.locator('span.border-green-700').filter({ hasText: 'approved' })).toBeVisible();
-    await expect(page.locator('span.border-yellow-700')).toHaveCount(0);
+    // After approval the badge re-renders with the success status class (approved).
+    // The warning-class draft badge must be gone; the description-text
+    // <span style="color: var(--warning)">draft</span> never has a status class,
+    // so toHaveCount(0) on .status-warning is unambiguous.
+    await expect(page.locator('.status-success').filter({ hasText: 'approved' })).toBeVisible();
+    await expect(page.locator('.status-warning')).toHaveCount(0);
   });
 
   test('extraction triggers job progress modal', async ({ page }) => {

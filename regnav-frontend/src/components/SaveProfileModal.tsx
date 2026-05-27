@@ -1,18 +1,20 @@
 /**
  * Save Regulatory Portfolio Modal
- * 
+ *
  * Allows users to save their curated discovery results as a named regulatory portfolio
  * for later use in rule mining and validation.
  */
 
 import React, { useState } from 'react';
 import {
-  XMarkIcon,
   CheckCircleIcon,
   FolderIcon,
   InformationCircleIcon,
 } from '@heroicons/react/24/outline';
 import { DiscoveryProfile, RegulatorySource } from '../types';
+import { Modal } from './ui/Modal';
+import { Select } from './ui/Select';
+import { PROFILE_STATUS_OPTIONS } from '../lib/constants';
 
 interface SaveProfileModalProps {
   isOpen: boolean;
@@ -80,7 +82,7 @@ export const SaveProfileModal: React.FC<SaveProfileModalProps> = ({
     };
 
     onSave(profile);
-    
+
     // Reset form
     setName('');
     setDescription('');
@@ -99,167 +101,171 @@ export const SaveProfileModal: React.FC<SaveProfileModalProps> = ({
     onClose();
   };
 
-  return (
-    <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-      <div className="bg-gray-900 rounded-lg border border-gray-700 max-w-2xl w-full shadow-2xl">
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-800">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center">
-              <FolderIcon className="w-6 h-6 text-purple-400" />
-            </div>
-            <div>
-              <h2 className="text-xl font-semibold text-white">
-                {isEditing ? 'Update Regulatory Portfolio' : 'Save as Regulatory Portfolio'}
-              </h2>
-              <p className="text-sm text-gray-400 mt-0.5">
-                {isEditing ? 'Update your portfolio details' : 'Create a named portfolio for later use'}
-              </p>
-            </div>
-          </div>
-          <button
-            onClick={handleCancel}
-            className="text-gray-400 hover:text-white transition-colors"
-          >
-            <XMarkIcon className="w-6 h-6" />
-          </button>
+  const title = (
+    <div className="flex items-center gap-3">
+      <div
+        className="w-10 h-10 rounded-lg flex items-center justify-center"
+        style={{ backgroundColor: 'var(--accent-bg)' }}
+      >
+        <FolderIcon
+          className="w-6 h-6"
+          style={{ color: 'rgb(var(--color-accent-primary))' }}
+        />
+      </div>
+      <div>
+        <div className="text-xl font-semibold" style={{ color: 'var(--text)' }}>
+          {isEditing ? 'Update Regulatory Portfolio' : 'Save as Regulatory Portfolio'}
         </div>
-
-        {/* Content */}
-        <div className="p-6 space-y-6">
-          {/* Portfolio Name */}
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-              Portfolio Name <span className="text-red-400">*</span>
-            </label>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => {
-                setName(e.target.value);
-                setError('');
-              }}
-              placeholder="e.g., Wisconsin Workers' Comp Q1 2024"
-              className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-            />
-            {error && <p className="text-red-400 text-sm mt-1">{error}</p>}
-          </div>
-
-          {/* Description */}
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-              Description (Optional)
-            </label>
-            <textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Add notes about this portfolio..."
-              rows={3}
-              className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
-            />
-          </div>
-
-          {/* Tags */}
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-              Tags (Optional)
-            </label>
-            <input
-              type="text"
-              value={tags}
-              onChange={(e) => setTags(e.target.value)}
-              placeholder="e.g., workers-comp, 2024, priority"
-              className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-            />
-            <p className="text-xs text-gray-500 mt-1">Separate tags with commas</p>
-          </div>
-
-          {/* Status */}
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-              Status
-            </label>
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                onClick={() => setStatus('draft')}
-                className={`
-                  p-3 rounded-lg border transition-all text-left
-                  ${status === 'draft'
-                    ? 'bg-blue-500/20 border-blue-500 text-blue-300'
-                    : 'bg-gray-800 border-gray-700 text-gray-400 hover:border-gray-600'
-                  }
-                `}
-              >
-                <div className="font-medium">Draft</div>
-                <div className="text-xs mt-1 opacity-75">
-                  Work in progress, can edit anytime
-                </div>
-              </button>
-              <button
-                onClick={() => setStatus('finalized')}
-                className={`
-                  p-3 rounded-lg border transition-all text-left
-                  ${status === 'finalized'
-                    ? 'bg-green-500/20 border-green-500 text-green-300'
-                    : 'bg-gray-800 border-gray-700 text-gray-400 hover:border-gray-600'
-                  }
-                `}
-              >
-                <div className="font-medium">Finalized</div>
-                <div className="text-xs mt-1 opacity-75">
-                  Ready for rule mining
-                </div>
-              </button>
-            </div>
-          </div>
-
-          {/* Summary Stats */}
-          <div className="bg-purple-900/20 border border-purple-500/30 rounded-lg p-4">
-            <div className="flex items-start gap-2 mb-3">
-              <InformationCircleIcon className="w-5 h-5 text-purple-400 flex-shrink-0 mt-0.5" />
-              <div className="text-sm text-purple-200 font-medium">
-                Portfolio Summary
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div>
-                <div className="text-gray-400">Total Sources</div>
-                <div className="text-white font-semibold">{sources.length}</div>
-              </div>
-              <div>
-                <div className="text-gray-400">Gov Auto</div>
-                <div className="text-white font-semibold">{govAutoSources}</div>
-              </div>
-              <div>
-                <div className="text-gray-400">User Added</div>
-                <div className="text-white font-semibold">{userAddedSources}</div>
-              </div>
-              <div>
-                <div className="text-gray-400">Avg Confidence</div>
-                <div className="text-white font-semibold">{(avgConfidence * 100).toFixed(0)}%</div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Footer */}
-        <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-800">
-          <button
-            onClick={handleCancel}
-            className="px-6 py-2 bg-gray-800 text-gray-300 rounded-lg hover:bg-gray-700 transition-colors"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={handleSave}
-            className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-500 transition-colors flex items-center gap-2 font-semibold"
-          >
-            <CheckCircleIcon className="w-5 h-5" />
-            {isEditing ? 'Update Portfolio' : 'Save Portfolio'}
-          </button>
-        </div>
+        <p className="text-sm font-normal mt-0.5" style={{ color: 'var(--muted)' }}>
+          {isEditing ? 'Update your portfolio details' : 'Create a named portfolio for later use'}
+        </p>
       </div>
     </div>
+  );
+
+  const footer = (
+    <>
+      <button onClick={handleCancel} className="btn-secondary">
+        Cancel
+      </button>
+      <button onClick={handleSave} className="btn-primary inline-flex items-center gap-2">
+        <CheckCircleIcon className="w-5 h-5" />
+        {isEditing ? 'Update Portfolio' : 'Save Portfolio'}
+      </button>
+    </>
+  );
+
+  return (
+    <Modal open={isOpen} onClose={handleCancel} title={title} footer={footer} size="lg">
+      <div className="space-y-6">
+        {/* Portfolio Name */}
+        <div>
+          <label
+            className="block text-sm font-medium mb-2"
+            style={{ color: 'var(--text-secondary)' }}
+          >
+            Portfolio Name <span style={{ color: 'var(--error)' }}>*</span>
+          </label>
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => {
+              setName(e.target.value);
+              setError('');
+            }}
+            placeholder="e.g., Wisconsin Workers' Comp Q1 2024"
+            className="input w-full"
+          />
+          {error && (
+            <p className="text-sm mt-1" style={{ color: 'var(--error)' }}>
+              {error}
+            </p>
+          )}
+        </div>
+
+        {/* Description */}
+        <div>
+          <label
+            className="block text-sm font-medium mb-2"
+            style={{ color: 'var(--text-secondary)' }}
+          >
+            Description (Optional)
+          </label>
+          <textarea
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="Add notes about this portfolio..."
+            rows={3}
+            className="input w-full resize-none"
+          />
+        </div>
+
+        {/* Tags */}
+        <div>
+          <label
+            className="block text-sm font-medium mb-2"
+            style={{ color: 'var(--text-secondary)' }}
+          >
+            Tags (Optional)
+          </label>
+          <input
+            type="text"
+            value={tags}
+            onChange={(e) => setTags(e.target.value)}
+            placeholder="e.g., workers-comp, 2024, priority"
+            className="input w-full"
+          />
+          <p className="text-xs mt-1" style={{ color: 'var(--muted)' }}>
+            Separate tags with commas
+          </p>
+        </div>
+
+        {/* Status */}
+        <div>
+          <label
+            className="block text-sm font-medium mb-2"
+            style={{ color: 'var(--text-secondary)' }}
+          >
+            Status
+          </label>
+          <Select
+            options={PROFILE_STATUS_OPTIONS.filter(
+              (opt) => opt.value === 'draft' || opt.value === 'finalized',
+            )}
+            value={status}
+            onChange={(e) => setStatus(e.target.value as 'draft' | 'finalized')}
+          />
+        </div>
+
+        {/* Summary Stats */}
+        <div
+          className="rounded-lg p-4 border"
+          style={{
+            backgroundColor: 'var(--accent-bg)',
+            borderColor: 'rgb(var(--color-accent-primary))',
+          }}
+        >
+          <div className="flex items-start gap-2 mb-3">
+            <InformationCircleIcon
+              className="w-5 h-5 flex-shrink-0 mt-0.5"
+              style={{ color: 'rgb(var(--color-accent-primary))' }}
+            />
+            <div
+              className="text-sm font-medium"
+              style={{ color: 'rgb(var(--color-accent-primary))' }}
+            >
+              Portfolio Summary
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4 text-sm">
+            <div>
+              <div style={{ color: 'var(--muted)' }}>Total Sources</div>
+              <div className="font-semibold" style={{ color: 'var(--text)' }}>
+                {sources.length}
+              </div>
+            </div>
+            <div>
+              <div style={{ color: 'var(--muted)' }}>Gov Auto</div>
+              <div className="font-semibold" style={{ color: 'var(--text)' }}>
+                {govAutoSources}
+              </div>
+            </div>
+            <div>
+              <div style={{ color: 'var(--muted)' }}>User Added</div>
+              <div className="font-semibold" style={{ color: 'var(--text)' }}>
+                {userAddedSources}
+              </div>
+            </div>
+            <div>
+              <div style={{ color: 'var(--muted)' }}>Avg Confidence</div>
+              <div className="font-semibold" style={{ color: 'var(--text)' }}>
+                {(avgConfidence * 100).toFixed(0)}%
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Modal>
   );
 };
 

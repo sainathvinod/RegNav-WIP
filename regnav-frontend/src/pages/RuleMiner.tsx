@@ -1,6 +1,12 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { AppLayout } from '../components/layout/AppLayout';
 import { JobProgressModal } from '../components/JobProgressModal';
+import { Badge, BadgeTone } from '../components/ui/Badge';
+import { Select } from '../components/ui/Select';
+import { Modal } from '../components/ui/Modal';
+import { US_STATE_OPTIONS, LOB_OPTIONS } from '../lib/constants';
+import { humanLabel } from '../lib/format';
 import {
   approveRule,
   deleteRule,
@@ -10,20 +16,20 @@ import {
 } from '../services/ruleminer';
 import type { Rule, RuleStatus } from '../types/ruleminer';
 
-const STATUS_COLORS: Record<RuleStatus, string> = {
-  draft: 'bg-yellow-900 text-yellow-300 border-yellow-700',
-  approved: 'bg-green-900 text-green-300 border-green-700',
-  rejected: 'bg-red-900 text-red-300 border-red-700',
-  superseded: 'bg-gray-700 text-gray-400 border-gray-600',
+const STATUS_TONES: Record<RuleStatus, BadgeTone> = {
+  draft: 'warning',
+  approved: 'success',
+  rejected: 'danger',
+  superseded: 'neutral',
 };
 
-const RULE_TYPE_COLORS: Record<string, string> = {
-  filing: 'bg-blue-900 text-blue-300',
-  underwriting: 'bg-purple-900 text-purple-300',
-  rating: 'bg-orange-900 text-orange-300',
-  claims: 'bg-red-900 text-red-300',
-  compliance: 'bg-teal-900 text-teal-300',
-  general: 'bg-gray-700 text-gray-300',
+const RULE_TYPE_TONES: Record<string, BadgeTone> = {
+  filing: 'info',
+  underwriting: 'accent',
+  rating: 'warning',
+  claims: 'danger',
+  compliance: 'info',
+  general: 'neutral',
 };
 
 const RuleMiner: React.FC = () => {
@@ -40,6 +46,9 @@ const RuleMiner: React.FC = () => {
   const [documentId, setDocumentId] = useState('');
   const [extractJobId, setExtractJobId] = useState<string | null>(null);
   const [extractError, setExtractError] = useState<string | null>(null);
+
+  // Delete confirmation modal
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const fetchRules = useCallback(async () => {
     setLoading(true);
@@ -86,8 +95,14 @@ const RuleMiner: React.FC = () => {
     }
   };
 
-  const handleDelete = async (ruleId: string) => {
-    if (!confirm('Delete this rule?')) return;
+  const handleDelete = (ruleId: string) => {
+    setDeleteId(ruleId);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteId) return;
+    const ruleId = deleteId;
+    setDeleteId(null);
     setActionLoading(ruleId);
     try {
       await deleteRule(ruleId);
@@ -117,23 +132,33 @@ const RuleMiner: React.FC = () => {
     rejected: rules.filter(r => r.status === 'rejected').length,
   };
 
+  const STAT_ACCENTS: Record<string, string> = {
+    'Total Rules': 'rgb(var(--color-accent-primary))',
+    Draft: 'var(--warning)',
+    Approved: 'var(--success)',
+    Rejected: 'var(--error)',
+  };
+
   return (
     <AppLayout title="RuleMiner — Rule Extraction">
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
         {[
-          { label: 'Total Rules', value: stats.total, color: 'bg-purple-600' },
-          { label: 'Draft', value: stats.draft, color: 'bg-yellow-600' },
-          { label: 'Approved', value: stats.approved, color: 'bg-green-600' },
-          { label: 'Rejected', value: stats.rejected, color: 'bg-red-600' },
+          { label: 'Total Rules', value: stats.total },
+          { label: 'Draft', value: stats.draft },
+          { label: 'Approved', value: stats.approved },
+          { label: 'Rejected', value: stats.rejected },
         ].map(s => (
           <div key={s.label} className="card hover:shadow-2xl transition-all">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-400">{s.label}</p>
-                <p className="text-3xl font-bold text-gray-50">{s.value}</p>
+                <p className="text-sm" style={{ color: 'var(--muted)' }}>{s.label}</p>
+                <p className="text-3xl font-bold" style={{ color: 'var(--text)' }}>{s.value}</p>
               </div>
-              <div className={`w-10 h-10 ${s.color} rounded-lg`} />
+              <div
+                className="w-10 h-10 rounded-lg"
+                style={{ backgroundColor: STAT_ACCENTS[s.label] }}
+              />
             </div>
           </div>
         ))}
@@ -141,30 +166,40 @@ const RuleMiner: React.FC = () => {
 
       {/* Extract Panel */}
       <div className="card mb-6">
-        <h3 className="text-lg font-semibold text-gray-50 mb-3">Extract Rules from Document</h3>
-        <p className="text-sm text-gray-400 mb-4">
+        <h3 className="text-lg font-semibold mb-3" style={{ color: 'var(--text)' }}>
+          Extract Rules from Document
+        </h3>
+        <p className="text-sm mb-4" style={{ color: 'var(--muted)' }}>
           Paste the UUID of an indexed document (from RegIngest) to trigger LLM-based rule
-          extraction. Rules land as <span className="text-yellow-400">draft</span> and require
+          extraction. Rules land as{' '}
+          <span style={{ color: 'var(--warning)' }}>draft</span> and require
           approval before use in validation.
         </p>
-        <div className="flex gap-3">
+        <div className="flex flex-col sm:flex-row gap-3">
           <input
             type="text"
             value={documentId}
             onChange={e => setDocumentId(e.target.value)}
             placeholder="Document UUID (e.g. 3f5c…)"
-            className="flex-1 px-3 py-2 rounded-lg bg-gray-800 border border-gray-700 text-gray-100 text-sm focus:outline-none focus:border-purple-500"
+            className="input flex-1 text-sm"
           />
           <button
             onClick={handleExtract}
             disabled={!documentId.trim()}
-            className="px-5 py-2 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-700 disabled:text-gray-500 text-white rounded-lg text-sm font-medium transition-colors"
+            className="btn-primary text-sm disabled:opacity-60 disabled:cursor-not-allowed"
           >
             Extract Rules
           </button>
         </div>
+        <p className="form-help">
+          Tip: copy the document ID from{' '}
+          <Link to="/regingest" className="underline">
+            RegIngest
+          </Link>
+          .
+        </p>
         {extractError && (
-          <p className="mt-2 text-sm text-red-400">{extractError}</p>
+          <p className="mt-2 text-sm" style={{ color: 'var(--error)' }}>{extractError}</p>
         )}
       </div>
 
@@ -174,38 +209,46 @@ const RuleMiner: React.FC = () => {
           <select
             value={filterStatus}
             onChange={e => setFilterStatus(e.target.value)}
-            className="px-3 py-2 rounded-lg bg-gray-800 border border-gray-700 text-gray-200 text-sm focus:outline-none focus:border-purple-500"
+            className="select text-sm w-auto"
           >
             <option value="">All Statuses</option>
             <option value="draft">Draft</option>
             <option value="approved">Approved</option>
             <option value="rejected">Rejected</option>
           </select>
-          <input
-            type="text"
-            value={filterState}
-            onChange={e => setFilterState(e.target.value)}
-            placeholder="State (e.g. TX)"
-            className="w-28 px-3 py-2 rounded-lg bg-gray-800 border border-gray-700 text-gray-200 text-sm focus:outline-none focus:border-purple-500"
-          />
-          <input
-            type="text"
-            value={filterLob}
-            onChange={e => setFilterLob(e.target.value)}
-            placeholder="Line of Business"
-            className="w-48 px-3 py-2 rounded-lg bg-gray-800 border border-gray-700 text-gray-200 text-sm focus:outline-none focus:border-purple-500"
-          />
-          <button
-            onClick={fetchRules}
-            className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-gray-200 rounded-lg text-sm transition-colors"
-          >
+          <div className="w-40">
+            <Select
+              options={US_STATE_OPTIONS}
+              allLabel="All states"
+              value={filterState}
+              onChange={e => setFilterState(e.target.value)}
+              className="text-sm"
+            />
+          </div>
+          <div className="w-56">
+            <Select
+              options={LOB_OPTIONS}
+              allLabel="All LOBs"
+              value={filterLob}
+              onChange={e => setFilterLob(e.target.value)}
+              className="text-sm"
+            />
+          </div>
+          <button onClick={fetchRules} className="btn-secondary text-sm">
             Refresh
           </button>
         </div>
       </div>
 
       {error && (
-        <div className="mb-4 p-3 rounded-lg bg-red-900/30 border border-red-700 text-red-300 text-sm">
+        <div
+          className="mb-4 p-3 rounded-lg border text-sm"
+          style={{
+            backgroundColor: 'var(--error-bg)',
+            borderColor: 'var(--error)',
+            color: 'var(--error)',
+          }}
+        >
           {error}
         </div>
       )}
@@ -213,12 +256,14 @@ const RuleMiner: React.FC = () => {
       {/* Rules Table */}
       <div className="card">
         {loading ? (
-          <div className="text-center py-12 text-gray-400">Loading rules…</div>
+          <div className="text-center py-12" style={{ color: 'var(--muted)' }}>
+            Loading rules…
+          </div>
         ) : rules.length === 0 ? (
           <div className="text-center py-16">
             <div className="text-5xl mb-4">⚖️</div>
-            <p className="text-gray-400">No rules found.</p>
-            <p className="text-sm text-gray-500 mt-1">
+            <p style={{ color: 'var(--muted)' }}>No rules found.</p>
+            <p className="text-sm mt-1" style={{ color: 'var(--muted)' }}>
               Ingest a regulatory document in RegIngest, then extract rules above.
             </p>
           </div>
@@ -252,6 +297,28 @@ const RuleMiner: React.FC = () => {
           }}
         />
       )}
+
+      {/* Delete confirmation */}
+      <Modal
+        open={deleteId !== null}
+        onClose={() => setDeleteId(null)}
+        title="Delete Rule?"
+        size="md"
+        footer={
+          <>
+            <button onClick={() => setDeleteId(null)} className="btn-secondary">
+              Cancel
+            </button>
+            <button onClick={confirmDelete} className="btn-danger">
+              Delete
+            </button>
+          </>
+        }
+      >
+        <p style={{ color: 'var(--text-secondary)' }}>
+          This action cannot be undone. The rule will be permanently deleted.
+        </p>
+      </Modal>
     </AppLayout>
   );
 };
@@ -275,82 +342,139 @@ const RuleRow: React.FC<RuleRowProps> = ({
   onDelete,
   actionLoading,
 }) => {
-  const statusClass = STATUS_COLORS[rule.status] ?? STATUS_COLORS.draft;
-  const typeClass = RULE_TYPE_COLORS[rule.ruleType] ?? RULE_TYPE_COLORS.general;
+  const statusTone = STATUS_TONES[rule.status] ?? 'warning';
+  const typeTone = RULE_TYPE_TONES[rule.ruleType] ?? 'neutral';
   const confidence = rule.confidenceScore != null
     ? Math.round(rule.confidenceScore * 100)
     : null;
+  const confidenceTone: BadgeTone =
+    confidence != null && confidence >= 80 ? 'success' : 'warning';
 
   return (
-    <div className="rounded-lg border border-gray-700 bg-gray-800/50 overflow-hidden">
+    <div
+      className="rounded-lg border overflow-hidden"
+      style={{
+        borderColor: 'var(--border)',
+        backgroundColor: 'var(--surface-2)',
+      }}
+    >
       {/* Header row */}
-      <div
-        className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-gray-700/30 transition-colors"
+      <button
+        type="button"
         onClick={onToggle}
+        className="w-full text-left flex items-center gap-3 px-4 py-3 transition-colors"
+        onMouseEnter={(e) => {
+          e.currentTarget.style.backgroundColor = 'var(--hover)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.backgroundColor = 'transparent';
+        }}
       >
-        <span className="text-gray-500 text-xs w-4">{expanded ? '▼' : '▶'}</span>
-        <code className="text-xs text-purple-400 font-mono w-28 shrink-0">{rule.ruleCode}</code>
+        <span className="text-xs w-4" style={{ color: 'var(--muted)' }}>
+          {expanded ? '▼' : '▶'}
+        </span>
+        <code
+          className="text-xs font-mono w-28 shrink-0"
+          style={{ color: 'rgb(var(--color-accent-primary))' }}
+        >
+          {rule.ruleCode}
+        </code>
 
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium text-gray-100 truncate">{rule.title}</p>
-          <div className="flex items-center gap-2 mt-0.5">
-            <span className={`px-1.5 py-0.5 rounded text-xs font-medium ${typeClass}`}>
-              {rule.ruleType}
-            </span>
+          <p className="text-sm font-medium truncate" style={{ color: 'var(--text)' }}>
+            {rule.title}
+          </p>
+          <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+            <Badge tone={typeTone}>{humanLabel(rule.ruleType)}</Badge>
             {rule.stateCode && (
-              <span className="text-xs text-gray-400">{rule.stateCode}</span>
+              <span className="text-xs" style={{ color: 'var(--muted)' }}>
+                {rule.stateCode}
+              </span>
             )}
             {rule.lineOfBusiness && (
-              <span className="text-xs text-gray-500 truncate">{rule.lineOfBusiness}</span>
+              <span className="text-xs truncate" style={{ color: 'var(--muted)' }}>
+                {rule.lineOfBusiness}
+              </span>
             )}
           </div>
         </div>
 
         {confidence != null && (
-          <div className="text-xs text-gray-400 shrink-0">
-            <span className={confidence >= 80 ? 'text-green-400' : 'text-yellow-400'}>
-              {confidence}%
-            </span>
+          <div className="shrink-0">
+            <Badge tone={confidenceTone}>{confidence}%</Badge>
           </div>
         )}
 
-        <span
-          className={`px-2 py-0.5 rounded border text-xs font-medium shrink-0 ${statusClass}`}
-        >
+        <Badge tone={statusTone} className="shrink-0">
           {rule.status}
-        </span>
-      </div>
+        </Badge>
+      </button>
 
       {/* Expanded detail */}
       {expanded && (
-        <div className="px-4 pb-4 border-t border-gray-700 pt-3">
+        <div
+          className="px-4 pb-4 pt-3 border-t"
+          style={{ borderColor: 'var(--border)' }}
+        >
           <div className="mb-3">
-            <p className="text-xs text-gray-400 mb-1 uppercase tracking-wide">Rule Text</p>
-            <p className="text-sm text-gray-200 leading-relaxed">{rule.text}</p>
+            <p
+              className="text-xs mb-1 uppercase tracking-wide"
+              style={{ color: 'var(--muted)' }}
+            >
+              Rule Text
+            </p>
+            <p className="text-sm leading-relaxed" style={{ color: 'var(--text)' }}>
+              {rule.text}
+            </p>
           </div>
           {rule.rationale && (
             <div className="mb-3">
-              <p className="text-xs text-gray-400 mb-1 uppercase tracking-wide">Rationale</p>
-              <p className="text-sm text-gray-300">{rule.rationale}</p>
+              <p
+                className="text-xs mb-1 uppercase tracking-wide"
+                style={{ color: 'var(--muted)' }}
+              >
+                Rationale
+              </p>
+              <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+                {rule.rationale}
+              </p>
             </div>
           )}
-          <div className="flex flex-wrap gap-4 text-xs text-gray-400 mb-3">
+          <div
+            className="flex flex-wrap gap-4 text-xs mb-3"
+            style={{ color: 'var(--muted)' }}
+          >
             {rule.effectiveDate && (
-              <span>Effective: <span className="text-gray-300">{rule.effectiveDate}</span></span>
+              <span>
+                Effective:{' '}
+                <span style={{ color: 'var(--text-secondary)' }}>
+                  {rule.effectiveDate}
+                </span>
+              </span>
             )}
             {rule.reviewedAt && (
-              <span>Reviewed: <span className="text-gray-300">{new Date(rule.reviewedAt).toLocaleDateString()}</span></span>
+              <span>
+                Reviewed:{' '}
+                <span style={{ color: 'var(--text-secondary)' }}>
+                  {new Date(rule.reviewedAt).toLocaleDateString()}
+                </span>
+              </span>
             )}
-            <span>Created: <span className="text-gray-300">{new Date(rule.createdAt).toLocaleDateString()}</span></span>
+            <span>
+              Created:{' '}
+              <span style={{ color: 'var(--text-secondary)' }}>
+                {new Date(rule.createdAt).toLocaleDateString()}
+              </span>
+            </span>
           </div>
 
           {rule.status !== 'superseded' && (
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap">
               {rule.status !== 'approved' && (
                 <button
                   onClick={onApprove}
                   disabled={actionLoading}
-                  className="px-3 py-1.5 bg-green-700 hover:bg-green-600 disabled:bg-gray-700 text-white rounded text-xs font-medium transition-colors"
+                  className="btn-success text-xs px-2 py-1 disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                   Approve
                 </button>
@@ -359,7 +483,8 @@ const RuleRow: React.FC<RuleRowProps> = ({
                 <button
                   onClick={onReject}
                   disabled={actionLoading}
-                  className="px-3 py-1.5 bg-yellow-700 hover:bg-yellow-600 disabled:bg-gray-700 text-white rounded text-xs font-medium transition-colors"
+                  className="btn-secondary text-xs px-2 py-1 disabled:opacity-60 disabled:cursor-not-allowed"
+                  style={{ color: 'var(--warning)' }}
                 >
                   Reject
                 </button>
@@ -367,7 +492,7 @@ const RuleRow: React.FC<RuleRowProps> = ({
               <button
                 onClick={onDelete}
                 disabled={actionLoading}
-                className="px-3 py-1.5 bg-red-800 hover:bg-red-700 disabled:bg-gray-700 text-white rounded text-xs font-medium transition-colors ml-auto"
+                className="btn-danger text-xs px-2 py-1 disabled:opacity-60 disabled:cursor-not-allowed ml-auto"
               >
                 Delete
               </button>

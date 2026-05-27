@@ -7,9 +7,10 @@
 // more — there is no fallback.
 
 import React, { useEffect, useState } from 'react';
-import { XMarkIcon } from '@heroicons/react/24/outline';
 import { fetchArchiveBlobUrl } from '../services/regingest';
 import type { IngestedDocument } from '../types/regscout';
+import { Modal } from './ui/Modal';
+import { formatBytes } from '../lib/format';
 
 interface DocumentViewerModalProps {
   document: IngestedDocument;
@@ -44,78 +45,67 @@ export const DocumentViewerModal: React.FC<DocumentViewerModalProps> = ({
     };
   }, [document.id, hasArchive]);
 
+  const title = (
+    <div className="min-w-0">
+      <div className="truncate" style={{ color: 'var(--text)' }}>
+        {document.title}
+      </div>
+      <p className="text-xs font-normal" style={{ color: 'var(--muted)' }}>
+        {document.archiveContentType ?? 'No archive'}
+        {document.archiveSizeBytes != null && <> · {formatBytes(document.archiveSizeBytes)}</>}
+        <> · {document.chunkCount} chunks indexed</>
+      </p>
+    </div>
+  );
+
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm"
-      style={{ backgroundColor: 'rgba(0,0,0,0.6)' }}
-    >
-      <div
-        className="w-full max-w-5xl h-[85vh] rounded-xl border overflow-hidden flex flex-col"
-        style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)' }}
-      >
-        <header
-          className="flex items-center justify-between px-5 py-3 border-b"
-          style={{ borderColor: 'var(--border)' }}
-        >
-          <div className="min-w-0">
-            <h3 className="text-base font-semibold truncate" style={{ color: 'var(--text)' }}>
-              {document.title}
-            </h3>
-            <p className="text-xs" style={{ color: 'var(--muted)' }}>
-              {document.archiveContentType ?? 'No archive'}
-              {document.archiveSizeBytes != null && (
-                <> · {(document.archiveSizeBytes / 1024).toFixed(1)} KB</>
-              )}
-              <> · {document.chunkCount} chunks indexed</>
+    <Modal open={true} onClose={onClose} title={title} size="xl" scrollBody={false}>
+      <div className="flex-1 min-h-[400px] h-full flex flex-col">
+        {!hasArchive ? (
+          <div
+            className="flex-1 flex flex-col items-center justify-center text-center px-6 min-h-[400px]"
+            style={{ color: 'var(--text)' }}
+          >
+            <div className="text-5xl mb-3">📄</div>
+            <p className="text-sm mb-1" style={{ color: 'var(--text)' }}>
+              No archive stored for this document
+            </p>
+            <p className="text-xs max-w-sm" style={{ color: 'var(--muted)' }}>
+              Text-only documents (ingested via the &ldquo;Ingest from text&rdquo; tab) have no
+              source file. Re-ingest the document from its URL or upload the original PDF to
+              enable the viewer.
             </p>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Close viewer"
-            style={{ color: 'var(--muted)' }}
-            className="p-1 rounded hover:bg-gray-700/30"
+        ) : error ? (
+          <div
+            className="flex-1 flex items-center justify-center text-sm px-6 text-center min-h-[400px]"
+            style={{ color: 'var(--error)' }}
           >
-            <XMarkIcon className="h-5 w-5" />
-          </button>
-        </header>
-
-        <div className="flex-1 min-h-0 bg-gray-900">
-          {!hasArchive ? (
-            <div className="h-full flex flex-col items-center justify-center text-center px-6">
-              <div className="text-5xl mb-3">📄</div>
-              <p className="text-sm text-gray-300 mb-1">No archive stored for this document</p>
-              <p className="text-xs text-gray-500 max-w-sm">
-                Text-only documents (ingested via the &ldquo;Ingest from text&rdquo; tab) have no
-                source file. Re-ingest the document from its URL or upload the original PDF to
-                enable the viewer.
-              </p>
-            </div>
-          ) : error ? (
-            <div className="h-full flex items-center justify-center text-sm text-red-300 px-6 text-center">
-              {error}
-            </div>
-          ) : !blobUrl ? (
-            <div className="h-full flex items-center justify-center text-sm text-gray-400">
-              Loading archive…
-            </div>
-          ) : isHtml ? (
-            <iframe
-              src={blobUrl}
-              title={`Archive of ${document.title}`}
-              sandbox=""
-              className="w-full h-full bg-white"
-            />
-          ) : (
-            <iframe
-              src={blobUrl}
-              title={`Archive of ${document.title}`}
-              className="w-full h-full bg-white"
-            />
-          )}
-        </div>
+            {error}
+          </div>
+        ) : !blobUrl ? (
+          <div
+            className="flex-1 flex items-center justify-center text-sm min-h-[400px]"
+            style={{ color: 'var(--muted)' }}
+          >
+            Loading archive…
+          </div>
+        ) : isHtml ? (
+          <iframe
+            src={blobUrl}
+            title={`Archive of ${document.title}`}
+            sandbox=""
+            className="w-full flex-1 min-h-[400px] bg-white"
+          />
+        ) : (
+          <iframe
+            src={blobUrl}
+            title={`Archive of ${document.title}`}
+            className="w-full flex-1 min-h-[400px] bg-white"
+          />
+        )}
       </div>
-    </div>
+    </Modal>
   );
 };
 
