@@ -5,6 +5,7 @@ import { useAppStore } from '../../store/appStore';
 const navItems = [
   { id: 'dashboard', label: 'Dashboard', icon: '📊', path: '/' },
   { id: 'organizations', label: 'Organizations', icon: '🏢', path: '/organizations' },
+  { id: 'users', label: 'Users', icon: '👥', path: '/users' },
   { id: 'configuration', label: 'Configuration', icon: '⚙️', path: '/configuration' },
   { id: 'profiles', label: 'Portfolios', icon: '🗂️', path: '/profiles' },
   { id: 'regscout', label: 'RegScout', icon: '🔍', path: '/regscout' },

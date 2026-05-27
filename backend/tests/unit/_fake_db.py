@@ -60,14 +60,25 @@ class FakeSession:
         return _FakeResult(items)
 
     def _guess_entity(self, stmt: Any) -> type | None:
-        """Match by exact table name appearing as a whole word in the SQL.
+        """Match the entity in the SELECT/FROM clause of the SQL.
 
-        Without word boundaries, ``rules`` would match inside
-        ``validation_runs``, causing the wrong entity to be returned.
+        Prefers the table mentioned in the ``FROM`` clause (which is the
+        source of returned rows for a ``select(Entity)`` even when there is
+        a JOIN). Falls back to whole-word substring match.
         """
         import re
 
         text = str(stmt).lower()
+
+        # 1) Match table directly after FROM (before any JOIN/WHERE/GROUP).
+        from_match = re.search(r"\bfrom\s+([a-z_][a-z0-9_]*)", text)
+        if from_match:
+            from_tn = from_match.group(1)
+            for entity in self.store:
+                if entity.__tablename__.lower() == from_tn:  # type: ignore[attr-defined]
+                    return entity
+
+        # 2) Fallback — longest whole-word table name in the statement.
         best: type | None = None
         best_len = 0
         for entity in self.store:
@@ -88,7 +99,18 @@ class FakeSession:
             instance.discovered_at = now
         self.added.append(instance)
         bucket = self.store.setdefault(type(instance), {})
-        bucket[instance.id] = instance
+        # Use .id if present; otherwise fall back to a composite key built
+        # from common association-table column names. As a last resort, use
+        # the object's identity so it's still retrievable.
+        key = getattr(instance, "id", None)
+        if key is None:
+            user_id = getattr(instance, "user_id", None)
+            role_id = getattr(instance, "role_id", None)
+            if user_id is not None and role_id is not None:
+                key = (user_id, role_id)
+            else:
+                key = id(instance)
+        bucket[key] = instance
 
     def add_all(self, instances: list[Any]) -> None:
         for inst in instances:

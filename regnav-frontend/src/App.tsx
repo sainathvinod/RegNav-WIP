@@ -16,6 +16,7 @@ import { Reports } from './pages/Reports';
 import { RuleMiner } from './pages/RuleMiner';
 import { RuleSense } from './pages/RuleSense';
 import { Settings } from './pages/Settings';
+import { Users } from './pages/Users';
 import { getSummary } from './services/analytics';
 import type { AnalyticsSummary } from './types/analytics';
 
@@ -132,6 +133,7 @@ function App() {
             <Routes>
               <Route path="/" element={<Dashboard />} />
               <Route path="/organizations" element={<Organizations />} />
+              <Route path="/users" element={<Users />} />
               <Route path="/configuration" element={<Configuration />} />
               <Route path="/profiles" element={<Profiles />} />
               <Route path="/regscout" element={<RegScout />} />
