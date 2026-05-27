@@ -14,6 +14,7 @@ from app.core.config import settings
 from app.core.logging import get_logger
 from app.db.models import Document, DocumentChunk
 from app.llm.embeddings import EmbeddingClient
+from app.services.blob_storage import build_archive_key, get_storage
 from app.services.chunking import chunk_text
 
 logger = get_logger(__name__)
@@ -30,10 +31,17 @@ async def ingest_text(
     lob: str | None = None,
     source_url: str | None = None,
     embedding_client: EmbeddingClient | None = None,
+    archive_bytes: bytes | None = None,
+    archive_content_type: str | None = None,
+    archive_extension: str | None = None,
 ) -> Document:
     """Create a Document, chunk + embed its text, persist everything.
 
     All steps run inside the caller's session so RLS context is preserved.
+
+    If ``archive_bytes`` is provided the raw payload (PDF upload, rendered
+    HTML, etc.) is written to blob storage and the resulting key is stored
+    on the Document so the /archive endpoint can stream it back.
     """
     embedder = embedding_client or EmbeddingClient()
 
@@ -50,6 +58,16 @@ async def ingest_text(
     )
     db.add(document)
     await db.flush()
+
+    if archive_bytes is not None:
+        ext = archive_extension or "bin"
+        ctype = archive_content_type or "application/octet-stream"
+        key = build_archive_key(tenant_id, document.id, ext)
+        await get_storage().put(key, archive_bytes, ctype)
+        document.archive_blob_key = key
+        document.archive_content_type = ctype
+        document.archive_size_bytes = len(archive_bytes)
+        await db.flush()
 
     try:
         chunks = chunk_text(

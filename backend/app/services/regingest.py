@@ -2,10 +2,13 @@
 
 Pipeline:
 1. Fetch the URL with httpx (or accept raw file bytes).
-2. If the content-type is HTML, strip boilerplate and pull main content.
-3. If the content-type is PDF, extract text via pypdf (Azure Document Intelligence
-   is the production upgrade path).
-4. Delegate to :func:`app.services.ingest.ingest_text` for chunking + embeddings.
+2. If the content-type is HTML, strip boilerplate and pull main content;
+   when ``archive_html_as_pdf`` is on, render the page to PDF and archive
+   that to blob storage too.
+3. If the content-type is PDF, extract structured text via Docling
+   (preserves tables and headings as Markdown); pypdf is the fallback.
+4. Delegate to :func:`app.services.ingest.ingest_text` for chunking,
+   embeddings, and archive persistence.
 """
 
 from __future__ import annotations
@@ -17,9 +20,12 @@ import httpx
 from bs4 import BeautifulSoup
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import settings
 from app.core.logging import get_logger
 from app.db.models import Document
+from app.services.html_pdf import render_html_to_pdf
 from app.services.ingest import ingest_text
+from app.services.pdf_extract import extract_pdf_text
 
 logger = get_logger(__name__)
 
@@ -53,11 +59,13 @@ async def fetch_url_content(
     url: str,
     *,
     http_client: httpx.AsyncClient | None = None,
-) -> tuple[str, str | None, str | None]:
-    """Return ``(text, content_type, title)`` for the document at ``url``.
+) -> tuple[str, str | None, str | None, bytes | None]:
+    """Return ``(text, content_type, title, raw_bytes)`` for ``url``.
 
-    Raises ``NotImplementedError`` for PDFs (Phase 4) and ``httpx.HTTPError``
-    for transport failures.
+    ``raw_bytes`` is the original payload, returned so the caller can
+    archive it. For PDFs that's the source PDF; for HTML pages the worker
+    re-renders the page to PDF separately (Playwright) since the raw HTML
+    is generally not useful as an archival format.
     """
     own_client = http_client is None
     client = http_client or httpx.AsyncClient(
@@ -73,14 +81,17 @@ async def fetch_url_content(
         ct_lower = content_type.lower()
 
         if "pdf" in ct_lower or url.lower().endswith(".pdf"):
-            return _extract_pdf_text(resp.content), content_type, None
+            text, _pages = extract_pdf_text(resp.content)
+            return text, content_type, None, resp.content
 
         if "html" in ct_lower or "xml" in ct_lower or "<html" in resp.text[:2000].lower():
             text, title = _extract_main_text(resp.text)
-            return text, content_type, title
+            # Raw HTML is returned for completeness; the caller decides
+            # whether to also produce a PDF render via render_html_to_pdf.
+            return text, content_type, title, resp.text.encode("utf-8")
 
         # Plain text or unknown text/* — return as-is
-        return resp.text, content_type, None
+        return resp.text, content_type, None, resp.content
     finally:
         if own_client:
             await client.aclose()
@@ -96,8 +107,10 @@ async def ingest_from_url(
     lob: str | None = None,
     http_client: httpx.AsyncClient | None = None,
 ) -> Document:
-    """Fetch ``source_url``, extract clean text, ingest into the RAG store."""
-    text, content_type, fetched_title = await fetch_url_content(source_url, http_client=http_client)
+    """Fetch ``source_url``, extract clean text, archive, and ingest."""
+    text, content_type, fetched_title, raw = await fetch_url_content(
+        source_url, http_client=http_client
+    )
     if not text.strip():
         raise ValueError(f"No extractable text at {source_url}")
 
@@ -110,6 +123,30 @@ async def ingest_from_url(
         text_length=len(text),
     )
 
+    archive_bytes: bytes | None = raw
+    archive_ctype = content_type or "application/octet-stream"
+    archive_ext = "bin"
+    ct_lower = (content_type or "").lower()
+
+    if "pdf" in ct_lower or source_url.lower().endswith(".pdf"):
+        archive_ctype = "application/pdf"
+        archive_ext = "pdf"
+    elif "html" in ct_lower or "xml" in ct_lower:
+        # Render HTML to PDF (best for archival) when configured.
+        if settings.archive_html_as_pdf:
+            pdf_render = await render_html_to_pdf(source_url)
+            if pdf_render is not None:
+                archive_bytes = pdf_render
+                archive_ctype = "application/pdf"
+                archive_ext = "pdf"
+            else:
+                # Fall back to storing the raw HTML so we still have an archive.
+                archive_ctype = "text/html"
+                archive_ext = "html"
+        else:
+            archive_ctype = "text/html"
+            archive_ext = "html"
+
     document = await ingest_text(
         db=db,
         tenant_id=tenant_id,
@@ -119,34 +156,11 @@ async def ingest_from_url(
         state_code=state_code,
         lob=lob,
         source_url=source_url,
+        archive_bytes=archive_bytes,
+        archive_content_type=archive_ctype,
+        archive_extension=archive_ext,
     )
     return document
-
-
-def _extract_pdf_text(pdf_bytes: bytes) -> str:
-    """Extract plain text from a PDF using pypdf.
-
-    Falls back gracefully if pypdf is not installed or parsing fails.
-    """
-    try:
-        import io
-
-        from pypdf import PdfReader
-
-        reader = PdfReader(io.BytesIO(pdf_bytes))
-        pages: list[str] = []
-        for page in reader.pages:
-            try:
-                pages.append(page.extract_text() or "")
-            except Exception:
-                pages.append("")
-        return "\n\n".join(p for p in pages if p.strip())
-    except ImportError:
-        logger.warning("pypdf_not_installed", hint="pip install pypdf")
-        return ""
-    except Exception as exc:
-        logger.warning("pdf_extract_failed", error=str(exc))
-        return ""
 
 
 async def ingest_pdf_bytes(
@@ -157,22 +171,32 @@ async def ingest_pdf_bytes(
     pdf_bytes: bytes,
     state_code: str | None = None,
     lob: str | None = None,
+    title: str | None = None,
 ) -> Document:
-    """Ingest a PDF file by extracting its text and feeding it to the RAG store."""
-    text = _extract_pdf_text(pdf_bytes)
+    """Ingest an uploaded PDF: Docling-extract its text, archive the bytes."""
+    text, page_count = extract_pdf_text(pdf_bytes)
     if not text.strip():
         raise ValueError(f"No extractable text in PDF: {filename}")
 
-    title = filename.rsplit("/", 1)[-1][:512]
-    logger.info("regingest_pdf", filename=filename, text_length=len(text))
+    final_title = (title or filename.rsplit("/", 1)[-1])[:512]
+    logger.info(
+        "regingest_pdf",
+        filename=filename,
+        title=final_title,
+        text_length=len(text),
+        pages=page_count,
+    )
     return await ingest_text(
         db=db,
         tenant_id=tenant_id,
-        title=title,
+        title=final_title,
         text=text,
         source_type="pdf",
         state_code=state_code,
         lob=lob,
+        archive_bytes=pdf_bytes,
+        archive_content_type="application/pdf",
+        archive_extension="pdf",
     )
 
 
