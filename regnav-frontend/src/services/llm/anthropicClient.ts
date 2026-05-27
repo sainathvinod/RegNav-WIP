@@ -4,7 +4,7 @@
 // The frontend never sends an API key — only the user's JWT is forwarded.
 import { LLMConfiguration, LLMTestResult } from '../../types';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000';
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/$/, '');
 const PROXY_URL = `${API_BASE_URL.replace(/\/$/, '')}/api/anthropic`;
 
 /** Retrieve the stored JWT for the current session, if any. */

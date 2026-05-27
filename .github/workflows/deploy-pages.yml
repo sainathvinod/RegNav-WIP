@@ -35,8 +35,15 @@ jobs:
         working-directory: regnav-frontend
         env:
           VITE_BASE_PATH: /RegNav-WIP/
-          VITE_API_BASE_URL: http://localhost:8000
+          # If VITE_API_BASE_URL is set as a repository secret, it is baked into
+          # the bundle here.  Leave the secret empty (or unset) to run in demo
+          # mode — the frontend still loads but API calls return 404s and a
+          # banner explains how to wire up the backend.
+          VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
           VITE_APP_ENV: production
+          # Always true for GitHub Pages builds — the banner checks whether
+          # VITE_API_BASE_URL is also set; if not it surfaces a setup prompt.
+          VITE_DEMO_MODE: 'true'
         run: npm run build
 
       - name: Deploy to gh-pages branch

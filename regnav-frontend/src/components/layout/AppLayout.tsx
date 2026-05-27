@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { TopBar } from './TopBar';
+import { DemoModeBanner } from './DemoModeBanner';
 import { useAppStore } from '../../store/appStore';
 
 interface AppLayoutProps {
@@ -46,6 +47,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children, title }) => {
       )}
 
       <div className={`transition-all duration-300 ${collapsed ? 'md:ml-20' : 'md:ml-64'}`}>
+        <DemoModeBanner />
         <TopBar title={title} />
 
         <main className="px-3 py-4 sm:px-4 md:px-6" style={{ backgroundColor: 'var(--bg)' }}>
