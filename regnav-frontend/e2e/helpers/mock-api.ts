@@ -174,7 +174,17 @@ export async function mockAllApis(page: Page) {
   );
   await page.route(/\/api\/v1\/organizations/, (route: Route) =>
     route.fulfill(json([
-      { id: 'o1', name: 'Acme Insurance', kind: 'carrier', country: 'US', state: 'TX', createdAt: '2026-04-01T00:00:00Z' },
+      {
+        id: 'o1',
+        name: 'Acme Insurance',
+        slug: 'acme-insurance',
+        kind: 'carrier',
+        country: 'US',
+        state: 'TX',
+        status: 'active',
+        userCount: 12,
+        createdAt: '2026-04-01T00:00:00Z',
+      },
     ])),
   );
   await page.route(/\/api\/v1\/audit/, (route: Route) =>
