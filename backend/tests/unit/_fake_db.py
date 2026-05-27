@@ -60,11 +60,22 @@ class FakeSession:
         return _FakeResult(items)
 
     def _guess_entity(self, stmt: Any) -> type | None:
+        """Match by exact table name appearing as a whole word in the SQL.
+
+        Without word boundaries, ``rules`` would match inside
+        ``validation_runs``, causing the wrong entity to be returned.
+        """
+        import re
+
         text = str(stmt).lower()
+        best: type | None = None
+        best_len = 0
         for entity in self.store:
-            if entity.__tablename__.lower() in text:  # type: ignore[attr-defined]
-                return entity
-        return None
+            tn = entity.__tablename__.lower()  # type: ignore[attr-defined]
+            if re.search(rf"\b{re.escape(tn)}\b", text) and len(tn) > best_len:
+                best = entity
+                best_len = len(tn)
+        return best
 
     # ---- CRUD ----------------------------------------------------------
     def add(self, instance: Any) -> None:

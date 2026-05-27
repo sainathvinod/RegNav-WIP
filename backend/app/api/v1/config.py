@@ -5,7 +5,7 @@ from __future__ import annotations
 import uuid
 
 from fastapi import APIRouter, Depends
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -47,7 +47,9 @@ class ConfigEntry(BaseModel):
     key: str
     value: str
     default: str
-    is_overridden: bool
+    is_overridden: bool = Field(..., alias="isOverridden")
+
+    model_config = {"populate_by_name": True}
 
 
 class ConfigResponse(BaseModel):

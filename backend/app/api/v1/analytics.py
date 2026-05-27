@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import UTC, datetime, timedelta
 
 from fastapi import APIRouter, Depends
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -26,14 +26,18 @@ class RuleStats(BaseModel):
 class ValidationStats(BaseModel):
     total: int
     today: int
-    violations_rate: float
+    violations_rate: float = Field(..., alias="violationsRate")
+
+    model_config = {"populate_by_name": True}
 
 
 class AnalyticsSummary(BaseModel):
     documents: int
     rules: RuleStats
     validations: ValidationStats
-    compliance_score: float
+    compliance_score: float = Field(..., alias="complianceScore")
+
+    model_config = {"populate_by_name": True}
 
 
 @router.get("/summary", response_model=AnalyticsSummary)
@@ -52,10 +56,10 @@ async def get_summary(
     )
 
     # --- Rules by status -------------------------------------------------
-    rules_result = await db.execute(
-        select(Rule.status, func.count()).where(Rule.deleted_at.is_(None)).group_by(Rule.status)
-    )
-    rule_counts: dict[str, int] = {row[0]: row[1] for row in rules_result}
+    rules_result = await db.execute(select(Rule).where(Rule.deleted_at.is_(None)))
+    rule_counts: dict[str, int] = {}
+    for r in rules_result.scalars().all():
+        rule_counts[r.status] = rule_counts.get(r.status, 0) + 1
     rules = RuleStats(
         total=sum(rule_counts.values()),
         draft=rule_counts.get("draft", 0),
@@ -89,7 +93,7 @@ async def get_summary(
     # Compliance score: % of completed runs in last 30 days with 0 violations
     cutoff = datetime.now(UTC) - timedelta(days=30)
     recent_runs_result = await db.execute(
-        select(ValidationRun.violations_found).where(
+        select(ValidationRun).where(
             ValidationRun.tenant_id == user.tenant_id,
             ValidationRun.status == "completed",
             ValidationRun.created_at >= cutoff,
@@ -97,10 +101,10 @@ async def get_summary(
     )
     recent_rows = recent_runs_result.scalars().all()
     if recent_rows:
-        clean = sum(1 for v in recent_rows if v == 0)
-        compliance = round(clean / len(recent_rows) * 100, 1)
-        total_violations = sum(recent_rows)
-        violations_rate = round(total_violations / len(recent_rows), 2)
+        violations = [r.violations_found for r in recent_rows]
+        clean = sum(1 for v in violations if v == 0)
+        compliance = round(clean / len(violations) * 100, 1)
+        violations_rate = round(sum(violations) / len(violations), 2)
     else:
         compliance = 100.0
         violations_rate = 0.0
