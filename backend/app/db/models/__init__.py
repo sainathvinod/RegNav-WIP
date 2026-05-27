@@ -12,6 +12,7 @@ from app.db.models.regulatory_source import RegulatorySource
 from app.db.models.role import Role, UserRole
 from app.db.models.rule import Rule
 from app.db.models.tenant import Tenant
+from app.db.models.tenant_config import TenantConfig
 from app.db.models.user import User
 from app.db.models.validation_run import ValidationResult, ValidationRun
 
@@ -29,6 +30,7 @@ __all__ = [
     "Rule",
     "SoftDeleteMixin",
     "Tenant",
+    "TenantConfig",
     "TimestampMixin",
     "User",
     "UserRole",

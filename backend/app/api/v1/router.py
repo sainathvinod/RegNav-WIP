@@ -2,12 +2,27 @@
 
 from fastapi import APIRouter
 
-from app.api.v1 import jobs, regingest, regscout, regvalidate, ruleminer, rulesense, tenants, users
+from app.api.v1 import (
+    analytics,
+    config,
+    jobs,
+    organizations,
+    regingest,
+    regscout,
+    regvalidate,
+    ruleminer,
+    rulesense,
+    tenants,
+    users,
+)
 
 router = APIRouter()
 
 router.include_router(tenants.router, prefix="/tenants", tags=["tenants"])
 router.include_router(users.router, prefix="/users", tags=["users"])
+router.include_router(organizations.router, prefix="/organizations", tags=["organizations"])
+router.include_router(config.router, prefix="/config", tags=["config"])
+router.include_router(analytics.router, prefix="/analytics", tags=["analytics"])
 router.include_router(rulesense.router, prefix="/rulesense", tags=["rulesense"])
 router.include_router(jobs.router, prefix="/jobs", tags=["jobs"])
 router.include_router(regscout.router, prefix="/regscout", tags=["regscout"])
