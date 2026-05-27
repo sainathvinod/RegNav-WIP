@@ -14,12 +14,11 @@ test.describe('Notification Bell', () => {
   });
 
   test('opens dropdown on click', async ({ page }) => {
-    // The bell button is the one with the SVG path for notifications
-    const bell = page.getByTitle('Notifications');
-    await bell.click();
+    await page.getByTitle('Notifications').click();
 
-    // Dropdown header should appear
-    await expect(page.getByText('Notifications').nth(1)).toBeVisible();
+    // Dropdown panel header — exact:true matches only the <span> directly
+    // containing "Notifications", not ancestor containers.
+    await expect(page.getByText('Notifications', { exact: true })).toBeVisible();
   });
 
   test('shows empty state when no notifications', async ({ page }) => {

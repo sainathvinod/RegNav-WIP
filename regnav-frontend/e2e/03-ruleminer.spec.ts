@@ -60,6 +60,6 @@ test.describe('RuleMiner', () => {
     await expect(page.getByRole('heading', { name: /Extracting Rules/i })).toBeVisible();
     await expect(page.getByText('Done')).toBeVisible({ timeout: 5000 });
 
-    await page.getByRole('button', { name: /Close/i }).click();
+    await page.getByRole('button', { name: /Close/i }).last().click();
   });
 });

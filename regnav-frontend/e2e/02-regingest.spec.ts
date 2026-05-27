@@ -40,8 +40,9 @@ test.describe('RegIngest', () => {
     // SSE stream returns immediate done — modal should show "Done" status
     await expect(page.getByText('Done')).toBeVisible({ timeout: 5000 });
 
-    // Close the modal
-    await page.getByRole('button', { name: /Close/i }).click();
+    // Close the modal — use .last() because the modal has two "Close" buttons:
+    // the header X (aria-label="Close") and the footer "Close" text button.
+    await page.getByRole('button', { name: /Close/i }).last().click();
     await expect(page.getByRole('heading', { name: /Ingesting text/i })).not.toBeVisible();
   });
 
