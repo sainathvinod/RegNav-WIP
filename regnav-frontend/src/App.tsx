@@ -128,7 +128,7 @@ const PlaceholderPage: React.FC<{ title: string }> = ({ title }) => {
 function App() {
   return (
     <ThemeProvider>
-      <Router>
+      <Router basename={import.meta.env.BASE_URL}>
         <Routes>
           <Route path="/" element={<Dashboard />} />
           <Route path="/organizations" element={<PlaceholderPage title="Organizations" />} />

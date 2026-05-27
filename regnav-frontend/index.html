@@ -12,6 +12,15 @@
     <link rel="apple-touch-icon" href="/logo192.png" />
     <link rel="manifest" href="/manifest.json" />
     <title>RegNav.AI</title>
+    <script>
+      // Restore path from GitHub Pages 404 redirect
+      (function () {
+        var p = window.location.search.slice(1).split('&').find(function (s) { return s.startsWith('p='); });
+        if (p) {
+          window.history.replaceState(null, null, '/' + decodeURIComponent(p.slice(2)));
+        }
+      })();
+    </script>
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
