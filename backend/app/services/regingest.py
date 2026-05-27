@@ -1,12 +1,11 @@
-"""Server-side URL ingestion for RegIngest.
+"""Server-side URL and file ingestion for RegIngest.
 
 Pipeline:
-1. Fetch the URL with httpx.
+1. Fetch the URL with httpx (or accept raw file bytes).
 2. If the content-type is HTML, strip boilerplate and pull main content.
-3. Delegate to :func:`app.services.ingest.ingest_text` for chunking + embeddings.
-
-PDF parsing is explicitly out of scope for Phase 3 — it lands in Phase 4
-with Azure Document Intelligence.
+3. If the content-type is PDF, extract text via pypdf (Azure Document Intelligence
+   is the production upgrade path).
+4. Delegate to :func:`app.services.ingest.ingest_text` for chunking + embeddings.
 """
 
 from __future__ import annotations
@@ -74,9 +73,7 @@ async def fetch_url_content(
         ct_lower = content_type.lower()
 
         if "pdf" in ct_lower or url.lower().endswith(".pdf"):
-            raise NotImplementedError(
-                "PDF support arrives with Azure Document Intelligence in Phase 4",
-            )
+            return _extract_pdf_text(resp.content), content_type, None
 
         if "html" in ct_lower or "xml" in ct_lower or "<html" in resp.text[:2000].lower():
             text, title = _extract_main_text(resp.text)
@@ -126,10 +123,63 @@ async def ingest_from_url(
     return document
 
 
+def _extract_pdf_text(pdf_bytes: bytes) -> str:
+    """Extract plain text from a PDF using pypdf.
+
+    Falls back gracefully if pypdf is not installed or parsing fails.
+    """
+    try:
+        import io
+
+        from pypdf import PdfReader
+
+        reader = PdfReader(io.BytesIO(pdf_bytes))
+        pages: list[str] = []
+        for page in reader.pages:
+            try:
+                pages.append(page.extract_text() or "")
+            except Exception:
+                pages.append("")
+        return "\n\n".join(p for p in pages if p.strip())
+    except ImportError:
+        logger.warning("pypdf_not_installed", hint="pip install pypdf")
+        return ""
+    except Exception as exc:
+        logger.warning("pdf_extract_failed", error=str(exc))
+        return ""
+
+
+async def ingest_pdf_bytes(
+    db: AsyncSession,
+    *,
+    tenant_id: uuid.UUID,
+    filename: str,
+    pdf_bytes: bytes,
+    state_code: str | None = None,
+    lob: str | None = None,
+) -> Document:
+    """Ingest a PDF file by extracting its text and feeding it to the RAG store."""
+    text = _extract_pdf_text(pdf_bytes)
+    if not text.strip():
+        raise ValueError(f"No extractable text in PDF: {filename}")
+
+    title = filename.rsplit("/", 1)[-1][:512]
+    logger.info("regingest_pdf", filename=filename, text_length=len(text))
+    return await ingest_text(
+        db=db,
+        tenant_id=tenant_id,
+        title=title,
+        text=text,
+        source_type="pdf",
+        state_code=state_code,
+        lob=lob,
+    )
+
+
 def _fallback_title(url: str) -> str:
     parsed = urlparse(url)
     path = parsed.path.rstrip("/").rsplit("/", 1)[-1] or parsed.netloc
     return path or url
 
 
-__all__ = ["fetch_url_content", "ingest_from_url"]
+__all__ = ["fetch_url_content", "ingest_from_url", "ingest_pdf_bytes"]

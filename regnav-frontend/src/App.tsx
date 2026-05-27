@@ -4,6 +4,8 @@ import { AppLayout } from './components/layout/AppLayout';
 import { ThemeProvider } from './components/ThemeProvider';
 import { RegScout } from './pages/RegScout';
 import { RegIngest } from './pages/RegIngest';
+import { RegValidate } from './pages/RegValidate';
+import { RuleMiner } from './pages/RuleMiner';
 import { RuleSense } from './pages/RuleSense';
 import { Settings } from './pages/Settings';
 import { Profiles } from './pages/Profiles';
@@ -138,9 +140,9 @@ function App() {
           <Route path="/profiles" element={<Profiles />} />
           <Route path="/regscout" element={<RegScout />} />
           <Route path="/regingest" element={<RegIngest />} />
-          <Route path="/ruleminer" element={<PlaceholderPage title="RuleMiner - Rule Extraction" />} />
+          <Route path="/ruleminer" element={<RuleMiner />} />
           <Route path="/rulesense" element={<RuleSense />} />
-          <Route path="/regvalidate" element={<PlaceholderPage title="RegValidate - File Validation" />} />
+          <Route path="/regvalidate" element={<RegValidate />} />
           <Route path="/analytics" element={<PlaceholderPage title="Analytics" />} />
           <Route path="/reports" element={<PlaceholderPage title="Reports" />} />
           <Route path="/settings" element={<Settings />} />

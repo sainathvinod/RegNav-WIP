@@ -10,8 +10,10 @@ from app.db.models.document_chunk import DocumentChunk
 from app.db.models.job import Job
 from app.db.models.regulatory_source import RegulatorySource
 from app.db.models.role import Role, UserRole
+from app.db.models.rule import Rule
 from app.db.models.tenant import Tenant
 from app.db.models.user import User
+from app.db.models.validation_run import ValidationResult, ValidationRun
 
 __all__ = [
     "AuditLog",
@@ -24,9 +26,12 @@ __all__ = [
     "Job",
     "RegulatorySource",
     "Role",
+    "Rule",
     "SoftDeleteMixin",
     "Tenant",
     "TimestampMixin",
     "User",
     "UserRole",
+    "ValidationResult",
+    "ValidationRun",
 ]
