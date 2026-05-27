@@ -35,9 +35,10 @@ test.describe('RuleMiner', () => {
     await expect(page.getByText('TX-WC-0001')).toBeVisible();
     await expect(page.getByText('Coverage must include all employees')).toBeVisible();
 
-    // The status badge is lowercase "draft"; the filter dropdown is capital
-    // "Draft". Exact + case-sensitive match disambiguates them.
-    await expect(page.getByText('draft', { exact: true })).toBeVisible();
+    // The status badge has class border-yellow-700 for draft status.
+    // The description paragraph also contains a <span>draft</span> (text-yellow-400)
+    // but no border class, so scoping by the badge's border colour is unique.
+    await expect(page.locator('span.border-yellow-700').filter({ hasText: 'draft' })).toBeVisible();
 
     // Expand the rule row
     await page.getByText('Coverage must include all employees').click();
@@ -49,17 +50,17 @@ test.describe('RuleMiner', () => {
     // Expand rule
     await page.getByText('Coverage must include all employees').click();
 
-    // Click Approve — anchor on exact text so we don't also match the
-    // "Approved" filter option label.
+    // Click Approve
     const approveBtn = page.getByRole('button', { name: /^Approve$/ });
     await expect(approveBtn).toBeVisible();
     await approveBtn.click();
 
-    // The status badge text is lowercase ("approved" / "draft"); the filter
-    // dropdown labels are capitalised ("Approved" / "Draft"). Case-sensitive
-    // exact matching targets only the badge.
-    await expect(page.getByText('approved', { exact: true })).toBeVisible();
-    await expect(page.getByText('draft', { exact: true })).toHaveCount(0);
+    // After approval the badge re-renders with green border (approved).
+    // The yellow-border draft badge must be gone; the description-text
+    // <span class="text-yellow-400">draft</span> never has a border class,
+    // so toHaveCount(0) on span.border-yellow-700 is unambiguous.
+    await expect(page.locator('span.border-green-700').filter({ hasText: 'approved' })).toBeVisible();
+    await expect(page.locator('span.border-yellow-700')).toHaveCount(0);
   });
 
   test('extraction triggers job progress modal', async ({ page }) => {
