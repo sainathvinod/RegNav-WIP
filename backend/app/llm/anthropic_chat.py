@@ -15,9 +15,11 @@ from typing import Any
 import httpx
 
 from app.core.logging import get_logger
+from app.core.telemetry import get_tracer
 from app.llm.credentials import get_anthropic_api_key
 
 logger = get_logger(__name__)
+tracer = get_tracer(__name__)
 
 ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages"
 ANTHROPIC_VERSION = "2023-06-01"
@@ -34,6 +36,24 @@ async def stream_chat(
     `messages` is a list of {role, content} dicts (no system message in here —
     Anthropic takes `system` as a top-level field).
     """
+    span = tracer.start_as_current_span("anthropic.chat.stream")
+    with span as s:
+        s.set_attribute("gen_ai.system", "anthropic")
+        s.set_attribute("gen_ai.request.model", model)
+        s.set_attribute("gen_ai.request.max_tokens", max_tokens)
+        s.set_attribute("gen_ai.request.message_count", len(messages))
+
+        async for event in _stream_chat_inner(messages, system, model, max_tokens, s):
+            yield event
+
+
+async def _stream_chat_inner(
+    messages: list[dict[str, str]],
+    system: str,
+    model: str,
+    max_tokens: int,
+    span: Any,
+) -> AsyncIterator[dict[str, Any]]:
     api_key = await get_anthropic_api_key()
 
     payload: dict[str, Any] = {
@@ -126,4 +146,6 @@ async def stream_chat(
                 }
                 return
 
+    span.set_attribute("gen_ai.usage.input_tokens", usage["input_tokens"])
+    span.set_attribute("gen_ai.usage.output_tokens", usage["output_tokens"])
     yield {"type": "done", "usage": usage}

@@ -63,6 +63,13 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
     log_json: bool = True
 
+    # OpenTelemetry — off by default. Enable + set the OTLP endpoint to
+    # ship traces to Azure Application Insights or a generic collector.
+    otel_enabled: bool = False
+    otel_service_name: str = "regnav-backend"
+    otel_exporter_otlp_endpoint: str | None = None
+    otel_exporter_otlp_headers: str | None = None
+
 
 @lru_cache(maxsize=1)
 def get_settings() -> Settings:

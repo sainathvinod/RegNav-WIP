@@ -83,6 +83,21 @@ services:
       - ./backend/app:/app/app:ro
     command: ["python", "-m", "app.workers.cli"]
 
+  jaeger:
+    # Optional local OTLP collector + trace UI. Start with:
+    #   docker compose --profile otel up
+    # Then set OTEL_ENABLED=true and
+    # OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4318/v1/traces in the
+    # backend env. UI at http://localhost:16686/.
+    image: jaegertracing/all-in-one:1.62
+    container_name: regnav-jaeger
+    profiles: ["otel"]
+    environment:
+      COLLECTOR_OTLP_ENABLED: "true"
+    ports:
+      - "16686:16686"   # Jaeger UI
+      - "4318:4318"     # OTLP HTTP receiver
+
 volumes:
   postgres_data:
   redis_data:

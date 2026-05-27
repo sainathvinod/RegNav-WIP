@@ -16,6 +16,7 @@ import socket
 import uuid
 
 from app.core.logging import configure_logging, get_logger
+from app.core.telemetry import configure_tracing
 from app.workers.handlers import HANDLERS
 from app.workers.runner import WorkerRunner
 
@@ -59,6 +60,7 @@ def main() -> None:
     args = parser.parse_args()
 
     configure_logging()
+    configure_tracing()
     logger.info(
         "worker_cli_starting",
         worker_id=args.worker_id,

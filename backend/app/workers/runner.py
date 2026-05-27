@@ -20,12 +20,14 @@ from typing import Any
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.logging import get_logger
+from app.core.telemetry import get_tracer
 from app.db.engine import AsyncSessionLocal
 from app.db.models import Job
 from app.db.rls import set_tenant_guc
 from app.services import jobs as jobs_service
 
 logger = get_logger(__name__)
+tracer = get_tracer(__name__)
 
 
 # ---------------------------------------------------------------------------
@@ -129,19 +131,26 @@ class WorkerRunner:
 
         reporter = ProgressReporter(job_id=job.id)
 
-        try:
-            async with AsyncSessionLocal() as work_session:
-                await set_tenant_guc(work_session, job.tenant_id)
-                output = await handler(work_session, job, reporter)
-            async with AsyncSessionLocal() as session:
-                await jobs_service.complete_job(session, job.id, output or {})
-        except Exception as exc:
-            logger.exception(
-                "worker_handler_failed",
-                job_id=str(job.id),
-                type=job.type,
-                error=str(exc),
-            )
-            async with AsyncSessionLocal() as session:
-                await jobs_service.fail_job(session, job.id, str(exc), retry=True)
+        with tracer.start_as_current_span(f"job.{job.type}") as span:
+            span.set_attribute("job.id", str(job.id))
+            span.set_attribute("job.type", job.type)
+            span.set_attribute("tenant.id", str(job.tenant_id))
+            try:
+                async with AsyncSessionLocal() as work_session:
+                    await set_tenant_guc(work_session, job.tenant_id)
+                    output = await handler(work_session, job, reporter)
+                async with AsyncSessionLocal() as session:
+                    await jobs_service.complete_job(session, job.id, output or {})
+                span.set_attribute("job.outcome", "completed")
+            except Exception as exc:
+                logger.exception(
+                    "worker_handler_failed",
+                    job_id=str(job.id),
+                    type=job.type,
+                    error=str(exc),
+                )
+                span.record_exception(exc)
+                span.set_attribute("job.outcome", "failed")
+                async with AsyncSessionLocal() as session:
+                    await jobs_service.fail_job(session, job.id, str(exc), retry=True)
         return True

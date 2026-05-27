@@ -19,6 +19,7 @@ from app.api.v1.router import router as api_v1_router
 from app.core.config import settings
 from app.core.logging import configure_logging, get_logger
 from app.core.rate_limit import rate_limit_middleware
+from app.core.telemetry import configure_tracing
 
 logger = get_logger(__name__)
 
@@ -26,11 +27,13 @@ logger = get_logger(__name__)
 @asynccontextmanager
 async def lifespan(_: FastAPI) -> AsyncIterator[None]:
     configure_logging()
+    configure_tracing()
     logger.info(
         "startup",
         app=settings.app_name,
         env=settings.app_env,
         debug=settings.debug,
+        otel_enabled=settings.otel_enabled,
     )
     yield
     logger.info("shutdown")
