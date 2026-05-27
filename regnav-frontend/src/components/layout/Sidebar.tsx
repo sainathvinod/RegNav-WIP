@@ -5,6 +5,7 @@ import { useAppStore } from '../../store/appStore';
 const navItems = [
   { id: 'dashboard', label: 'Dashboard', icon: '📊', path: '/' },
   { id: 'organizations', label: 'Organizations', icon: '🏢', path: '/organizations' },
+  { id: 'users', label: 'Users', icon: '👥', path: '/users' },
   { id: 'configuration', label: 'Configuration', icon: '⚙️', path: '/configuration' },
   { id: 'profiles', label: 'Portfolios', icon: '🗂️', path: '/profiles' },
   { id: 'regscout', label: 'RegScout', icon: '🔍', path: '/regscout' },
@@ -14,48 +15,76 @@ const navItems = [
   { id: 'regvalidate', label: 'RegValidate', icon: '✅', path: '/regvalidate' },
   { id: 'analytics', label: 'Analytics', icon: '📈', path: '/analytics' },
   { id: 'reports', label: 'Reports', icon: '📑', path: '/reports' },
-  { id: 'settings', label: 'Settings', icon: '⚙️', path: '/settings' },
+  { id: 'audit', label: 'Audit Log', icon: '📜', path: '/audit' },
 ];
 
 export const Sidebar: React.FC = () => {
   const location = useLocation();
   const collapsed = useAppStore((state) => state.sidebarCollapsed);
+  const mobileOpen = useAppStore((state) => state.sidebarMobileOpen);
   const toggleSidebar = useAppStore((state) => state.toggleSidebar);
+  const closeMobileSidebar = useAppStore((state) => state.closeMobileSidebar);
 
   const isActive = (path: string) => {
     if (path === '/') return location.pathname === '/';
     return location.pathname.startsWith(path);
   };
 
+  // Width:   mobile→w-72  | md collapsed→w-20 | md expanded→w-64
+  // Slide:   mobile open→0, closed→-100% | md→always 0
+  const widthClass = `w-72 ${collapsed ? 'md:w-20' : 'md:w-64'}`;
+  const translateClass = mobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0';
+  const showLabel = mobileOpen || !collapsed;
+
   return (
-    <aside 
-      className={`fixed left-0 top-0 h-screen border-r transition-all duration-300 z-40 flex flex-col ${collapsed ? 'w-20' : 'w-64'}`}
-      style={{ 
-        backgroundColor: 'var(--surface)', 
-        borderColor: 'var(--border)' 
+    <aside
+      className={`fixed left-0 top-0 h-screen border-r transition-all duration-300 z-40 flex flex-col ${widthClass} ${translateClass}`}
+      style={{
+        backgroundColor: 'var(--surface)',
+        borderColor: 'var(--border)',
       }}
+      aria-label="Primary navigation"
     >
       {/* Header */}
-      <div 
+      <div
         className="h-16 border-b flex items-center justify-between px-4"
         style={{ borderColor: 'var(--border)' }}
       >
-        {!collapsed && (
+        {showLabel ? (
           <div className="flex items-center space-x-2">
-            <span className="text-2xl">🧭</span>
-            <span className="font-bold text-xl bg-gradient-to-r from-purple-500 to-purple-400 bg-clip-text text-transparent">
+            <span className="text-2xl" aria-hidden="true">🧭</span>
+            <span
+              className="font-bold text-xl bg-clip-text text-transparent"
+              style={{
+                backgroundImage:
+                  'linear-gradient(to right, rgb(var(--color-accent-primary)), rgb(var(--color-accent-hover)))',
+              }}
+            >
               RegNav.AI
             </span>
           </div>
+        ) : (
+          <span className="text-2xl mx-auto" aria-hidden="true">🧭</span>
         )}
-        {collapsed && <span className="text-2xl mx-auto">🧭</span>}
-        <button 
-          onClick={toggleSidebar} 
-          className="p-1.5 rounded-lg transition-colors"
-          style={{ 
-            backgroundColor: 'transparent',
-            color: 'var(--muted)'
-          }}
+
+        {/* Mobile close button */}
+        <button
+          onClick={closeMobileSidebar}
+          className="md:hidden p-2 rounded-lg transition-colors"
+          aria-label="Close menu"
+          style={{ color: 'var(--muted)' }}
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+
+        {/* Desktop collapse/expand */}
+        <button
+          onClick={toggleSidebar}
+          className="hidden md:inline-flex p-1.5 rounded-lg transition-colors"
+          aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          style={{ backgroundColor: 'transparent', color: 'var(--muted)' }}
           onMouseEnter={(e) => {
             e.currentTarget.style.backgroundColor = 'var(--surface-2)';
             e.currentTarget.style.color = 'var(--text)';
@@ -75,7 +104,6 @@ export const Sidebar: React.FC = () => {
         </button>
       </div>
 
-      {/* Navigation */}
       <nav className="flex-1 overflow-y-auto py-4 px-3">
         <div className="space-y-1">
           {navItems.map((item) => {
@@ -84,18 +112,20 @@ export const Sidebar: React.FC = () => {
               <Link
                 key={item.id}
                 to={item.path}
+                onClick={closeMobileSidebar}
                 className={`sidebar-link ${active ? 'sidebar-link-active' : ''} group relative`}
-                title={collapsed ? item.label : ''}
+                title={!showLabel ? item.label : ''}
+                aria-current={active ? 'page' : undefined}
               >
-                <span className="text-2xl flex-shrink-0">{item.icon}</span>
-                {!collapsed && <span className="ml-3 flex-1">{item.label}</span>}
-                {collapsed && (
-                  <div 
+                <span className="text-2xl flex-shrink-0" aria-hidden="true">{item.icon}</span>
+                {showLabel && <span className="ml-3 flex-1">{item.label}</span>}
+                {!showLabel && (
+                  <div
                     className="absolute left-full ml-2 px-2 py-1 text-sm rounded-md opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50 border shadow-lg"
-                    style={{ 
-                      backgroundColor: 'var(--surface)', 
+                    style={{
+                      backgroundColor: 'var(--surface)',
                       color: 'var(--text)',
-                      borderColor: 'var(--border)'
+                      borderColor: 'var(--border)',
                     }}
                   >
                     {item.label}

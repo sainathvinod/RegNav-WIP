@@ -1,10 +1,17 @@
 // Anthropic Claude API Client
+//
+// Phase 1: API keys are managed server-side (Azure Key Vault or env var).
+// The frontend never sends an API key — only the user's JWT is forwarded.
 import { LLMConfiguration, LLMTestResult } from '../../types';
 
-// Use proxy server to avoid CORS issues
-const USE_PROXY = true;
-const PROXY_URL = 'http://localhost:3001/api/anthropic';
-const DIRECT_URL = 'https://api.anthropic.com/v1/messages';
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/$/, '');
+const PROXY_URL = `${API_BASE_URL.replace(/\/$/, '')}/api/anthropic`;
+
+/** Retrieve the stored JWT for the current session, if any. */
+function getAuthHeader(): Record<string, string> {
+  const token = localStorage.getItem('auth_token');
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
 
 export interface AnthropicMessage {
   role: 'user' | 'assistant';
@@ -36,19 +43,14 @@ export interface AnthropicResponse {
 }
 
 /**
- * Call Anthropic Claude API
+ * Call Anthropic Claude API via the RegNav backend proxy.
+ * The API key is resolved server-side; do NOT pass it from the browser.
  */
 export const callAnthropicAPI = async (
   prompt: string,
-  config: LLMConfiguration
+  config: LLMConfiguration,
 ): Promise<string> => {
-  if (!config.apiKey) {
-    throw new Error('Anthropic API key not configured');
-  }
-
   const startTime = Date.now();
-
-  const apiUrl = USE_PROXY ? PROXY_URL : DIRECT_URL;
 
   const requestBody: AnthropicRequest = {
     model: config.model,
@@ -63,31 +65,25 @@ export const callAnthropicAPI = async (
     ],
   };
 
-  // Add API key to body for proxy, or headers for direct call
-  const proxyRequestBody = USE_PROXY
-    ? { ...requestBody, apiKey: config.apiKey }
-    : requestBody;
-
-  let response;
+  // No apiKey field — the backend resolves it from Key Vault / env
+  let response: Response;
   try {
-    response = await fetch(apiUrl, {
+    response = await fetch(PROXY_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        ...(USE_PROXY ? {} : {
-          'x-api-key': config.apiKey,
-          'anthropic-version': '2023-06-01',
-        }),
+        ...getAuthHeader(),
       },
-      body: JSON.stringify(proxyRequestBody),
+      body: JSON.stringify(requestBody),
       signal: AbortSignal.timeout(config.timeout * 1000),
     });
-  } catch (error: any) {
-    if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
-      const errorMsg = USE_PROXY
-        ? `Cannot connect to proxy server at ${PROXY_URL}. Make sure it's running with: node proxy-server.js`
-        : 'CORS Error: Cannot call Anthropic API directly from browser. Start the proxy server with: node proxy-server.js';
-      throw new Error(errorMsg);
+  } catch (error: unknown) {
+    const err = error as { name?: string; message?: string };
+    if (err.name === 'TypeError' && err.message?.includes('Failed to fetch')) {
+      throw new Error(
+        `Cannot connect to RegNav backend at ${PROXY_URL}. ` +
+          `Confirm the backend is running and VITE_API_BASE_URL points at it.`,
+      );
     }
     throw error;
   }
@@ -97,15 +93,18 @@ export const callAnthropicAPI = async (
     throw new Error(
       `Anthropic API error: ${response.status} ${response.statusText}${
         errorData.error?.message ? ` - ${errorData.error.message}` : ''
-      }`
+      }`,
     );
   }
 
   const data: AnthropicResponse = await response.json();
   const latency = Date.now() - startTime;
 
-  console.log(`Anthropic API call completed in ${latency}ms`);
-  console.log(`Tokens used: ${data.usage.input_tokens} in, ${data.usage.output_tokens} out`);
+  if (import.meta.env.DEV) {
+    console.debug(
+      `[anthropic] ${config.model} ${latency}ms in=${data.usage.input_tokens} out=${data.usage.output_tokens}`,
+    );
+  }
 
   if (data.content && data.content.length > 0 && data.content[0].text) {
     return data.content[0].text;
@@ -115,22 +114,15 @@ export const callAnthropicAPI = async (
 };
 
 /**
- * Test Anthropic API connection
+ * Test Anthropic API connection via the backend proxy.
+ * No API key needed from the browser — the backend manages credentials.
  */
 export const testAnthropicConnection = async (
-  config: LLMConfiguration
+  config: LLMConfiguration,
 ): Promise<LLMTestResult> => {
   const startTime = Date.now();
 
   try {
-    if (!config.apiKey) {
-      return {
-        success: false,
-        message: 'API key is required',
-        error: 'No API key provided',
-      };
-    }
-
     const testPrompt = 'Respond with "OK" to confirm connection.';
     const response = await callAnthropicAPI(testPrompt, {
       ...config,
@@ -154,14 +146,14 @@ export const testAnthropicConnection = async (
       message: 'Unexpected response from API',
       error: 'Empty or invalid response',
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const err = error as { message?: string };
     const latency = Date.now() - startTime;
     return {
       success: false,
       message: 'Connection failed',
       latency,
-      error: error.message || 'Unknown error',
+      error: err.message ?? 'Unknown error',
     };
   }
 };
-

@@ -1,0 +1,103 @@
+# Local development stack for RegNav.AI.
+#
+# Brings up Postgres (with pgvector), Redis, and the FastAPI backend.
+# The frontend is run separately via `npm run dev` inside
+# `regnav-frontend/` to keep HMR fast.
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: regnav-postgres
+    environment:
+      POSTGRES_USER: regnav
+      POSTGRES_PASSWORD: regnav
+      POSTGRES_DB: regnav
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U regnav -d regnav"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: regnav-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: regnav-backend
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      APP_ENV: development
+      DEBUG: "true"
+      DATABASE_URL: postgresql+asyncpg://regnav:regnav@postgres:5432/regnav
+      REDIS_URL: redis://redis:6379/0
+      CORS_ALLOWED_ORIGINS: '["http://localhost:3000"]'
+      LOG_LEVEL: DEBUG
+      LOG_JSON: "false"
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend/app:/app/app:ro
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+
+  worker:
+    # Background job worker — drains the Postgres `jobs` table and runs
+    # regscout.discover / regingest.ingest_url / regingest.ingest_text
+    # handlers. Same image as backend; only the entrypoint differs.
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: regnav-worker
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      APP_ENV: development
+      DEBUG: "true"
+      DATABASE_URL: postgresql+asyncpg://regnav:regnav@postgres:5432/regnav
+      REDIS_URL: redis://redis:6379/0
+      LOG_LEVEL: DEBUG
+      LOG_JSON: "false"
+    volumes:
+      - ./backend/app:/app/app:ro
+    command: ["python", "-m", "app.workers.cli"]
+
+  jaeger:
+    # Optional local OTLP collector + trace UI. Start with:
+    #   docker compose --profile otel up
+    # Then set OTEL_ENABLED=true and
+    # OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4318/v1/traces in the
+    # backend env. UI at http://localhost:16686/.
+    image: jaegertracing/all-in-one:1.62
+    container_name: regnav-jaeger
+    profiles: ["otel"]
+    environment:
+      COLLECTOR_OTLP_ENABLED: "true"
+    ports:
+      - "16686:16686"   # Jaeger UI
+      - "4318:4318"     # OTLP HTTP receiver
+
+volumes:
+  postgres_data:
+  redis_data:

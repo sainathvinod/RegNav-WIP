@@ -8,6 +8,7 @@ import { DEFAULT_REFERENCE_PROMPTS } from '../data/defaultReferencePrompts';
 interface AppStore {
   // UI State
   sidebarCollapsed: boolean;
+  sidebarMobileOpen: boolean;
   regScoutView: 'config' | 'loading' | 'results';
   
   // Configuration
@@ -30,6 +31,8 @@ interface AppStore {
   
   // Actions
   toggleSidebar: () => void;
+  openMobileSidebar: () => void;
+  closeMobileSidebar: () => void;
   setRegScoutView: (view: 'config' | 'loading' | 'results') => void;
   setSelectedCountries: (countries: string[]) => void;
   setSelectedStates: (states: string[]) => void;
@@ -53,6 +56,8 @@ interface AppStore {
   setDiscoveredSources: (sources: RegulatorySource[]) => void;
   addDiscoveredSource: (source: RegulatorySource) => void;
   removeDiscoveredSource: (sourceId: string) => void;
+  setDiscoveryProfiles: (profiles: DiscoveryProfile[]) => void;
+  upsertDiscoveryProfile: (profile: DiscoveryProfile) => void;
   createProfile: (profile: Omit<DiscoveryProfile, 'id' | 'createdAt' | 'updatedAt'>, insertBeforeId?: string) => DiscoveryProfile;
   updateProfile: (profileId: string, updates: Partial<DiscoveryProfile>) => void;
   deleteProfile: (profileId: string) => void;
@@ -68,6 +73,7 @@ export const useAppStore = create<AppStore>()(
     (set, get) => ({
       // Initial State
       sidebarCollapsed: false,
+      sidebarMobileOpen: false,
       regScoutView: 'config',
       selectedCountries: ['US'],
       selectedStates: [],
@@ -90,7 +96,9 @@ export const useAppStore = create<AppStore>()(
 
       // Actions
       toggleSidebar: () => set((state) => ({ sidebarCollapsed: !state.sidebarCollapsed })),
-      
+      openMobileSidebar: () => set({ sidebarMobileOpen: true }),
+      closeMobileSidebar: () => set({ sidebarMobileOpen: false }),
+
       setRegScoutView: (view) => set({ regScoutView: view }),
 
       setSelectedCountries: (countries) => set({ selectedCountries: countries }),
@@ -245,6 +253,21 @@ export const useAppStore = create<AppStore>()(
         set((state) => ({
           discoveredSources: state.discoveredSources.filter(s => s.id !== sourceId),
         })),
+
+      setDiscoveryProfiles: (profiles) =>
+        set(() => ({ discoveryProfiles: JSON.parse(JSON.stringify(profiles)) })),
+
+      upsertDiscoveryProfile: (profile) =>
+        set((state) => {
+          const cloned = JSON.parse(JSON.stringify(profile)) as DiscoveryProfile;
+          const idx = state.discoveryProfiles.findIndex((p) => p.id === profile.id);
+          if (idx >= 0) {
+            const next = state.discoveryProfiles.slice();
+            next[idx] = cloned;
+            return { discoveryProfiles: next };
+          }
+          return { discoveryProfiles: [cloned, ...state.discoveryProfiles] };
+        }),
 
       createProfile: (profileData, insertBeforeId) => {
         // DEEP CLONE to ensure complete data isolation

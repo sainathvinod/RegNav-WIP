@@ -1,0 +1,80 @@
+name: Provision Azure Infrastructure
+
+# Manually-triggered Bicep deployment. Run this once per environment to
+# bring up Container Apps, Postgres, Redis, Key Vault, etc. Subsequent
+# image deploys are handled by deploy-aca.yml.
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Target environment
+        required: true
+        default: staging
+        type: choice
+        options: [staging, production]
+      mode:
+        description: Deployment mode
+        required: true
+        default: validate
+        type: choice
+        options: [validate, what-if, deploy]
+
+env:
+  RESOURCE_GROUP: regnav-${{ github.event.inputs.environment }}-rg
+  LOCATION: eastus2
+
+jobs:
+  provision:
+    name: ${{ github.event.inputs.mode }} — ${{ github.event.inputs.environment }}
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment }}
+    permissions:
+      id-token: write   # required for OIDC / Workload Identity
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to Azure (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Ensure resource group exists
+        run: |
+          az group create -n $RESOURCE_GROUP -l $LOCATION
+
+      - name: Bicep validate
+        if: github.event.inputs.mode == 'validate'
+        run: |
+          az deployment group validate \
+            --resource-group $RESOURCE_GROUP \
+            --template-file infra/main.bicep \
+            --parameters infra/parameters/${{ github.event.inputs.environment }}.json
+
+      - name: Bicep what-if
+        if: github.event.inputs.mode == 'what-if'
+        run: |
+          az deployment group what-if \
+            --resource-group $RESOURCE_GROUP \
+            --template-file infra/main.bicep \
+            --parameters infra/parameters/${{ github.event.inputs.environment }}.json
+
+      - name: Bicep deploy
+        if: github.event.inputs.mode == 'deploy'
+        run: |
+          az deployment group create \
+            --resource-group $RESOURCE_GROUP \
+            --template-file infra/main.bicep \
+            --parameters infra/parameters/${{ github.event.inputs.environment }}.json \
+            --name regnav-$(date +%s)
+
+      - name: Print outputs
+        if: github.event.inputs.mode == 'deploy'
+        run: |
+          az deployment group list \
+            --resource-group $RESOURCE_GROUP \
+            --query "[?contains(name,'regnav-')] | [0].properties.outputs" \
+            --output yaml

@@ -1,0 +1,54 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main, claude/repo-code-explanation-DZK1m]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: Build and Deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: regnav-frontend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: regnav-frontend
+        run: npm install
+
+      - name: Build
+        working-directory: regnav-frontend
+        env:
+          VITE_BASE_PATH: /RegNav-WIP/
+          # If VITE_API_BASE_URL is set as a repository secret, it is baked into
+          # the bundle here.  Leave the secret empty (or unset) to run in demo
+          # mode — the frontend still loads but API calls return 404s and a
+          # banner explains how to wire up the backend.
+          VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
+          VITE_APP_ENV: production
+          # Always true for GitHub Pages builds — the banner checks whether
+          # VITE_API_BASE_URL is also set; if not it surfaces a setup prompt.
+          VITE_DEMO_MODE: 'true'
+        run: npm run build
+
+      - name: Deploy to gh-pages branch
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: regnav-frontend/dist
+          force_orphan: true

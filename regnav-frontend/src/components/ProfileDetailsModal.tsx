@@ -1,13 +1,12 @@
 /**
  * Profile Details Modal
- * 
+ *
  * Full-featured modal for viewing and editing discovery profiles.
  * Shows all configuration, sources, and metadata with edit capabilities.
  */
 
 import React, { useState, useEffect } from 'react';
 import {
-  XMarkIcon,
   PencilSquareIcon,
   CheckCircleIcon,
   FolderIcon,
@@ -22,6 +21,9 @@ import {
   DocumentDuplicateIcon,
 } from '@heroicons/react/24/outline';
 import { DiscoveryProfile, RegulatorySource } from '../types';
+import { Modal } from './ui/Modal';
+import { Badge, BadgeTone } from './ui/Badge';
+import { formatDateTime } from '../lib/format';
 
 interface ProfileDetailsModalProps {
   isOpen: boolean;
@@ -31,6 +33,26 @@ interface ProfileDetailsModalProps {
   onDuplicate?: (profile: DiscoveryProfile) => void;
   mode: 'view' | 'edit';
 }
+
+type Status = 'draft' | 'finalized' | 'used_for_rules';
+
+const STATUS_META: Record<Status, { tone: BadgeTone; icon: React.ReactNode; label: string }> = {
+  draft: {
+    tone: 'info',
+    icon: <ClockIcon className="w-4 h-4" />,
+    label: 'Draft',
+  },
+  finalized: {
+    tone: 'success',
+    icon: <CheckCircleIcon className="w-4 h-4" />,
+    label: 'Finalized',
+  },
+  used_for_rules: {
+    tone: 'accent',
+    icon: <BeakerIcon className="w-4 h-4" />,
+    label: 'Used for Rules',
+  },
+};
 
 export const ProfileDetailsModal: React.FC<ProfileDetailsModalProps> = ({
   isOpen,
@@ -44,10 +66,11 @@ export const ProfileDetailsModal: React.FC<ProfileDetailsModalProps> = ({
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [tags, setTags] = useState('');
-  const [status, setStatus] = useState<'draft' | 'finalized' | 'used_for_rules'>('draft');
+  const [status, setStatus] = useState<Status>('draft');
   const [sources, setSources] = useState<RegulatorySource[]>([]);
   const [selectedTab, setSelectedTab] = useState<'overview' | 'sources' | 'metadata'>('overview');
   const [error, setError] = useState('');
+  const [confirmRemoveId, setConfirmRemoveId] = useState<string | null>(null);
 
   useEffect(() => {
     if (profile) {
@@ -71,8 +94,8 @@ export const ProfileDetailsModal: React.FC<ProfileDetailsModalProps> = ({
 
     const tagArray = tags
       .split(',')
-      .map(t => t.trim())
-      .filter(t => t.length > 0);
+      .map((t) => t.trim())
+      .filter((t) => t.length > 0);
 
     const updates: Partial<DiscoveryProfile> = {
       name: name.trim(),
@@ -82,11 +105,12 @@ export const ProfileDetailsModal: React.FC<ProfileDetailsModalProps> = ({
       sources,
       metadata: {
         totalSources: sources.length,
-        govAutoSources: sources.filter(s => s.trustLevel === 'gov-auto').length,
-        userAddedSources: sources.filter(s => s.trustLevel === 'user-added').length,
-        avgConfidence: sources.length > 0
-          ? sources.reduce((sum, s) => sum + s.confidenceScore, 0) / sources.length
-          : 0,
+        govAutoSources: sources.filter((s) => s.trustLevel === 'gov-auto').length,
+        userAddedSources: sources.filter((s) => s.trustLevel === 'user-added').length,
+        avgConfidence:
+          sources.length > 0
+            ? sources.reduce((sum, s) => sum + s.confidenceScore, 0) / sources.length
+            : 0,
       },
     };
 
@@ -108,157 +132,150 @@ export const ProfileDetailsModal: React.FC<ProfileDetailsModalProps> = ({
   };
 
   const handleRemoveSource = (sourceId: string) => {
-    setSources(sources.filter(s => s.id !== sourceId));
+    setSources(sources.filter((s) => s.id !== sourceId));
+    setConfirmRemoveId(null);
   };
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'draft':
-        return (
-          <span className="px-3 py-1 bg-blue-900/30 border border-blue-500/30 text-blue-300 text-sm rounded-full flex items-center gap-1">
-            <ClockIcon className="w-4 h-4" />
-            Draft
-          </span>
-        );
-      case 'finalized':
-        return (
-          <span className="px-3 py-1 bg-green-900/30 border border-green-500/30 text-green-300 text-sm rounded-full flex items-center gap-1">
-            <CheckCircleIcon className="w-4 h-4" />
-            Finalized
-          </span>
-        );
-      case 'used_for_rules':
-        return (
-          <span className="px-3 py-1 bg-purple-900/30 border border-purple-500/30 text-purple-300 text-sm rounded-full flex items-center gap-1">
-            <BeakerIcon className="w-4 h-4" />
-            Used for Rules
-          </span>
-        );
-      default:
-        return null;
-    }
+  const renderStatusBadge = (s: Status) => {
+    const meta = STATUS_META[s];
+    return (
+      <Badge tone={meta.tone}>
+        <span className="inline-flex items-center gap-1">
+          {meta.icon}
+          {meta.label}
+        </span>
+      </Badge>
+    );
   };
+
+  const title = (
+    <div className="flex items-center gap-3 flex-1 min-w-0">
+      <div
+        className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
+        style={{ backgroundColor: 'var(--accent-bg)' }}
+      >
+        <FolderIcon
+          className="w-6 h-6"
+          style={{ color: 'rgb(var(--color-accent-primary))' }}
+        />
+      </div>
+      <div className="flex-1 min-w-0">
+        {mode === 'edit' ? (
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => {
+              setName(e.target.value);
+              setError('');
+            }}
+            className="input text-xl font-semibold w-full"
+          />
+        ) : (
+          <h2
+            className="text-xl font-semibold truncate"
+            style={{ color: 'var(--text)' }}
+          >
+            {name}
+          </h2>
+        )}
+        {error && (
+          <p className="text-sm mt-1" style={{ color: 'var(--error)' }}>
+            {error}
+          </p>
+        )}
+      </div>
+      {mode === 'view' && renderStatusBadge(status)}
+    </div>
+  );
+
+  const footer =
+    mode === 'view' ? (
+      <>
+        {onDuplicate && (
+          <button
+            onClick={() => {
+              onDuplicate(profile);
+              onClose();
+            }}
+            className="btn-secondary inline-flex items-center gap-2"
+          >
+            <DocumentDuplicateIcon className="w-4 h-4" />
+            Duplicate
+          </button>
+        )}
+        <button
+          onClick={() => setMode('edit')}
+          className="btn-primary inline-flex items-center gap-2"
+        >
+          <PencilSquareIcon className="w-4 h-4" />
+          Edit
+        </button>
+      </>
+    ) : (
+      <>
+        <button onClick={handleCancel} className="btn-secondary">
+          Cancel
+        </button>
+        <button onClick={handleSave} className="btn-success inline-flex items-center gap-2">
+          <CheckCircleIcon className="w-4 h-4" />
+          Save Changes
+        </button>
+      </>
+    );
+
+  const tabClass = (active: boolean) =>
+    `px-4 py-3 font-medium transition-all relative whitespace-nowrap ${
+      active ? '' : ''
+    }`;
 
   return (
-    <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 overflow-y-auto">
-      <div className="bg-gray-900 rounded-lg border border-gray-700 max-w-5xl w-full shadow-2xl my-8">
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-800">
-          <div className="flex items-center gap-3 flex-1">
-            <div className="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center">
-              <FolderIcon className="w-6 h-6 text-purple-400" />
-            </div>
-            <div className="flex-1">
-              {mode === 'edit' ? (
-                <input
-                  type="text"
-                  value={name}
-                  onChange={(e) => {
-                    setName(e.target.value);
-                    setError('');
+    <>
+      <Modal open={isOpen} onClose={onClose} title={title} footer={footer} size="xl">
+        {/* Tabs (scrollable on mobile) */}
+        <div
+          className="border-b -mx-5 px-5 mb-4 overflow-x-auto table-wrap"
+          style={{ borderColor: 'var(--border)' }}
+        >
+          <div className="flex gap-1">
+            {(['overview', 'sources', 'metadata'] as const).map((tab) => {
+              const active = selectedTab === tab;
+              const labels: Record<typeof tab, string> = {
+                overview: 'Overview',
+                sources: `Sources (${sources.length})`,
+                metadata: 'Configuration',
+              };
+              return (
+                <button
+                  key={tab}
+                  onClick={() => setSelectedTab(tab)}
+                  className={tabClass(active)}
+                  style={{
+                    color: active
+                      ? 'rgb(var(--color-accent-primary))'
+                      : 'var(--muted)',
+                    borderBottom: active
+                      ? '2px solid rgb(var(--color-accent-primary))'
+                      : '2px solid transparent',
                   }}
-                  className="text-xl font-semibold bg-gray-800 border border-gray-700 rounded px-3 py-1 text-white w-full focus:outline-none focus:ring-2 focus:ring-purple-500"
-                />
-              ) : (
-                <h2 className="text-xl font-semibold text-white">{name}</h2>
-              )}
-              {error && <p className="text-red-400 text-sm mt-1">{error}</p>}
-            </div>
-            {mode === 'view' && getStatusBadge(status)}
-          </div>
-          <div className="flex items-center gap-2 ml-4">
-            {mode === 'view' ? (
-              <>
-                <button
-                  onClick={() => setMode('edit')}
-                  className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-500 transition-colors flex items-center gap-2"
                 >
-                  <PencilSquareIcon className="w-4 h-4" />
-                  Edit
+                  {labels[tab]}
                 </button>
-                {onDuplicate && (
-                  <button
-                    onClick={() => {
-                      onDuplicate(profile);
-                      onClose();
-                    }}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-500 transition-colors flex items-center gap-2"
-                  >
-                    <DocumentDuplicateIcon className="w-4 h-4" />
-                    Duplicate
-                  </button>
-                )}
-              </>
-            ) : (
-              <>
-                <button
-                  onClick={handleCancel}
-                  className="px-4 py-2 bg-gray-800 text-gray-300 rounded-lg hover:bg-gray-700 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleSave}
-                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-500 transition-colors flex items-center gap-2"
-                >
-                  <CheckCircleIcon className="w-4 h-4" />
-                  Save Changes
-                </button>
-              </>
-            )}
-            <button
-              onClick={onClose}
-              className="text-gray-400 hover:text-white transition-colors ml-2"
-            >
-              <XMarkIcon className="w-6 h-6" />
-            </button>
-          </div>
-        </div>
-
-        {/* Tabs */}
-        <div className="border-b border-gray-800">
-          <div className="flex gap-1 px-6">
-            <button
-              onClick={() => setSelectedTab('overview')}
-              className={`px-4 py-3 font-medium transition-all relative ${
-                selectedTab === 'overview'
-                  ? 'text-purple-400 border-b-2 border-purple-500'
-                  : 'text-gray-400 hover:text-gray-300'
-              }`}
-            >
-              Overview
-            </button>
-            <button
-              onClick={() => setSelectedTab('sources')}
-              className={`px-4 py-3 font-medium transition-all relative ${
-                selectedTab === 'sources'
-                  ? 'text-purple-400 border-b-2 border-purple-500'
-                  : 'text-gray-400 hover:text-gray-300'
-              }`}
-            >
-              Sources ({sources.length})
-            </button>
-            <button
-              onClick={() => setSelectedTab('metadata')}
-              className={`px-4 py-3 font-medium transition-all relative ${
-                selectedTab === 'metadata'
-                  ? 'text-purple-400 border-b-2 border-purple-500'
-                  : 'text-gray-400 hover:text-gray-300'
-              }`}
-            >
-              Configuration
-            </button>
+              );
+            })}
           </div>
         </div>
 
         {/* Content */}
-        <div className="p-6 max-h-[600px] overflow-y-auto">
+        <div>
           {/* Overview Tab */}
           {selectedTab === 'overview' && (
             <div className="space-y-6">
               {/* Description */}
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
+                <label
+                  className="block text-sm font-medium mb-2"
+                  style={{ color: 'var(--text-secondary)' }}
+                >
                   Description
                 </label>
                 {mode === 'edit' ? (
@@ -267,10 +284,10 @@ export const ProfileDetailsModal: React.FC<ProfileDetailsModalProps> = ({
                     onChange={(e) => setDescription(e.target.value)}
                     placeholder="Add a description for this profile..."
                     rows={3}
-                    className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
+                    className="input w-full resize-none"
                   />
                 ) : (
-                  <p className="text-gray-400">
+                  <p style={{ color: 'var(--muted)' }}>
                     {description || 'No description provided'}
                   </p>
                 )}
@@ -278,51 +295,68 @@ export const ProfileDetailsModal: React.FC<ProfileDetailsModalProps> = ({
 
               {/* Status */}
               {mode === 'edit' && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                <fieldset>
+                  <legend
+                    className="block text-sm font-medium mb-2"
+                    style={{ color: 'var(--text-secondary)' }}
+                  >
                     Status
-                  </label>
-                  <div className="grid grid-cols-3 gap-3">
-                    <button
-                      onClick={() => setStatus('draft')}
-                      className={`p-3 rounded-lg border transition-all text-left ${
-                        status === 'draft'
-                          ? 'bg-blue-500/20 border-blue-500 text-blue-300'
-                          : 'bg-gray-800 border-gray-700 text-gray-400 hover:border-gray-600'
-                      }`}
-                    >
-                      <div className="font-medium">Draft</div>
-                      <div className="text-xs mt-1 opacity-75">Work in progress</div>
-                    </button>
-                    <button
-                      onClick={() => setStatus('finalized')}
-                      className={`p-3 rounded-lg border transition-all text-left ${
-                        status === 'finalized'
-                          ? 'bg-green-500/20 border-green-500 text-green-300'
-                          : 'bg-gray-800 border-gray-700 text-gray-400 hover:border-gray-600'
-                      }`}
-                    >
-                      <div className="font-medium">Finalized</div>
-                      <div className="text-xs mt-1 opacity-75">Ready for rules</div>
-                    </button>
-                    <button
-                      onClick={() => setStatus('used_for_rules')}
-                      className={`p-3 rounded-lg border transition-all text-left ${
-                        status === 'used_for_rules'
-                          ? 'bg-purple-500/20 border-purple-500 text-purple-300'
-                          : 'bg-gray-800 border-gray-700 text-gray-400 hover:border-gray-600'
-                      }`}
-                    >
-                      <div className="font-medium">Used for Rules</div>
-                      <div className="text-xs mt-1 opacity-75">Already mined</div>
-                    </button>
+                  </legend>
+                  <div
+                    className="grid grid-cols-1 sm:grid-cols-3 gap-3"
+                    role="radiogroup"
+                  >
+                    {(['draft', 'finalized', 'used_for_rules'] as Status[]).map((s) => {
+                      const selected = status === s;
+                      const captions: Record<Status, string> = {
+                        draft: 'Work in progress',
+                        finalized: 'Ready for rules',
+                        used_for_rules: 'Already mined',
+                      };
+                      const labels: Record<Status, string> = {
+                        draft: 'Draft',
+                        finalized: 'Finalized',
+                        used_for_rules: 'Used for Rules',
+                      };
+                      return (
+                        <label
+                          key={s}
+                          className="p-3 rounded-lg border transition-all text-left cursor-pointer"
+                          style={{
+                            backgroundColor: selected
+                              ? 'var(--accent-bg)'
+                              : 'var(--surface-2)',
+                            borderColor: selected
+                              ? 'rgb(var(--color-accent-primary))'
+                              : 'var(--border)',
+                            color: selected
+                              ? 'rgb(var(--color-accent-primary))'
+                              : 'var(--muted)',
+                          }}
+                        >
+                          <input
+                            type="radio"
+                            name="profile-status"
+                            value={s}
+                            checked={selected}
+                            onChange={() => setStatus(s)}
+                            className="sr-only"
+                          />
+                          <div className="font-medium">{labels[s]}</div>
+                          <div className="text-xs mt-1 opacity-75">{captions[s]}</div>
+                        </label>
+                      );
+                    })}
                   </div>
-                </div>
+                </fieldset>
               )}
 
               {/* Tags */}
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
+                <label
+                  className="block text-sm font-medium mb-2"
+                  style={{ color: 'var(--text-secondary)' }}
+                >
                   Tags
                 </label>
                 {mode === 'edit' ? (
@@ -332,24 +366,27 @@ export const ProfileDetailsModal: React.FC<ProfileDetailsModalProps> = ({
                       value={tags}
                       onChange={(e) => setTags(e.target.value)}
                       placeholder="e.g., workers-comp, 2024, priority"
-                      className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      className="input w-full"
                     />
-                    <p className="text-xs text-gray-500 mt-1">Separate tags with commas</p>
+                    <p className="text-xs mt-1" style={{ color: 'var(--muted)' }}>
+                      Separate tags with commas
+                    </p>
                   </>
                 ) : (
                   <div className="flex items-center gap-2 flex-wrap">
                     {profile.tags && profile.tags.length > 0 ? (
                       profile.tags.map((tag, idx) => (
-                        <span
-                          key={idx}
-                          className="px-3 py-1 bg-gray-800 text-gray-300 text-sm rounded-full flex items-center gap-1"
-                        >
-                          <TagIcon className="w-3 h-3" />
-                          {tag}
-                        </span>
+                        <Badge key={idx} tone="neutral">
+                          <span className="inline-flex items-center gap-1">
+                            <TagIcon className="w-3 h-3" />
+                            {tag}
+                          </span>
+                        </Badge>
                       ))
                     ) : (
-                      <span className="text-gray-500 text-sm">No tags</span>
+                      <span className="text-sm" style={{ color: 'var(--muted)' }}>
+                        No tags
+                      </span>
                     )}
                   </div>
                 )}
@@ -357,34 +394,86 @@ export const ProfileDetailsModal: React.FC<ProfileDetailsModalProps> = ({
 
               {/* Statistics */}
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-3">
+                <label
+                  className="block text-sm font-medium mb-3"
+                  style={{ color: 'var(--text-secondary)' }}
+                >
                   Statistics
                 </label>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="bg-gray-800 rounded-lg p-4 border border-gray-700">
-                    <div className="text-gray-400 text-sm mb-1">Total Sources</div>
-                    <div className="text-2xl font-semibold text-white">
+                  <div
+                    className="rounded-lg p-4 border"
+                    style={{
+                      backgroundColor: 'var(--surface-2)',
+                      borderColor: 'var(--border)',
+                    }}
+                  >
+                    <div className="text-sm mb-1" style={{ color: 'var(--muted)' }}>
+                      Total Sources
+                    </div>
+                    <div
+                      className="text-2xl font-semibold"
+                      style={{ color: 'var(--text)' }}
+                    >
                       {sources.length}
                     </div>
                   </div>
-                  <div className="bg-gray-800 rounded-lg p-4 border border-gray-700">
-                    <div className="text-gray-400 text-sm mb-1">Gov Auto</div>
-                    <div className="text-2xl font-semibold text-green-400">
-                      {sources.filter(s => s.trustLevel === 'gov-auto').length}
+                  <div
+                    className="rounded-lg p-4 border"
+                    style={{
+                      backgroundColor: 'var(--surface-2)',
+                      borderColor: 'var(--border)',
+                    }}
+                  >
+                    <div className="text-sm mb-1" style={{ color: 'var(--muted)' }}>
+                      Gov Auto
+                    </div>
+                    <div
+                      className="text-2xl font-semibold"
+                      style={{ color: 'var(--success)' }}
+                    >
+                      {sources.filter((s) => s.trustLevel === 'gov-auto').length}
                     </div>
                   </div>
-                  <div className="bg-gray-800 rounded-lg p-4 border border-gray-700">
-                    <div className="text-gray-400 text-sm mb-1">User Added</div>
-                    <div className="text-2xl font-semibold text-blue-400">
-                      {sources.filter(s => s.trustLevel === 'user-added').length}
+                  <div
+                    className="rounded-lg p-4 border"
+                    style={{
+                      backgroundColor: 'var(--surface-2)',
+                      borderColor: 'var(--border)',
+                    }}
+                  >
+                    <div className="text-sm mb-1" style={{ color: 'var(--muted)' }}>
+                      User Added
+                    </div>
+                    <div
+                      className="text-2xl font-semibold"
+                      style={{ color: 'var(--info)' }}
+                    >
+                      {sources.filter((s) => s.trustLevel === 'user-added').length}
                     </div>
                   </div>
-                  <div className="bg-gray-800 rounded-lg p-4 border border-gray-700">
-                    <div className="text-gray-400 text-sm mb-1">Avg Confidence</div>
-                    <div className="text-2xl font-semibold text-purple-400">
+                  <div
+                    className="rounded-lg p-4 border"
+                    style={{
+                      backgroundColor: 'var(--surface-2)',
+                      borderColor: 'var(--border)',
+                    }}
+                  >
+                    <div className="text-sm mb-1" style={{ color: 'var(--muted)' }}>
+                      Avg Confidence
+                    </div>
+                    <div
+                      className="text-2xl font-semibold"
+                      style={{ color: 'rgb(var(--color-accent-primary))' }}
+                    >
                       {sources.length > 0
-                        ? ((sources.reduce((sum, s) => sum + s.confidenceScore, 0) / sources.length) * 100).toFixed(0)
-                        : 0}%
+                        ? (
+                            (sources.reduce((sum, s) => sum + s.confidenceScore, 0) /
+                              sources.length) *
+                            100
+                          ).toFixed(0)
+                        : 0}
+                      %
                     </div>
                   </div>
                 </div>
@@ -393,21 +482,27 @@ export const ProfileDetailsModal: React.FC<ProfileDetailsModalProps> = ({
               {/* Timestamps */}
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
-                  <div className="text-gray-500 mb-1 flex items-center gap-1">
+                  <div
+                    className="mb-1 flex items-center gap-1"
+                    style={{ color: 'var(--muted)' }}
+                  >
                     <CalendarIcon className="w-4 h-4" />
                     Created
                   </div>
-                  <div className="text-white">
-                    {new Date(profile.createdAt).toLocaleString()}
+                  <div style={{ color: 'var(--text)' }}>
+                    {formatDateTime(profile.createdAt)}
                   </div>
                 </div>
                 <div>
-                  <div className="text-gray-500 mb-1 flex items-center gap-1">
+                  <div
+                    className="mb-1 flex items-center gap-1"
+                    style={{ color: 'var(--muted)' }}
+                  >
                     <ArrowPathIcon className="w-4 h-4" />
                     Last Updated
                   </div>
-                  <div className="text-white">
-                    {new Date(profile.updatedAt).toLocaleString()}
+                  <div style={{ color: 'var(--text)' }}>
+                    {formatDateTime(profile.updatedAt)}
                   </div>
                 </div>
               </div>
@@ -418,56 +513,18 @@ export const ProfileDetailsModal: React.FC<ProfileDetailsModalProps> = ({
           {selectedTab === 'sources' && (
             <div className="space-y-4">
               {sources.length === 0 ? (
-                <div className="text-center py-12 text-gray-500">
+                <div className="text-center py-12" style={{ color: 'var(--muted)' }}>
                   No sources in this profile
                 </div>
               ) : (
                 <div className="space-y-3">
                   {sources.map((source) => (
-                    <div
+                    <SourceCard
                       key={source.id}
-                      className="bg-gray-800 border border-gray-700 rounded-lg p-4 hover:border-purple-500 transition-all"
-                    >
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-2">
-                            <h4 className="font-medium text-white">{source.sourceName}</h4>
-                            {source.trustLevel === 'gov-auto' ? (
-                              <span className="px-2 py-0.5 bg-green-900/30 border border-green-500/30 text-green-300 text-xs rounded">
-                                Gov Auto
-                              </span>
-                            ) : (
-                              <span className="px-2 py-0.5 bg-blue-900/30 border border-blue-500/30 text-blue-300 text-xs rounded">
-                                User Added
-                              </span>
-                            )}
-                            <span className="px-2 py-0.5 bg-gray-700 text-gray-300 text-xs rounded">
-                              {(source.confidenceScore * 100).toFixed(0)}% confidence
-                            </span>
-                          </div>
-                          {source.agencyName && (
-                            <p className="text-sm text-gray-400 mb-1">{source.agencyName}</p>
-                          )}
-                          <a
-                            href={source.sourceUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-sm text-purple-400 hover:text-purple-300 flex items-center gap-1"
-                          >
-                            <LinkIcon className="w-4 h-4" />
-                            {source.sourceUrl}
-                          </a>
-                        </div>
-                        {mode === 'edit' && (
-                          <button
-                            onClick={() => handleRemoveSource(source.id)}
-                            className="ml-4 p-2 text-red-400 hover:bg-red-900/30 rounded transition-colors"
-                          >
-                            <TrashIcon className="w-5 h-5" />
-                          </button>
-                        )}
-                      </div>
-                    </div>
+                      source={source}
+                      canRemove={mode === 'edit'}
+                      onRemove={() => setConfirmRemoveId(source.id)}
+                    />
                   ))}
                 </div>
               )}
@@ -477,71 +534,128 @@ export const ProfileDetailsModal: React.FC<ProfileDetailsModalProps> = ({
           {/* Configuration Tab */}
           {selectedTab === 'metadata' && (
             <div className="space-y-6">
-              <div className="bg-gray-800 border border-gray-700 rounded-lg p-4">
-                <h3 className="text-sm font-semibold text-gray-300 mb-3 flex items-center gap-2">
-                  <ChartBarIcon className="w-5 h-5 text-purple-400" />
+              <div
+                className="rounded-lg p-4 border"
+                style={{
+                  backgroundColor: 'var(--surface-2)',
+                  borderColor: 'var(--border)',
+                }}
+              >
+                <h3
+                  className="text-sm font-semibold mb-3 flex items-center gap-2"
+                  style={{ color: 'var(--text-secondary)' }}
+                >
+                  <ChartBarIcon
+                    className="w-5 h-5"
+                    style={{ color: 'rgb(var(--color-accent-primary))' }}
+                  />
                   Discovery Configuration
                 </h3>
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
-                    <div className="text-gray-500 mb-1">Countries</div>
-                    <div className="text-white">{profile.configuration.countries.join(', ')}</div>
+                    <div className="mb-1" style={{ color: 'var(--muted)' }}>
+                      Countries
+                    </div>
+                    <div style={{ color: 'var(--text)' }}>
+                      {profile.configuration.countries.join(', ')}
+                    </div>
                   </div>
                   <div>
-                    <div className="text-gray-500 mb-1">States</div>
-                    <div className="text-white">{profile.configuration.states.join(', ') || 'None'}</div>
+                    <div className="mb-1" style={{ color: 'var(--muted)' }}>
+                      States
+                    </div>
+                    <div style={{ color: 'var(--text)' }}>
+                      {profile.configuration.states.join(', ') || 'None'}
+                    </div>
                   </div>
                   <div>
-                    <div className="text-gray-500 mb-1">Line of Business</div>
-                    <div className="text-white">{profile.configuration.linesOfBusiness || 'None'}</div>
+                    <div className="mb-1" style={{ color: 'var(--muted)' }}>
+                      Line of Business
+                    </div>
+                    <div style={{ color: 'var(--text)' }}>
+                      {profile.configuration.linesOfBusiness || 'None'}
+                    </div>
                   </div>
                   <div>
-                    <div className="text-gray-500 mb-1">Document Types</div>
-                    <div className="text-white">{profile.configuration.documentTypes.length} selected</div>
+                    <div className="mb-1" style={{ color: 'var(--muted)' }}>
+                      Document Types
+                    </div>
+                    <div style={{ color: 'var(--text)' }}>
+                      {profile.configuration.documentTypes.length} selected
+                    </div>
                   </div>
                   <div>
-                    <div className="text-gray-500 mb-1">Search Depth</div>
-                    <div className="text-white capitalize">{profile.configuration.searchDepth}</div>
+                    <div className="mb-1" style={{ color: 'var(--muted)' }}>
+                      Search Depth
+                    </div>
+                    <div className="capitalize" style={{ color: 'var(--text)' }}>
+                      {profile.configuration.searchDepth}
+                    </div>
                   </div>
                   <div>
-                    <div className="text-gray-500 mb-1">Confidence Threshold</div>
-                    <div className="text-white">{(profile.configuration.confidenceThreshold * 100).toFixed(0)}%</div>
+                    <div className="mb-1" style={{ color: 'var(--muted)' }}>
+                      Confidence Threshold
+                    </div>
+                    <div style={{ color: 'var(--text)' }}>
+                      {(profile.configuration.confidenceThreshold * 100).toFixed(0)}%
+                    </div>
                   </div>
                 </div>
               </div>
 
               {profile.configuration.documentTypes.length > 0 && (
                 <div>
-                  <h4 className="text-sm font-medium text-gray-300 mb-2">Selected Document Types</h4>
+                  <h4
+                    className="text-sm font-medium mb-2"
+                    style={{ color: 'var(--text-secondary)' }}
+                  >
+                    Selected Document Types
+                  </h4>
                   <div className="flex flex-wrap gap-2">
                     {profile.configuration.documentTypes.map((docType) => (
-                      <span
-                        key={docType}
-                        className="px-3 py-1 bg-purple-900/30 border border-purple-500/30 text-purple-300 text-sm rounded-full"
-                      >
+                      <Badge key={docType} tone="accent">
                         {docType}
-                      </span>
+                      </Badge>
                     ))}
                   </div>
                 </div>
               )}
 
               {profile.usedInRuleMining && (
-                <div className="bg-purple-900/20 border border-purple-500/30 rounded-lg p-4">
-                  <h4 className="text-sm font-semibold text-purple-300 mb-2 flex items-center gap-2">
+                <div
+                  className="rounded-lg p-4 border"
+                  style={{
+                    backgroundColor: 'var(--accent-bg)',
+                    borderColor: 'rgb(var(--color-accent-primary))',
+                  }}
+                >
+                  <h4
+                    className="text-sm font-semibold mb-2 flex items-center gap-2"
+                    style={{ color: 'rgb(var(--color-accent-primary))' }}
+                  >
                     <BeakerIcon className="w-5 h-5" />
                     Rule Mining Information
                   </h4>
                   <div className="grid grid-cols-2 gap-3 text-sm">
                     <div>
-                      <div className="text-purple-400/70">Mined At</div>
-                      <div className="text-purple-200">
-                        {new Date(profile.usedInRuleMining.minedAt).toLocaleString()}
+                      <div
+                        style={{ color: 'rgb(var(--color-accent-primary))', opacity: 0.7 }}
+                      >
+                        Mined At
+                      </div>
+                      <div style={{ color: 'var(--text)' }}>
+                        {formatDateTime(profile.usedInRuleMining.minedAt)}
                       </div>
                     </div>
                     <div>
-                      <div className="text-purple-400/70">Rules Generated</div>
-                      <div className="text-purple-200">{profile.usedInRuleMining.rulesGenerated}</div>
+                      <div
+                        style={{ color: 'rgb(var(--color-accent-primary))', opacity: 0.7 }}
+                      >
+                        Rules Generated
+                      </div>
+                      <div style={{ color: 'var(--text)' }}>
+                        {profile.usedInRuleMining.rulesGenerated}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -549,6 +663,105 @@ export const ProfileDetailsModal: React.FC<ProfileDetailsModalProps> = ({
             </div>
           )}
         </div>
+      </Modal>
+
+      {/* Confirm remove source */}
+      {confirmRemoveId && (
+        <Modal
+          open={true}
+          onClose={() => setConfirmRemoveId(null)}
+          title="Remove source?"
+          size="sm"
+          footer={
+            <>
+              <button onClick={() => setConfirmRemoveId(null)} className="btn-secondary">
+                Cancel
+              </button>
+              <button
+                onClick={() => handleRemoveSource(confirmRemoveId)}
+                className="btn-danger"
+              >
+                Remove
+              </button>
+            </>
+          }
+        >
+          <p style={{ color: 'var(--text)' }}>
+            This source will be removed from the profile. You can still re-add it later.
+          </p>
+        </Modal>
+      )}
+    </>
+  );
+};
+
+interface SourceCardProps {
+  source: RegulatorySource;
+  canRemove: boolean;
+  onRemove: () => void;
+}
+
+const SourceCard: React.FC<SourceCardProps> = ({ source, canRemove, onRemove }) => {
+  const [hover, setHover] = useState(false);
+  const accent = 'rgb(var(--color-accent-primary))';
+  return (
+    <div
+      className="rounded-lg p-4 transition-all border"
+      style={{
+        backgroundColor: 'var(--surface-2)',
+        borderColor: hover ? accent : 'var(--border)',
+      }}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+    >
+      <div className="flex items-start justify-between">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-2 flex-wrap">
+            <h4 className="font-medium" style={{ color: 'var(--text)' }}>
+              {source.sourceName}
+            </h4>
+            {source.trustLevel === 'gov-auto' ? (
+              <Badge tone="success">Gov Auto</Badge>
+            ) : (
+              <Badge tone="info">User Added</Badge>
+            )}
+            <Badge tone="neutral">
+              {(source.confidenceScore * 100).toFixed(0)}% confidence
+            </Badge>
+          </div>
+          {source.agencyName && (
+            <p className="text-sm mb-1" style={{ color: 'var(--muted)' }}>
+              {source.agencyName}
+            </p>
+          )}
+          <a
+            href={source.sourceUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sm flex items-center gap-1 break-all"
+            style={{ color: accent }}
+          >
+            <LinkIcon className="w-4 h-4 flex-shrink-0" />
+            {source.sourceUrl}
+          </a>
+        </div>
+        {canRemove && (
+          <button
+            type="button"
+            aria-label="Remove source"
+            onClick={onRemove}
+            className="ml-4 p-2 rounded transition-colors"
+            style={{ color: 'var(--error)' }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = 'var(--error-bg)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'transparent';
+            }}
+          >
+            <TrashIcon className="w-5 h-5" />
+          </button>
+        )}
       </div>
     </div>
   );

@@ -26,26 +26,35 @@
 :root,
 [data-theme="light"] {
   /* Backgrounds */
-  --bg: #F3F4F6;                /* gray-100 - Page background */
-  --surface: #FFFFFF;           /* white - Cards/panels */
-  --surface-2: #F9FAFB;         /* gray-50 - Inputs/secondary surfaces */
-  --hover: #E5E7EB;             /* gray-200 - Hover states */
-  
+  --bg: #F3F4F6;
+  --surface: #FFFFFF;
+  --surface-2: #F9FAFB;
+  --hover: #E5E7EB;
+  --color-bg-panel: #FFFFFF;
+
   /* Borders */
-  --border: #E5E7EB;            /* gray-200 - Default borders */
-  --border-subtle: #F3F4F6;     /* gray-100 - Subtle borders */
-  
+  --border: #E5E7EB;
+  --border-subtle: #F3F4F6;
+  --color-border-subtle: #F3F4F6;
+
   /* Text */
-  --text: #111827;              /* gray-900 - Primary text */
-  --text-secondary: #374151;    /* gray-700 - Secondary text */
-  --muted: #6B7280;             /* gray-500 - Muted text */
-  --disabled: #9CA3AF;          /* gray-400 - Disabled text */
-  
+  --text: #111827;
+  --text-secondary: #374151;
+  --muted: #6B7280;
+  --disabled: #9CA3AF;
+
   /* Status Colors */
-  --success: #059669;           /* green-600 */
-  --warning: #D97706;           /* yellow-600 */
-  --error: #DC2626;             /* red-600 */
-  --info: #2563EB;              /* blue-600 */
+  --success: #059669;
+  --warning: #D97706;
+  --error: #DC2626;
+  --info: #2563EB;
+
+  /* Tinted status backgrounds */
+  --success-bg: #ECFDF5;
+  --warning-bg: #FFFBEB;
+  --error-bg: #FEF2F2;
+  --info-bg: #EFF6FF;
+  --accent-bg: #F5F3FF;
 }
 
 /* 
@@ -55,26 +64,35 @@
 .theme-dark,
 [data-theme="dark"] {
   /* Backgrounds */
-  --bg: #030712;                /* gray-950 - Page background */
-  --surface: #111827;           /* gray-900 - Cards/panels */
-  --surface-2: #1F2937;         /* gray-800 - Inputs/secondary surfaces */
-  --hover: #374151;             /* gray-700 - Hover states */
-  
+  --bg: #030712;
+  --surface: #111827;
+  --surface-2: #1F2937;
+  --hover: #374151;
+  --color-bg-panel: #111827;
+
   /* Borders */
-  --border: #374151;            /* gray-700 - Default borders */
-  --border-subtle: #1F2937;     /* gray-800 - Subtle borders */
-  
+  --border: #374151;
+  --border-subtle: #1F2937;
+  --color-border-subtle: #1F2937;
+
   /* Text */
-  --text: #F9FAFB;              /* gray-50 - Primary text */
-  --text-secondary: #D1D5DB;    /* gray-300 - Secondary text */
-  --muted: #9CA3AF;             /* gray-400 - Muted text */
-  --disabled: #6B7280;          /* gray-500 - Disabled text */
-  
+  --text: #F9FAFB;
+  --text-secondary: #D1D5DB;
+  --muted: #9CA3AF;
+  --disabled: #6B7280;
+
   /* Status Colors */
-  --success: #10B981;           /* green-500 */
-  --warning: #F59E0B;           /* yellow-500 */
-  --error: #EF4444;             /* red-500 */
-  --info: #3B82F6;              /* blue-500 */
+  --success: #10B981;
+  --warning: #F59E0B;
+  --error: #EF4444;
+  --info: #3B82F6;
+
+  /* Tinted status backgrounds (~15% alpha on dark surface) */
+  --success-bg: rgba(16, 185, 129, 0.12);
+  --warning-bg: rgba(245, 158, 11, 0.12);
+  --error-bg: rgba(239, 68, 68, 0.12);
+  --info-bg: rgba(59, 130, 246, 0.12);
+  --accent-bg: rgba(147, 51, 234, 0.12);
 }
 
 @layer base {
@@ -195,6 +213,78 @@
     background-color: rgb(var(--color-accent-primary));
   }
   
+  /* Semantic button variants */
+  .btn-success {
+    @apply text-white font-medium py-2 px-4 rounded-lg transition-all duration-200;
+    background-color: var(--success);
+  }
+  .btn-success:hover { filter: brightness(0.92); }
+  .btn-danger {
+    @apply text-white font-medium py-2 px-4 rounded-lg transition-all duration-200;
+    background-color: var(--error);
+  }
+  .btn-danger:hover { filter: brightness(0.92); }
+  .btn-ghost {
+    @apply font-medium py-2 px-4 rounded-lg transition-all duration-200;
+    background-color: transparent;
+    color: var(--text-secondary);
+  }
+  .btn-ghost:hover {
+    background-color: var(--hover);
+    color: var(--text);
+  }
+
+  /* Themed select dropdown */
+  .select {
+    @apply w-full px-3 py-2 rounded-lg transition-all appearance-none;
+    background-color: var(--surface-2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236B7280'%3e%3cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 0.625rem center;
+    background-size: 1rem;
+    padding-right: 2.25rem;
+  }
+  .select:focus {
+    border-color: rgb(var(--color-accent-primary));
+    box-shadow: 0 0 0 3px rgba(var(--color-accent-primary), 0.1);
+    outline: none;
+  }
+  .select:disabled { opacity: 0.6; cursor: not-allowed; }
+
+  /* Form helpers */
+  .form-label {
+    @apply block text-sm font-medium mb-1;
+    color: var(--text-secondary);
+  }
+  .form-help {
+    @apply text-xs mt-1;
+    color: var(--muted);
+  }
+
+  /* Section titles */
+  .page-subtitle { @apply text-sm; color: var(--muted); }
+  .section-title { @apply text-base font-semibold; color: var(--text); }
+
+  /* Status badge tone classes (paired with .badge or span.border) */
+  .status-success { background-color: var(--success-bg); color: var(--success); border-color: var(--success); }
+  .status-warning { background-color: var(--warning-bg); color: var(--warning); border-color: var(--warning); }
+  .status-danger  { background-color: var(--error-bg);   color: var(--error);   border-color: var(--error); }
+  .status-info    { background-color: var(--info-bg);    color: var(--info);    border-color: var(--info); }
+  .status-neutral { background-color: var(--surface-2);  color: var(--text-secondary); border-color: var(--border); }
+  .status-accent  {
+    background-color: var(--accent-bg);
+    color: rgb(var(--color-accent-primary));
+    border-color: rgb(var(--color-accent-primary));
+  }
+
+  /* Responsive table wrapper — wrap every data table in this */
+  .table-wrap {
+    @apply w-full overflow-x-auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
   /* Tables - Theme-Aware */
   .table {
     @apply w-full text-sm text-left;
