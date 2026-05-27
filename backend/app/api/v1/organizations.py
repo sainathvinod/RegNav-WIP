@@ -61,11 +61,7 @@ async def list_organizations(
     _admin: CurrentUser = Depends(require_platform_admin),
     db: AsyncSession = Depends(get_db),
 ) -> list[OrgResponse]:
-    stmt = (
-        select(Tenant)
-        .where(Tenant.deleted_at.is_(None))
-        .order_by(Tenant.created_at.desc())
-    )
+    stmt = select(Tenant).where(Tenant.deleted_at.is_(None)).order_by(Tenant.created_at.desc())
     result = await db.execute(stmt)
     tenants = result.scalars().all()
 
@@ -237,5 +233,3 @@ async def _load_tenant(db: AsyncSession, org_id: uuid.UUID) -> Tenant:
             detail="Organization not found",
         )
     return t
-
-

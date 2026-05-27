@@ -52,9 +52,7 @@ async def test_summary_with_no_data_returns_zeros(client: httpx.AsyncClient) -> 
     assert body["complianceScore"] == 100.0
 
 
-async def test_summary_counts_documents(
-    client: httpx.AsyncClient, fake_db: FakeSession
-) -> None:
+async def test_summary_counts_documents(client: httpx.AsyncClient, fake_db: FakeSession) -> None:
     for _ in range(3):
         doc = Document(
             id=uuid.uuid4(),

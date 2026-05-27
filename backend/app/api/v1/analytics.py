@@ -44,15 +44,16 @@ async def get_summary(
     """Return aggregated stats for the current tenant's data."""
 
     # --- Documents -------------------------------------------------------
-    doc_count = await db.scalar(
-        select(func.count()).select_from(Document).where(Document.deleted_at.is_(None))
-    ) or 0
+    doc_count = (
+        await db.scalar(
+            select(func.count()).select_from(Document).where(Document.deleted_at.is_(None))
+        )
+        or 0
+    )
 
     # --- Rules by status -------------------------------------------------
     rules_result = await db.execute(
-        select(Rule.status, func.count())
-        .where(Rule.deleted_at.is_(None))
-        .group_by(Rule.status)
+        select(Rule.status, func.count()).where(Rule.deleted_at.is_(None)).group_by(Rule.status)
     )
     rule_counts: dict[str, int] = {row[0]: row[1] for row in rules_result}
     rules = RuleStats(
@@ -63,27 +64,32 @@ async def get_summary(
     )
 
     # --- Validation runs -------------------------------------------------
-    total_runs = await db.scalar(
-        select(func.count())
-        .select_from(ValidationRun)
-        .where(ValidationRun.tenant_id == user.tenant_id)
-    ) or 0
+    total_runs = (
+        await db.scalar(
+            select(func.count())
+            .select_from(ValidationRun)
+            .where(ValidationRun.tenant_id == user.tenant_id)
+        )
+        or 0
+    )
 
     today_start = datetime.now(UTC).replace(hour=0, minute=0, second=0, microsecond=0)
-    today_runs = await db.scalar(
-        select(func.count())
-        .select_from(ValidationRun)
-        .where(
-            ValidationRun.tenant_id == user.tenant_id,
-            ValidationRun.created_at >= today_start,
+    today_runs = (
+        await db.scalar(
+            select(func.count())
+            .select_from(ValidationRun)
+            .where(
+                ValidationRun.tenant_id == user.tenant_id,
+                ValidationRun.created_at >= today_start,
+            )
         )
-    ) or 0
+        or 0
+    )
 
     # Compliance score: % of completed runs in last 30 days with 0 violations
     cutoff = datetime.now(UTC) - timedelta(days=30)
     recent_runs_result = await db.execute(
-        select(ValidationRun.violations_found)
-        .where(
+        select(ValidationRun.violations_found).where(
             ValidationRun.tenant_id == user.tenant_id,
             ValidationRun.status == "completed",
             ValidationRun.created_at >= cutoff,

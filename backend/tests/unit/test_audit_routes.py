@@ -61,9 +61,7 @@ async def test_audit_list_empty(client: httpx.AsyncClient) -> None:
     assert resp.json() == []
 
 
-async def test_audit_list_returns_entries(
-    client: httpx.AsyncClient, fake_db: FakeSession
-) -> None:
+async def test_audit_list_returns_entries(client: httpx.AsyncClient, fake_db: FakeSession) -> None:
     fake_db.add(_make_entry("rule.approve"))
     fake_db.add(_make_entry("rule.reject"))
     fake_db.add(_make_entry("org.create", resource_type="tenant"))
@@ -91,9 +89,7 @@ async def test_audit_writes_recorded_on_rule_approve(
     rule.updated_at = datetime.now(UTC)
     fake_db.add(rule)
 
-    resp = await client.post(
-        f"/api/v1/ruleminer/rules/{rule.id}/approve", headers=AUTH
-    )
+    resp = await client.post(f"/api/v1/ruleminer/rules/{rule.id}/approve", headers=AUTH)
     assert resp.status_code == 200
 
     # An audit row should have been added with action='rule.approve'

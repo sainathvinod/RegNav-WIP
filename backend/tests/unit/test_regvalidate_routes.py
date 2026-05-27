@@ -11,7 +11,7 @@ import httpx
 import pytest
 
 from app.db.engine import get_db
-from app.db.models import Rule, ValidationResult, ValidationRun
+from app.db.models import Rule, ValidationRun
 from app.main import create_app
 from tests.unit._fake_db import FakeSession
 
@@ -84,9 +84,7 @@ async def test_list_runs_returns_seeded_rows(
     assert len(resp.json()) == 2
 
 
-async def test_get_run_by_id(
-    client: httpx.AsyncClient, fake_db: FakeSession
-) -> None:
+async def test_get_run_by_id(client: httpx.AsyncClient, fake_db: FakeSession) -> None:
     run = _make_run()
     fake_db.add(run)
     resp = await client.get(f"/api/v1/regvalidate/runs/{run.id}", headers=AUTH)
@@ -99,16 +97,12 @@ async def test_get_run_not_found(client: httpx.AsyncClient) -> None:
     assert resp.status_code == 404
 
 
-async def test_delete_run(
-    client: httpx.AsyncClient, fake_db: FakeSession
-) -> None:
+async def test_delete_run(client: httpx.AsyncClient, fake_db: FakeSession) -> None:
     run = _make_run()
     fake_db.add(run)
     # delete requires db.delete() — FakeSession handles via close
     with patch.object(fake_db, "delete", new=AsyncMock()):
-        resp = await client.delete(
-            f"/api/v1/regvalidate/runs/{run.id}", headers=AUTH
-        )
+        resp = await client.delete(f"/api/v1/regvalidate/runs/{run.id}", headers=AUTH)
     assert resp.status_code == 204
 
 

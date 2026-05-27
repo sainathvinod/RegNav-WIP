@@ -78,13 +78,9 @@ async def validate_file(
         Rule.deleted_at.is_(None),
     )
     if state_code:
-        stmt = stmt.where(
-            (Rule.state_code == state_code) | (Rule.state_code.is_(None))
-        )
+        stmt = stmt.where((Rule.state_code == state_code) | (Rule.state_code.is_(None)))
     if lob:
-        stmt = stmt.where(
-            (Rule.line_of_business == lob) | (Rule.line_of_business.is_(None))
-        )
+        stmt = stmt.where((Rule.line_of_business == lob) | (Rule.line_of_business.is_(None)))
     result = await db.execute(stmt)
     rules = result.scalars().all()
 

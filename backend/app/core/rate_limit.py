@@ -20,9 +20,9 @@ logger = get_logger(__name__)
 
 # Per-endpoint-class limits (requests per 60-second window per tenant)
 _LIMITS: dict[str, int] = {
-    "chat": 120,        # /api/v1/rulesense/sessions/.../messages
-    "validate": 60,     # /api/v1/regvalidate/validate
-    "extract": 30,      # /api/v1/ruleminer/extract
+    "chat": 120,  # /api/v1/rulesense/sessions/.../messages
+    "validate": 60,  # /api/v1/regvalidate/validate
+    "extract": 30,  # /api/v1/ruleminer/extract
     "default": 600,
 }
 

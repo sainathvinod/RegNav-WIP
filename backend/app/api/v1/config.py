@@ -170,10 +170,6 @@ async def reset_config_key(
 # ---------------------------------------------------------------------------
 
 
-async def _load_overrides(
-    db: AsyncSession, tenant_id: uuid.UUID
-) -> dict[str, str]:
-    result = await db.execute(
-        select(TenantConfig).where(TenantConfig.tenant_id == tenant_id)
-    )
+async def _load_overrides(db: AsyncSession, tenant_id: uuid.UUID) -> dict[str, str]:
+    result = await db.execute(select(TenantConfig).where(TenantConfig.tenant_id == tenant_id))
     return {row.key: row.value for row in result.scalars().all()}

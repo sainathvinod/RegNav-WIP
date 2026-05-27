@@ -87,9 +87,7 @@ async def test_list_rules_returns_seeded_rows(
     assert len(resp.json()) == 2
 
 
-async def test_get_rule_by_id(
-    client: httpx.AsyncClient, fake_db: FakeSession
-) -> None:
+async def test_get_rule_by_id(client: httpx.AsyncClient, fake_db: FakeSession) -> None:
     rule = _make_rule()
     fake_db.add(rule)
     resp = await client.get(f"/api/v1/ruleminer/rules/{rule.id}", headers=AUTH)
@@ -98,9 +96,7 @@ async def test_get_rule_by_id(
 
 
 async def test_get_rule_not_found(client: httpx.AsyncClient) -> None:
-    resp = await client.get(
-        f"/api/v1/ruleminer/rules/{uuid.uuid4()}", headers=AUTH
-    )
+    resp = await client.get(f"/api/v1/ruleminer/rules/{uuid.uuid4()}", headers=AUTH)
     assert resp.status_code == 404
 
 
@@ -109,26 +105,18 @@ async def test_get_rule_not_found(client: httpx.AsyncClient) -> None:
 # ---------------------------------------------------------------------------
 
 
-async def test_approve_draft_rule(
-    client: httpx.AsyncClient, fake_db: FakeSession
-) -> None:
+async def test_approve_draft_rule(client: httpx.AsyncClient, fake_db: FakeSession) -> None:
     rule = _make_rule(status="draft")
     fake_db.add(rule)
-    resp = await client.post(
-        f"/api/v1/ruleminer/rules/{rule.id}/approve", headers=AUTH
-    )
+    resp = await client.post(f"/api/v1/ruleminer/rules/{rule.id}/approve", headers=AUTH)
     assert resp.status_code == 200
     assert resp.json()["status"] == "approved"
 
 
-async def test_reject_draft_rule(
-    client: httpx.AsyncClient, fake_db: FakeSession
-) -> None:
+async def test_reject_draft_rule(client: httpx.AsyncClient, fake_db: FakeSession) -> None:
     rule = _make_rule(status="draft")
     fake_db.add(rule)
-    resp = await client.post(
-        f"/api/v1/ruleminer/rules/{rule.id}/reject", headers=AUTH
-    )
+    resp = await client.post(f"/api/v1/ruleminer/rules/{rule.id}/reject", headers=AUTH)
     assert resp.status_code == 200
     assert resp.json()["status"] == "rejected"
 
@@ -138,15 +126,11 @@ async def test_approve_already_approved_is_idempotent(
 ) -> None:
     rule = _make_rule(status="approved")
     fake_db.add(rule)
-    resp = await client.post(
-        f"/api/v1/ruleminer/rules/{rule.id}/approve", headers=AUTH
-    )
+    resp = await client.post(f"/api/v1/ruleminer/rules/{rule.id}/approve", headers=AUTH)
     assert resp.status_code == 200
 
 
-async def test_delete_rule(
-    client: httpx.AsyncClient, fake_db: FakeSession
-) -> None:
+async def test_delete_rule(client: httpx.AsyncClient, fake_db: FakeSession) -> None:
     rule = _make_rule()
     fake_db.add(rule)
     resp = await client.delete(f"/api/v1/ruleminer/rules/{rule.id}", headers=AUTH)

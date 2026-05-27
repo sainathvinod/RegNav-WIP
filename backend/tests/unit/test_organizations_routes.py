@@ -54,9 +54,7 @@ async def test_list_orgs_empty(client: httpx.AsyncClient) -> None:
     assert resp.json() == []
 
 
-async def test_list_orgs_returns_tenants(
-    client: httpx.AsyncClient, fake_db: FakeSession
-) -> None:
+async def test_list_orgs_returns_tenants(client: httpx.AsyncClient, fake_db: FakeSession) -> None:
     fake_db.add(_make_tenant("Acme Corp", "acme"))
     fake_db.add(_make_tenant("Beta Inc", "beta"))
     resp = await client.get("/api/v1/organizations", headers=AUTH)

@@ -78,8 +78,6 @@ async def test_update_config_rejects_unknown_keys(client: httpx.AsyncClient) -> 
     assert resp.status_code == 422
 
 
-async def test_reset_config_key(
-    client: httpx.AsyncClient, fake_db: FakeSession
-) -> None:
+async def test_reset_config_key(client: httpx.AsyncClient, fake_db: FakeSession) -> None:
     resp = await client.delete("/api/v1/config/default_state_code", headers=AUTH)
     assert resp.status_code == 204

@@ -79,9 +79,7 @@ class UpdateRuleRequest(BaseModel):
     rationale: str | None = None
     rule_type: str | None = Field(default=None, alias="ruleType")
     state_code: str | None = Field(default=None, max_length=8, alias="stateCode")
-    line_of_business: str | None = Field(
-        default=None, max_length=64, alias="lineOfBusiness"
-    )
+    line_of_business: str | None = Field(default=None, max_length=64, alias="lineOfBusiness")
 
     model_config = {"populate_by_name": True}
 
@@ -108,10 +106,7 @@ async def list_rules(
     limit: int = Query(default=200, ge=1, le=500),
 ) -> list[RuleResponse]:
     stmt = (
-        select(Rule)
-        .where(Rule.deleted_at.is_(None))
-        .order_by(Rule.created_at.desc())
-        .limit(limit)
+        select(Rule).where(Rule.deleted_at.is_(None)).order_by(Rule.created_at.desc()).limit(limit)
     )
     if rule_status:
         stmt = stmt.where(Rule.status == rule_status)
