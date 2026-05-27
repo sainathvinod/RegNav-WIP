@@ -58,6 +58,7 @@ var workspaceName = '${resourcePrefix}-logs'
 var appInsightsName = '${resourcePrefix}-ai'
 var postgresName = '${resourcePrefix}-pg'
 var redisName = '${resourcePrefix}-redis'
+var storageName = take(replace('${resourcePrefix}st', '-', ''), 24)  // Storage names: 3-24 lowercase alphanumeric
 var caeName = '${resourcePrefix}-cae'
 var backendAppName = '${resourcePrefix}-backend'
 var workerAppName = '${resourcePrefix}-worker'
@@ -126,6 +127,18 @@ module redis 'modules/redis.bicep' = {
 }
 
 // -----------------------------------------------------------------------------
+// Storage — archived document blobs (PDFs, HTML renders)
+// -----------------------------------------------------------------------------
+
+module storage 'modules/storage.bicep' = {
+  name: 'storage'
+  params: {
+    storageName: storageName
+    location: location
+  }
+}
+
+// -----------------------------------------------------------------------------
 // Container Apps
 // -----------------------------------------------------------------------------
 
@@ -166,3 +179,6 @@ output keyVaultUri string = keyVault.outputs.uri
 
 @description('Application Insights connection string (also exposed to the app via env).')
 output appInsightsConnectionString string = observability.outputs.appInsightsConnectionString
+
+@description('Blob endpoint for the archive container — set as AZURE_STORAGE_ACCOUNT_URL.')
+output archiveBlobEndpoint string = storage.outputs.blobEndpoint

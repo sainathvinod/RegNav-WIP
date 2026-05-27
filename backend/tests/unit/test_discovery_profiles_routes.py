@@ -102,9 +102,7 @@ async def test_update_profile_changes_status_and_metadata(
 async def test_delete_profile_returns_204_and_hides_from_list(
     client: httpx.AsyncClient,
 ) -> None:
-    created = await client.post(
-        "/api/v1/profiles", headers=_AUTH, json={"name": "Temp"}
-    )
+    created = await client.post("/api/v1/profiles", headers=_AUTH, json={"name": "Temp"})
     pid = created.json()["id"]
 
     delete = await client.delete(f"/api/v1/profiles/{pid}", headers=_AUTH)

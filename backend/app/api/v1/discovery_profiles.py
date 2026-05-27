@@ -45,7 +45,7 @@ class ProfileResponse(BaseModel):
     model_config = {"from_attributes": True, "populate_by_name": True}
 
     @classmethod
-    def from_orm_obj(cls, obj: DiscoveryProfile) -> "ProfileResponse":
+    def from_orm_obj(cls, obj: DiscoveryProfile) -> ProfileResponse:
         # Hand-build because the ORM column is named profile_metadata while
         # the response field is aliased to ``metadata`` for the API surface.
         return cls(

@@ -34,6 +34,4 @@ router.include_router(regscout.router, prefix="/regscout", tags=["regscout"])
 router.include_router(regingest.router, prefix="/regingest", tags=["regingest"])
 router.include_router(ruleminer.router, prefix="/ruleminer", tags=["ruleminer"])
 router.include_router(regvalidate.router, prefix="/regvalidate", tags=["regvalidate"])
-router.include_router(
-    discovery_profiles.router, prefix="/profiles", tags=["discovery-profiles"]
-)
+router.include_router(discovery_profiles.router, prefix="/profiles", tags=["discovery-profiles"])

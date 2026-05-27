@@ -45,9 +45,7 @@ class DiscoveryProfile(TimestampMixin, SoftDeleteMixin, Base):
     # specific keys later if filtering needs it.
     configuration: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
     sources: Mapped[list] = mapped_column(JSONB, nullable=False, default=list)
-    profile_metadata: Mapped[dict] = mapped_column(
-        "metadata", JSONB, nullable=False, default=dict
-    )
+    profile_metadata: Mapped[dict] = mapped_column("metadata", JSONB, nullable=False, default=dict)
     tags: Mapped[list[str]] = mapped_column(JSONB, nullable=False, default=list)
 
     created_by: Mapped[uuid.UUID | None] = mapped_column(

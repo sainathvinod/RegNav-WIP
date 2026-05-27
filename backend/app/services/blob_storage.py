@@ -15,6 +15,7 @@ which returns the right one based on configuration.
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import os
 import uuid
 from abc import ABC, abstractmethod
@@ -91,11 +92,11 @@ class AzureBlobBackend(BlobStorage):
 
     async def _container_client(self):  # type: ignore[no-untyped-def]
         client = self._service.get_container_client(self._container)
-        try:
+        # Already exists → 409; we ignore both that and any transient
+        # network error so the first put doesn't fail loudly when the
+        # container is provisioned out-of-band.
+        with contextlib.suppress(Exception):
             await client.create_container()
-        except Exception:
-            # Already exists — ignore the 409.
-            pass
         return client
 
     async def put(self, key: str, data: bytes, content_type: str) -> None:
@@ -171,10 +172,10 @@ def build_archive_key(tenant_id: uuid.UUID, document_id: uuid.UUID, extension: s
 
 
 __all__ = [
+    "AzureBlobBackend",
     "BlobStorage",
     "LocalDiskBackend",
-    "AzureBlobBackend",
+    "build_archive_key",
     "get_storage",
     "reset_storage_for_tests",
-    "build_archive_key",
 ]
