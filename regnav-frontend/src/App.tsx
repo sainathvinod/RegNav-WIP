@@ -15,7 +15,6 @@ import { RegValidate } from './pages/RegValidate';
 import { Reports } from './pages/Reports';
 import { RuleMiner } from './pages/RuleMiner';
 import { RuleSense } from './pages/RuleSense';
-import { Settings } from './pages/Settings';
 import { Users } from './pages/Users';
 import { getSummary } from './services/analytics';
 import type { AnalyticsSummary } from './types/analytics';
@@ -144,7 +143,6 @@ function App() {
               <Route path="/analytics" element={<Analytics />} />
               <Route path="/reports" element={<Reports />} />
               <Route path="/audit" element={<AuditLog />} />
-              <Route path="/settings" element={<Settings />} />
             </Routes>
           </Router>
         </LoginGate>
