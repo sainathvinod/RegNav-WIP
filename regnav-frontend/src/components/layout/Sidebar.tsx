@@ -14,6 +14,7 @@ const navItems = [
   { id: 'regvalidate', label: 'RegValidate', icon: '✅', path: '/regvalidate' },
   { id: 'analytics', label: 'Analytics', icon: '📈', path: '/analytics' },
   { id: 'reports', label: 'Reports', icon: '📑', path: '/reports' },
+  { id: 'audit', label: 'Audit Log', icon: '📜', path: '/audit' },
   { id: 'settings', label: 'Settings', icon: '⚙️', path: '/settings' },
 ];
 

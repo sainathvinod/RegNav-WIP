@@ -14,6 +14,7 @@ from app.core.auth import CurrentUser, get_current_user
 from app.core.logging import get_logger
 from app.db.engine import get_db
 from app.db.models import Document, Rule
+from app.services import audit
 from app.services import jobs as jobs_service
 
 logger = get_logger(__name__)
@@ -187,6 +188,15 @@ async def approve_rule(
     rule.status = "approved"
     rule.reviewed_by = user.user_id
     rule.reviewed_at = datetime.now(UTC)
+    await audit.record(
+        db,
+        tenant_id=user.tenant_id,
+        user_id=user.user_id,
+        action="rule.approve",
+        resource_type="rule",
+        resource_id=rule.id,
+        after={"rule_code": rule.rule_code, "status": rule.status},
+    )
     await db.commit()
     await db.refresh(rule)
     return RuleResponse.from_orm(rule)
@@ -208,6 +218,15 @@ async def reject_rule(
     rule.status = "rejected"
     rule.reviewed_by = user.user_id
     rule.reviewed_at = datetime.now(UTC)
+    await audit.record(
+        db,
+        tenant_id=user.tenant_id,
+        user_id=user.user_id,
+        action="rule.reject",
+        resource_type="rule",
+        resource_id=rule.id,
+        after={"rule_code": rule.rule_code, "status": rule.status},
+    )
     await db.commit()
     await db.refresh(rule)
     return RuleResponse.from_orm(rule)

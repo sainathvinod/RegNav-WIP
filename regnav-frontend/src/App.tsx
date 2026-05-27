@@ -1,8 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import { AuthProvider } from './auth/AuthProvider';
+import { LoginGate } from './auth/LoginGate';
 import { AppLayout } from './components/layout/AppLayout';
 import { ThemeProvider } from './components/ThemeProvider';
 import { Analytics } from './pages/Analytics';
+import { AuditLog } from './pages/AuditLog';
 import { Configuration } from './pages/Configuration';
 import { Organizations } from './pages/Organizations';
 import { Profiles } from './pages/Profiles';
@@ -123,22 +126,27 @@ const StatCard: React.FC<{
 function App() {
   return (
     <ThemeProvider>
-      <Router basename={import.meta.env.BASE_URL}>
-        <Routes>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/organizations" element={<Organizations />} />
-          <Route path="/configuration" element={<Configuration />} />
-          <Route path="/profiles" element={<Profiles />} />
-          <Route path="/regscout" element={<RegScout />} />
-          <Route path="/regingest" element={<RegIngest />} />
-          <Route path="/ruleminer" element={<RuleMiner />} />
-          <Route path="/rulesense" element={<RuleSense />} />
-          <Route path="/regvalidate" element={<RegValidate />} />
-          <Route path="/analytics" element={<Analytics />} />
-          <Route path="/reports" element={<Reports />} />
-          <Route path="/settings" element={<Settings />} />
-        </Routes>
-      </Router>
+      <AuthProvider>
+        <LoginGate>
+          <Router basename={import.meta.env.BASE_URL}>
+            <Routes>
+              <Route path="/" element={<Dashboard />} />
+              <Route path="/organizations" element={<Organizations />} />
+              <Route path="/configuration" element={<Configuration />} />
+              <Route path="/profiles" element={<Profiles />} />
+              <Route path="/regscout" element={<RegScout />} />
+              <Route path="/regingest" element={<RegIngest />} />
+              <Route path="/ruleminer" element={<RuleMiner />} />
+              <Route path="/rulesense" element={<RuleSense />} />
+              <Route path="/regvalidate" element={<RegValidate />} />
+              <Route path="/analytics" element={<Analytics />} />
+              <Route path="/reports" element={<Reports />} />
+              <Route path="/audit" element={<AuditLog />} />
+              <Route path="/settings" element={<Settings />} />
+            </Routes>
+          </Router>
+        </LoginGate>
+      </AuthProvider>
     </ThemeProvider>
   );
 }

@@ -1,5 +1,6 @@
 import React from 'react';
 import { SunIcon, MoonIcon, ComputerDesktopIcon } from '@heroicons/react/24/outline';
+import { UserMenu } from '../../auth/UserMenu';
 import { useUserPreferences } from '../../store/userPreferencesStore';
 
 interface TopBarProps {
@@ -50,6 +51,8 @@ export const TopBar: React.FC<TopBarProps> = ({ title }) => {
             </div>
           </div>
           
+          <div className="flex items-center gap-3">
+          <UserMenu />
           {/* Global Light/Dark Mode Toggle */}
           <button
             onClick={toggleTheme}
@@ -82,6 +85,7 @@ export const TopBar: React.FC<TopBarProps> = ({ title }) => {
               <MoonIcon className="w-5 h-5" />
             )}
           </button>
+          </div>
         </div>
       </div>
     </div>

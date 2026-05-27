@@ -18,6 +18,7 @@ from app.api.v1 import llm as llm_router_module
 from app.api.v1.router import router as api_v1_router
 from app.core.config import settings
 from app.core.logging import configure_logging, get_logger
+from app.core.rate_limit import rate_limit_middleware
 
 logger = get_logger(__name__)
 
@@ -60,6 +61,9 @@ def create_app() -> FastAPI:
         response: Response = await call_next(request)
         response.headers["X-Request-ID"] = request_id
         return response
+
+    # ---- Rate-limit middleware -------------------------------------------
+    app.middleware("http")(rate_limit_middleware)
 
     # ---- Routers --------------------------------------------------------
     app.include_router(health.router)

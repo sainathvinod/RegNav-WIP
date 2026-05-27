@@ -14,6 +14,7 @@ from app.core.config import settings
 from app.core.logging import get_logger
 from app.db.engine import get_db
 from app.db.models import TenantConfig
+from app.services import audit
 
 logger = get_logger(__name__)
 
@@ -118,6 +119,14 @@ async def update_config(
             )
         overrides[key] = value
 
+    await audit.record(
+        db,
+        tenant_id=user.tenant_id,
+        user_id=user.user_id,
+        action="config.update",
+        resource_type="tenant_config",
+        after={"keys": sorted(body.updates.keys())},
+    )
     await db.commit()
     logger.info(
         "tenant_config_updated",

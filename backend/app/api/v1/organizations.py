@@ -15,6 +15,7 @@ from app.core.auth import CurrentUser, require_platform_admin
 from app.core.logging import get_logger
 from app.db.engine import get_db
 from app.db.models import Tenant, User
+from app.services import audit
 
 logger = get_logger(__name__)
 
@@ -97,7 +98,7 @@ async def list_organizations(
 @router.post("", response_model=OrgResponse, status_code=status.HTTP_201_CREATED)
 async def create_organization(
     body: CreateOrgRequest,
-    _admin: CurrentUser = Depends(require_platform_admin),
+    admin: CurrentUser = Depends(require_platform_admin),
     db: AsyncSession = Depends(get_db),
 ) -> OrgResponse:
     if not _SLUG_RE.match(body.slug):
@@ -122,6 +123,16 @@ async def create_organization(
         status=body.status,
     )
     db.add(tenant)
+    await db.flush()
+    await audit.record(
+        db,
+        tenant_id=tenant.id,
+        user_id=admin.user_id,
+        action="org.create",
+        resource_type="tenant",
+        resource_id=tenant.id,
+        after={"name": tenant.name, "slug": tenant.slug, "status": tenant.status},
+    )
     await db.commit()
     await db.refresh(tenant)
     logger.info("org_created", tenant_id=str(tenant.id), slug=tenant.slug)
@@ -139,14 +150,25 @@ async def create_organization(
 async def update_organization(
     org_id: uuid.UUID,
     body: UpdateOrgRequest,
-    _admin: CurrentUser = Depends(require_platform_admin),
+    admin: CurrentUser = Depends(require_platform_admin),
     db: AsyncSession = Depends(get_db),
 ) -> OrgResponse:
     tenant = await _load_tenant(db, org_id)
+    before = {"name": tenant.name, "status": tenant.status}
     if body.name is not None:
         tenant.name = body.name
     if body.status is not None:
         tenant.status = body.status
+    await audit.record(
+        db,
+        tenant_id=tenant.id,
+        user_id=admin.user_id,
+        action="org.update",
+        resource_type="tenant",
+        resource_id=tenant.id,
+        before=before,
+        after={"name": tenant.name, "status": tenant.status},
+    )
     await db.commit()
     await db.refresh(tenant)
     return OrgResponse(
@@ -168,6 +190,15 @@ async def delete_organization(
     tenant = await _load_tenant(db, org_id)
     tenant.deleted_at = datetime.now(UTC)
     tenant.deleted_by = admin.user_id
+    await audit.record(
+        db,
+        tenant_id=tenant.id,
+        user_id=admin.user_id,
+        action="org.delete",
+        resource_type="tenant",
+        resource_id=tenant.id,
+        before={"name": tenant.name, "slug": tenant.slug},
+    )
     await db.commit()
 
 
