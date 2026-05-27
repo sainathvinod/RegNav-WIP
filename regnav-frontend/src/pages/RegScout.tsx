@@ -7,6 +7,9 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { AppLayout } from '../components/layout/AppLayout';
 import { JobProgressModal } from '../components/JobProgressModal';
+import { Select } from '../components/ui/Select';
+import { Modal } from '../components/ui/Modal';
+import { US_STATE_OPTIONS, LOB_OPTIONS } from '../lib/constants';
 import {
   CheckCircleIcon,
   ExclamationTriangleIcon,
@@ -214,8 +217,8 @@ export const RegScout: React.FC = () => {
           <div
             className="rounded-lg border p-3 text-sm flex items-start gap-2"
             style={{
-              borderColor: 'rgba(220,38,38,0.4)',
-              backgroundColor: 'rgba(220,38,38,0.08)',
+              borderColor: 'var(--error)',
+              backgroundColor: 'var(--error-bg)',
               color: 'var(--error)',
             }}
           >
@@ -235,8 +238,8 @@ export const RegScout: React.FC = () => {
         <section
           className="rounded-xl border"
           style={{
-            backgroundColor: 'var(--color-bg-panel, var(--surface))',
-            borderColor: 'var(--color-border-subtle, var(--border))',
+            backgroundColor: 'var(--surface)',
+            borderColor: 'var(--border-subtle)',
           }}
         >
           <header
@@ -255,11 +258,7 @@ export const RegScout: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setShowAddSource(true)}
-                className="flex items-center gap-2 px-3 py-2 rounded-lg border text-sm"
-                style={{
-                  borderColor: 'var(--border)',
-                  color: 'var(--text-secondary)',
-                }}
+                className="btn-secondary flex items-center gap-2 text-sm"
               >
                 <PlusIcon className="h-4 w-4" />
                 Add source
@@ -268,7 +267,7 @@ export const RegScout: React.FC = () => {
                 type="button"
                 onClick={() => void handleRunDiscovery()}
                 disabled={sources.filter((s) => s.enabled).length === 0}
-                className="flex items-center gap-2 px-3 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium"
+                className="btn-primary flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
               >
                 <MagnifyingGlassIcon className="h-4 w-4" />
                 Run discovery
@@ -277,36 +276,27 @@ export const RegScout: React.FC = () => {
           </header>
 
           <div
-            className="flex items-center gap-3 px-6 py-3 border-b text-xs"
+            className="flex flex-wrap items-center gap-2 sm:gap-3 px-6 py-3 border-b text-xs"
             style={{ borderColor: 'var(--border)', color: 'var(--text-secondary)' }}
           >
             <label className="flex items-center gap-1">
               State
-              <input
+              <Select
+                options={US_STATE_OPTIONS}
                 value={stateFilter}
-                onChange={(e) => setStateFilter(e.target.value.toUpperCase())}
-                maxLength={4}
-                placeholder="All"
-                className="ml-1 px-2 py-1 rounded border text-xs w-20"
-                style={{
-                  borderColor: 'var(--border)',
-                  backgroundColor: 'var(--surface-2)',
-                  color: 'var(--text)',
-                }}
+                onChange={(e) => setStateFilter(e.target.value)}
+                allLabel="All states"
+                className="ml-1 text-xs w-32"
               />
             </label>
             <label className="flex items-center gap-1">
               LOB
-              <input
+              <Select
+                options={LOB_OPTIONS}
                 value={lobFilter}
                 onChange={(e) => setLobFilter(e.target.value)}
-                placeholder="All"
-                className="ml-1 px-2 py-1 rounded border text-xs w-32"
-                style={{
-                  borderColor: 'var(--border)',
-                  backgroundColor: 'var(--surface-2)',
-                  color: 'var(--text)',
-                }}
+                allLabel="All LOBs"
+                className="ml-1 text-xs w-40"
               />
             </label>
             <div className="ml-auto" style={{ color: 'var(--muted)' }}>
@@ -315,7 +305,7 @@ export const RegScout: React.FC = () => {
             </div>
           </div>
 
-          <div className="overflow-x-auto">
+          <div className="table-wrap">
             <table className="w-full text-sm">
               <thead>
                 <tr
@@ -411,8 +401,8 @@ export const RegScout: React.FC = () => {
         <section
           className="rounded-xl border"
           style={{
-            backgroundColor: 'var(--color-bg-panel, var(--surface))',
-            borderColor: 'var(--color-border-subtle, var(--border))',
+            backgroundColor: 'var(--surface)',
+            borderColor: 'var(--border-subtle)',
           }}
         >
           <header
@@ -430,7 +420,7 @@ export const RegScout: React.FC = () => {
           </header>
 
           <div
-            className="flex items-center gap-3 px-6 py-3 border-b text-xs"
+            className="flex flex-wrap items-center gap-2 sm:gap-3 px-6 py-3 border-b text-xs"
             style={{ borderColor: 'var(--border)', color: 'var(--text-secondary)' }}
           >
             <label className="flex items-center gap-1">
@@ -438,12 +428,7 @@ export const RegScout: React.FC = () => {
               <select
                 value={sourceFilter}
                 onChange={(e) => setSourceFilter(e.target.value)}
-                className="ml-1 px-2 py-1 rounded border text-xs"
-                style={{
-                  borderColor: 'var(--border)',
-                  backgroundColor: 'var(--surface-2)',
-                  color: 'var(--text)',
-                }}
+                className="select ml-1 text-xs"
               >
                 <option value="">All</option>
                 {sources.map((s) => (
@@ -458,12 +443,7 @@ export const RegScout: React.FC = () => {
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value as DiscoveredDocStatus | '')}
-                className="ml-1 px-2 py-1 rounded border text-xs"
-                style={{
-                  borderColor: 'var(--border)',
-                  backgroundColor: 'var(--surface-2)',
-                  color: 'var(--text)',
-                }}
+                className="select ml-1 text-xs"
               >
                 <option value="">All</option>
                 <option value="pending">Pending</option>
@@ -477,7 +457,7 @@ export const RegScout: React.FC = () => {
             </div>
           </div>
 
-          <div className="overflow-x-auto">
+          <div className="table-wrap">
             <table className="w-full text-sm">
               <thead>
                 <tr
@@ -550,18 +530,17 @@ export const RegScout: React.FC = () => {
         </section>
       </div>
 
-      {showAddSource && (
-        <AddSourceModal
-          draft={sourceDraft}
-          onDraftChange={setSourceDraft}
-          onSubmit={() => void handleCreateSource()}
-          onClose={() => {
-            setShowAddSource(false);
-            setSourceDraft(EMPTY_SOURCE);
-          }}
-          submitting={savingSource}
-        />
-      )}
+      <AddSourceModal
+        open={showAddSource}
+        draft={sourceDraft}
+        onDraftChange={setSourceDraft}
+        onSubmit={() => void handleCreateSource()}
+        onClose={() => {
+          setShowAddSource(false);
+          setSourceDraft(EMPTY_SOURCE);
+        }}
+        submitting={savingSource}
+      />
 
       {activeJob && (
         <JobProgressModal
@@ -587,8 +566,8 @@ const SourceStatusBadge: React.FC<{ status: string | null }> = ({ status }) => {
     <span
       className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md font-medium"
       style={{
-        backgroundColor: ok ? 'rgba(34,197,94,0.15)' : 'rgba(220,38,38,0.15)',
-        color: ok ? '#16a34a' : '#dc2626',
+        backgroundColor: ok ? 'var(--success-bg)' : 'var(--error-bg)',
+        color: ok ? 'var(--success)' : 'var(--error)',
       }}
     >
       {ok ? <CheckCircleIcon className="h-3 w-3" /> : null}
@@ -599,10 +578,10 @@ const SourceStatusBadge: React.FC<{ status: string | null }> = ({ status }) => {
 
 const DocStatusBadge: React.FC<{ status: DiscoveredDocStatus }> = ({ status }) => {
   const palette: Record<DiscoveredDocStatus, { bg: string; color: string }> = {
-    pending: { bg: 'rgba(148,163,184,0.2)', color: '#64748b' },
-    ingested: { bg: 'rgba(34,197,94,0.2)', color: '#16a34a' },
-    skipped: { bg: 'rgba(234,179,8,0.2)', color: '#ca8a04' },
-    failed: { bg: 'rgba(220,38,38,0.2)', color: '#dc2626' },
+    pending: { bg: 'var(--surface-2)', color: 'var(--muted)' },
+    ingested: { bg: 'var(--success-bg)', color: 'var(--success)' },
+    skipped: { bg: 'var(--warning-bg)', color: 'var(--warning)' },
+    failed: { bg: 'var(--error-bg)', color: 'var(--error)' },
   };
   const { bg, color } = palette[status];
   return (
@@ -616,6 +595,7 @@ const DocStatusBadge: React.FC<{ status: DiscoveredDocStatus }> = ({ status }) =
 };
 
 interface AddSourceModalProps {
+  open: boolean;
   draft: SourceDraft;
   onDraftChange: (next: SourceDraft) => void;
   onSubmit: () => void;
@@ -624,134 +604,25 @@ interface AddSourceModalProps {
 }
 
 const AddSourceModal: React.FC<AddSourceModalProps> = ({
+  open,
   draft,
   onDraftChange,
   onSubmit,
   onClose,
   submitting,
 }) => (
-  <div
-    className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm"
-    style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}
-  >
-    <div
-      className="w-full max-w-lg rounded-xl border overflow-hidden"
-      style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)' }}
-    >
-      <header
-        className="flex items-center justify-between px-6 py-4 border-b"
-        style={{ borderColor: 'var(--border)' }}
-      >
-        <h3 className="text-lg font-semibold" style={{ color: 'var(--text)' }}>
-          Add regulatory source
-        </h3>
-        <button
-          type="button"
-          onClick={onClose}
-          aria-label="Close"
-          style={{ color: 'var(--muted)' }}
-        >
-          <XMarkIcon className="h-5 w-5" />
-        </button>
-      </header>
-
-      <div className="px-6 py-5 space-y-4">
-        <FormField label="Name *">
-          <input
-            type="text"
-            value={draft.name}
-            onChange={(e) => onDraftChange({ ...draft, name: e.target.value })}
-            placeholder="e.g., California DOI Bulletins"
-            className="w-full px-3 py-2 rounded-lg border text-sm"
-            style={{
-              backgroundColor: 'var(--surface-2)',
-              borderColor: 'var(--border)',
-              color: 'var(--text)',
-            }}
-          />
-        </FormField>
-        <FormField label="URL *">
-          <input
-            type="url"
-            value={draft.url}
-            onChange={(e) => onDraftChange({ ...draft, url: e.target.value })}
-            placeholder="https://www.insurance.ca.gov/bulletins/"
-            className="w-full px-3 py-2 rounded-lg border text-sm font-mono"
-            style={{
-              backgroundColor: 'var(--surface-2)',
-              borderColor: 'var(--border)',
-              color: 'var(--text)',
-            }}
-          />
-        </FormField>
-        <div className="grid grid-cols-3 gap-3">
-          <FormField label="Type">
-            <select
-              value={draft.sourceType}
-              onChange={(e) =>
-                onDraftChange({ ...draft, sourceType: e.target.value as SourceType })
-              }
-              className="w-full px-3 py-2 rounded-lg border text-sm"
-              style={{
-                backgroundColor: 'var(--surface-2)',
-                borderColor: 'var(--border)',
-                color: 'var(--text)',
-              }}
-            >
-              {SOURCE_TYPES.map((t) => (
-                <option key={t.value} value={t.value}>
-                  {t.label}
-                </option>
-              ))}
-            </select>
-          </FormField>
-          <FormField label="State">
-            <input
-              type="text"
-              maxLength={4}
-              value={draft.stateCode}
-              onChange={(e) =>
-                onDraftChange({ ...draft, stateCode: e.target.value.toUpperCase() })
-              }
-              placeholder="CA"
-              className="w-full px-3 py-2 rounded-lg border text-sm"
-              style={{
-                backgroundColor: 'var(--surface-2)',
-                borderColor: 'var(--border)',
-                color: 'var(--text)',
-              }}
-            />
-          </FormField>
-          <FormField label="LOB">
-            <input
-              type="text"
-              value={draft.lob}
-              onChange={(e) => onDraftChange({ ...draft, lob: e.target.value })}
-              placeholder="workers_comp"
-              className="w-full px-3 py-2 rounded-lg border text-sm"
-              style={{
-                backgroundColor: 'var(--surface-2)',
-                borderColor: 'var(--border)',
-                color: 'var(--text)',
-              }}
-            />
-          </FormField>
-        </div>
-      </div>
-
-      <footer
-        className="flex items-center justify-end gap-2 px-6 py-4 border-t"
-        style={{ borderColor: 'var(--border)' }}
-      >
+  <Modal
+    open={open}
+    onClose={onClose}
+    title="Add regulatory source"
+    size="lg"
+    footer={
+      <>
         <button
           type="button"
           onClick={onClose}
           disabled={submitting}
-          className="px-3 py-2 text-sm rounded-lg border"
-          style={{
-            borderColor: 'var(--border)',
-            color: 'var(--text-secondary)',
-          }}
+          className="btn-secondary text-sm"
         >
           Cancel
         </button>
@@ -759,13 +630,67 @@ const AddSourceModal: React.FC<AddSourceModalProps> = ({
           type="button"
           onClick={onSubmit}
           disabled={submitting || !draft.name.trim() || !draft.url.trim()}
-          className="px-3 py-2 text-sm rounded-lg bg-purple-600 hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium"
+          className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed text-sm"
         >
           {submitting ? 'Saving…' : 'Add source'}
         </button>
-      </footer>
+      </>
+    }
+  >
+    <div className="space-y-4">
+      <FormField label="Name *">
+        <input
+          type="text"
+          value={draft.name}
+          onChange={(e) => onDraftChange({ ...draft, name: e.target.value })}
+          placeholder="e.g., California DOI Bulletins"
+          className="input text-sm"
+        />
+      </FormField>
+      <FormField label="URL *">
+        <input
+          type="url"
+          value={draft.url}
+          onChange={(e) => onDraftChange({ ...draft, url: e.target.value })}
+          placeholder="https://www.insurance.ca.gov/bulletins/"
+          className="input text-sm font-mono"
+        />
+      </FormField>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <FormField label="Type">
+          <select
+            value={draft.sourceType}
+            onChange={(e) =>
+              onDraftChange({ ...draft, sourceType: e.target.value as SourceType })
+            }
+            className="select text-sm"
+          >
+            {SOURCE_TYPES.map((t) => (
+              <option key={t.value} value={t.value}>
+                {t.label}
+              </option>
+            ))}
+          </select>
+        </FormField>
+        <FormField label="State">
+          <Select
+            options={US_STATE_OPTIONS}
+            value={draft.stateCode}
+            onChange={(e) => onDraftChange({ ...draft, stateCode: e.target.value })}
+            allLabel="All states"
+          />
+        </FormField>
+        <FormField label="LOB">
+          <Select
+            options={LOB_OPTIONS}
+            value={draft.lob}
+            onChange={(e) => onDraftChange({ ...draft, lob: e.target.value })}
+            allLabel="All LOBs"
+          />
+        </FormField>
+      </div>
     </div>
-  </div>
+  </Modal>
 );
 
 const FormField: React.FC<{ label: string; children: React.ReactNode }> = ({ label, children }) => (

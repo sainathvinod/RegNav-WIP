@@ -1,5 +1,10 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { AppLayout } from '../components/layout/AppLayout';
+import { Badge, type BadgeTone } from '../components/ui/Badge';
+import { Modal } from '../components/ui/Modal';
+import { Select } from '../components/ui/Select';
+import { ROLE_OPTIONS } from '../lib/constants';
+import { humanLabel } from '../lib/format';
 import {
   assignRole,
   inviteUser,
@@ -11,21 +16,48 @@ import {
   type User,
 } from '../services/users';
 
-const STATUS_COLORS: Record<string, string> = {
-  active: 'bg-green-900 text-green-300 border-green-700',
-  invited: 'bg-yellow-900 text-yellow-300 border-yellow-700',
-  suspended: 'bg-red-900 text-red-300 border-red-700',
-  removed: 'bg-gray-700 text-gray-400 border-gray-600',
-};
+/** Map a user status onto a Badge tone. */
+function statusTone(status: string): BadgeTone {
+  switch (status) {
+    case 'active':
+      return 'success';
+    case 'invited':
+      return 'warning';
+    case 'suspended':
+      return 'danger';
+    default:
+      return 'neutral';
+  }
+}
 
-const ROLE_COLORS: Record<string, string> = {
-  platform_admin: 'bg-purple-900 text-purple-300',
-  tenant_owner: 'bg-blue-900 text-blue-300',
-  compliance_admin: 'bg-teal-900 text-teal-300',
-  compliance_lead: 'bg-cyan-900 text-cyan-300',
-  analyst: 'bg-indigo-900 text-indigo-300',
-  viewer: 'bg-gray-700 text-gray-300',
-};
+/** Map a role onto a Badge tone for visual differentiation. */
+function roleTone(role: string): BadgeTone {
+  switch (role) {
+    case 'platform_admin':
+      return 'accent';
+    case 'tenant_owner':
+    case 'tenant_admin':
+      return 'info';
+    case 'compliance_admin':
+    case 'compliance_lead':
+    case 'compliance_officer':
+      return 'success';
+    case 'analyst':
+      return 'info';
+    case 'auditor':
+      return 'warning';
+    case 'viewer':
+    default:
+      return 'neutral';
+  }
+}
+
+type ConfirmKind = 'suspend' | 'remove';
+
+interface ConfirmState {
+  kind: ConfirmKind;
+  user: User;
+}
 
 const Users: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
@@ -43,6 +75,9 @@ const Users: React.FC = () => {
 
   // Per-row role-add state
   const [addingRoleFor, setAddingRoleFor] = useState<string | null>(null);
+
+  // Destructive-action confirmation modal
+  const [confirm, setConfirm] = useState<ConfirmState | null>(null);
 
   const load = useCallback(() => {
     setLoading(true);
@@ -90,7 +125,6 @@ const Users: React.FC = () => {
   };
 
   const handleRemove = async (u: User) => {
-    if (!confirm(`Remove ${u.email}? They will lose access immediately.`)) return;
     try {
       await removeUser(u.id);
       setUsers(prev => prev.filter(x => x.id !== u.id));
@@ -118,18 +152,32 @@ const Users: React.FC = () => {
     }
   };
 
+  const runConfirm = async () => {
+    if (!confirm) return;
+    const target = confirm.user;
+    const kind = confirm.kind;
+    setConfirm(null);
+    if (kind === 'suspend') {
+      await handleStatusToggle(target);
+    } else if (kind === 'remove') {
+      await handleRemove(target);
+    }
+  };
+
   return (
     <AppLayout title="Users">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h2 className="text-xl font-semibold text-gray-100">Tenant Users</h2>
-          <p className="text-sm text-gray-400 mt-0.5">
+          <h2 className="text-xl font-semibold" style={{ color: 'var(--text)' }}>
+            Tenant Users
+          </h2>
+          <p className="text-sm mt-0.5" style={{ color: 'var(--muted)' }}>
             Invite team members and manage their roles. Audit-logged for SOC 2.
           </p>
         </div>
         <button
           onClick={() => setShowInvite(true)}
-          className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm font-medium transition-colors"
+          className="btn-primary text-sm"
         >
           + Invite User
         </button>
@@ -137,32 +185,37 @@ const Users: React.FC = () => {
 
       {/* Invite form */}
       {showInvite && (
-        <div className="card mb-6 border-purple-700">
-          <h3 className="text-base font-semibold text-gray-100 mb-4">Invite User</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+        <div
+          className="card mb-6"
+          style={{ borderColor: 'rgb(var(--color-accent-primary))' }}
+        >
+          <h3 className="text-base font-semibold mb-4" style={{ color: 'var(--text)' }}>
+            Invite User
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
             <div>
-              <label className="block text-xs text-gray-400 mb-1">Email</label>
+              <label className="form-label">Email</label>
               <input
                 type="email"
                 value={inviteEmail}
                 onChange={e => setInviteEmail(e.target.value)}
                 placeholder="user@example.com"
-                className="w-full px-3 py-2 rounded-lg bg-gray-800 border border-gray-700 text-gray-100 text-sm focus:outline-none focus:border-purple-500"
+                className="input text-sm"
               />
             </div>
             <div>
-              <label className="block text-xs text-gray-400 mb-1">Display Name</label>
+              <label className="form-label">Display Name</label>
               <input
                 type="text"
                 value={inviteName}
                 onChange={e => setInviteName(e.target.value)}
                 placeholder="Jane Doe"
-                className="w-full px-3 py-2 rounded-lg bg-gray-800 border border-gray-700 text-gray-100 text-sm focus:outline-none focus:border-purple-500"
+                className="input text-sm"
               />
             </div>
           </div>
           <div className="mb-4">
-            <label className="block text-xs text-gray-400 mb-1">Roles</label>
+            <label className="form-label">Roles</label>
             <div className="flex flex-wrap gap-2">
               {availableRoles.map(r => {
                 const checked = inviteRoles.includes(r);
@@ -175,22 +228,33 @@ const Users: React.FC = () => {
                         checked ? prev.filter(x => x !== r) : [...prev, r],
                       )
                     }
-                    className={`px-2.5 py-1 rounded text-xs transition-colors ${
+                    className="px-2.5 py-1 rounded text-xs transition-colors border"
+                    style={
                       checked
-                        ? 'bg-purple-600 text-white'
-                        : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
-                    }`}
+                        ? {
+                            backgroundColor: 'rgb(var(--color-accent-primary))',
+                            color: '#fff',
+                            borderColor: 'rgb(var(--color-accent-primary))',
+                          }
+                        : {
+                            backgroundColor: 'var(--surface-2)',
+                            color: 'var(--text-secondary)',
+                            borderColor: 'var(--border)',
+                          }
+                    }
                   >
-                    {r}
+                    {humanLabel(r)}
                   </button>
                 );
               })}
             </div>
           </div>
           {inviteError && (
-            <p className="mb-3 text-sm text-red-400">{inviteError}</p>
+            <p className="mb-3 text-sm" style={{ color: 'var(--error)' }}>
+              {inviteError}
+            </p>
           )}
-          <div className="flex gap-3">
+          <div className="flex flex-col sm:flex-row gap-3">
             <button
               onClick={handleInvite}
               disabled={
@@ -199,13 +263,13 @@ const Users: React.FC = () => {
                 !inviteName.trim() ||
                 inviteRoles.length === 0
               }
-              className="px-4 py-2 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-700 text-white rounded-lg text-sm font-medium"
+              className="btn-primary text-sm disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {inviting ? 'Inviting…' : 'Send Invite'}
             </button>
             <button
               onClick={() => { setShowInvite(false); setInviteError(null); }}
-              className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-gray-200 rounded-lg text-sm"
+              className="btn-secondary text-sm"
             >
               Cancel
             </button>
@@ -214,110 +278,189 @@ const Users: React.FC = () => {
       )}
 
       {error && (
-        <div className="mb-4 p-3 rounded-lg bg-red-900/30 border border-red-700 text-red-300 text-sm">
+        <div
+          className="mb-4 p-3 rounded-lg border text-sm"
+          style={{
+            backgroundColor: 'var(--error-bg)',
+            borderColor: 'var(--error)',
+            color: 'var(--error)',
+          }}
+        >
           {error}
-          <p className="text-xs mt-1 text-red-400/70">Start the backend to manage users.</p>
+          <p className="text-xs mt-1" style={{ color: 'var(--error)', opacity: 0.7 }}>
+            Start the backend to manage users.
+          </p>
         </div>
       )}
 
       {/* Users table */}
       <div className="card">
         {loading ? (
-          <div className="text-center py-12 text-gray-400">Loading users…</div>
+          <div className="text-center py-12" style={{ color: 'var(--muted)' }}>
+            Loading users…
+          </div>
         ) : users.length === 0 ? (
           <div className="text-center py-16">
             <div className="text-5xl mb-4">👥</div>
-            <p className="text-gray-400">No users yet.</p>
-            <p className="text-sm text-gray-500 mt-1">Invite your first team member above.</p>
+            <p style={{ color: 'var(--muted)' }}>No users yet.</p>
+            <p className="text-sm mt-1" style={{ color: 'var(--disabled)' }}>
+              Invite your first team member above.
+            </p>
           </div>
         ) : (
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-gray-700 text-left">
-                <th className="pb-3 text-gray-400 font-medium">User</th>
-                <th className="pb-3 text-gray-400 font-medium">Status</th>
-                <th className="pb-3 text-gray-400 font-medium">Roles</th>
-                <th className="pb-3 text-gray-400 font-medium">Joined</th>
-                <th className="pb-3" />
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-800">
-              {users.map(u => (
-                <tr key={u.id} className="hover:bg-gray-800/30 transition-colors align-top">
-                  <td className="py-3">
-                    <p className="text-gray-100 font-medium">{u.displayName}</p>
-                    <p className="text-xs text-gray-500">{u.email}</p>
-                  </td>
-                  <td className="py-3">
-                    <span className={`px-2 py-0.5 rounded border text-xs font-medium ${STATUS_COLORS[u.status] ?? STATUS_COLORS.invited}`}>
-                      {u.status}
-                    </span>
-                  </td>
-                  <td className="py-3">
-                    <div className="flex flex-wrap gap-1 items-center">
-                      {u.roles.map(r => (
-                        <span
-                          key={r}
-                          className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs ${ROLE_COLORS[r] ?? 'bg-gray-700 text-gray-300'}`}
-                        >
-                          {r}
-                          <button
-                            onClick={() => handleRevokeRole(u.id, r)}
-                            className="text-current opacity-60 hover:opacity-100"
-                            title="Revoke role"
-                          >
-                            ×
-                          </button>
-                        </span>
-                      ))}
-                      {addingRoleFor === u.id ? (
-                        <select
-                          autoFocus
-                          onChange={e => e.target.value && handleAddRole(u.id, e.target.value)}
-                          onBlur={() => setAddingRoleFor(null)}
-                          className="px-2 py-0.5 rounded bg-gray-800 border border-gray-700 text-gray-200 text-xs"
-                          defaultValue=""
-                        >
-                          <option value="" disabled>Add role…</option>
-                          {availableRoles
-                            .filter(r => !u.roles.includes(r))
-                            .map(r => (
-                              <option key={r} value={r}>{r}</option>
-                            ))}
-                        </select>
-                      ) : (
-                        <button
-                          onClick={() => setAddingRoleFor(u.id)}
-                          className="text-xs text-purple-400 hover:text-purple-300 px-1.5"
-                        >
-                          + add
-                        </button>
-                      )}
-                    </div>
-                  </td>
-                  <td className="py-3 text-gray-500 text-xs whitespace-nowrap">
-                    {new Date(u.createdAt).toLocaleDateString()}
-                  </td>
-                  <td className="py-3 text-right whitespace-nowrap">
-                    <button
-                      onClick={() => handleStatusToggle(u)}
-                      className="text-xs text-purple-400 hover:text-purple-300 mr-3"
-                    >
-                      {u.status === 'active' ? 'Suspend' : 'Activate'}
-                    </button>
-                    <button
-                      onClick={() => handleRemove(u)}
-                      className="text-xs text-red-500 hover:text-red-400"
-                    >
-                      Remove
-                    </button>
-                  </td>
+          <div className="table-wrap">
+            <table className="w-full text-sm">
+              <thead>
+                <tr
+                  className="border-b text-left"
+                  style={{ borderColor: 'var(--border)' }}
+                >
+                  <th className="pb-3 font-medium" style={{ color: 'var(--muted)' }}>User</th>
+                  <th className="pb-3 font-medium" style={{ color: 'var(--muted)' }}>Status</th>
+                  <th className="pb-3 font-medium" style={{ color: 'var(--muted)' }}>Roles</th>
+                  <th className="pb-3 font-medium" style={{ color: 'var(--muted)' }}>Joined</th>
+                  <th className="pb-3" />
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {users.map(u => (
+                  <tr
+                    key={u.id}
+                    className="align-top border-b transition-colors"
+                    style={{ borderColor: 'var(--border-subtle)' }}
+                  >
+                    <td className="py-3">
+                      <p className="font-medium" style={{ color: 'var(--text)' }}>
+                        {u.displayName}
+                      </p>
+                      <p className="text-xs" style={{ color: 'var(--muted)' }}>
+                        {u.email}
+                      </p>
+                    </td>
+                    <td className="py-3">
+                      <Badge tone={statusTone(u.status)}>{humanLabel(u.status)}</Badge>
+                    </td>
+                    <td className="py-3">
+                      <div className="flex flex-wrap gap-1 items-center">
+                        {u.roles.map(r => (
+                          <span key={r} className="inline-flex items-center gap-1">
+                            <Badge tone={roleTone(r)}>{humanLabel(r)}</Badge>
+                            <button
+                              onClick={() => handleRevokeRole(u.id, r)}
+                              className="opacity-60 hover:opacity-100 text-xs"
+                              style={{ color: 'var(--muted)' }}
+                              title="Revoke role"
+                            >
+                              ×
+                            </button>
+                          </span>
+                        ))}
+                        {addingRoleFor === u.id ? (
+                          <Select
+                            autoFocus
+                            options={ROLE_OPTIONS.filter(r => !u.roles.includes(r.value))}
+                            placeholder="Add role…"
+                            defaultValue=""
+                            onChange={e =>
+                              e.target.value && handleAddRole(u.id, e.target.value)
+                            }
+                            onBlur={() => setAddingRoleFor(null)}
+                            className="text-xs py-1"
+                          />
+                        ) : (
+                          <button
+                            onClick={() => setAddingRoleFor(u.id)}
+                            className="text-xs px-1.5"
+                            style={{ color: 'rgb(var(--color-accent-primary))' }}
+                          >
+                            + add
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                    <td className="py-3 text-xs whitespace-nowrap" style={{ color: 'var(--muted)' }}>
+                      {new Date(u.createdAt).toLocaleDateString()}
+                    </td>
+                    <td className="py-3 text-right whitespace-nowrap">
+                      <button
+                        onClick={() => setConfirm({ kind: 'suspend', user: u })}
+                        className="text-xs mr-3"
+                        style={{ color: 'rgb(var(--color-accent-primary))' }}
+                      >
+                        {u.status === 'active' ? 'Suspend' : 'Activate'}
+                      </button>
+                      <button
+                        onClick={() => setConfirm({ kind: 'remove', user: u })}
+                        className="text-xs"
+                        style={{ color: 'var(--error)' }}
+                      >
+                        Remove
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
+
+      {/* Confirm modal for destructive actions */}
+      <Modal
+        open={confirm !== null}
+        onClose={() => setConfirm(null)}
+        size="sm"
+        title={
+          confirm?.kind === 'remove'
+            ? 'Remove user?'
+            : confirm?.user.status === 'active'
+              ? 'Suspend user?'
+              : 'Activate user?'
+        }
+        footer={
+          <>
+            <button
+              type="button"
+              onClick={() => setConfirm(null)}
+              className="btn-secondary text-sm"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={runConfirm}
+              className={confirm?.kind === 'remove' ? 'btn-danger text-sm' : 'btn-primary text-sm'}
+            >
+              {confirm?.kind === 'remove'
+                ? 'Remove'
+                : confirm?.user.status === 'active'
+                  ? 'Suspend'
+                  : 'Activate'}
+            </button>
+          </>
+        }
+      >
+        {confirm && (
+          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+            {confirm.kind === 'remove' ? (
+              <>
+                Remove <span style={{ color: 'var(--text)' }}>{confirm.user.email}</span>?
+                They will lose access immediately.
+              </>
+            ) : confirm.user.status === 'active' ? (
+              <>
+                Suspend <span style={{ color: 'var(--text)' }}>{confirm.user.email}</span>?
+                They will be unable to sign in until reactivated.
+              </>
+            ) : (
+              <>
+                Reactivate <span style={{ color: 'var(--text)' }}>{confirm.user.email}</span>?
+                They will regain access immediately.
+              </>
+            )}
+          </p>
+        )}
+      </Modal>
     </AppLayout>
   );
 };

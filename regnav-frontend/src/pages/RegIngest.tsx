@@ -4,6 +4,9 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { AppLayout } from '../components/layout/AppLayout';
 import { DocumentViewerModal } from '../components/DocumentViewerModal';
 import { JobProgressModal } from '../components/JobProgressModal';
+import { Select } from '../components/ui/Select';
+import { Modal } from '../components/ui/Modal';
+import { US_STATE_OPTIONS, LOB_OPTIONS } from '../lib/constants';
 import {
   ArrowUpTrayIcon,
   DocumentTextIcon,
@@ -59,6 +62,8 @@ export const RegIngest: React.FC = () => {
   const [activeJob, setActiveJob] = useState<{ id: string; title: string } | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [viewerDoc, setViewerDoc] = useState<IngestedDocument | null>(null);
+  const [docToDelete, setDocToDelete] = useState<IngestedDocument | null>(null);
+  const [deletingDoc, setDeletingDoc] = useState(false);
 
   const refreshDocs = useCallback(async () => {
     try {
@@ -134,18 +139,23 @@ export const RegIngest: React.FC = () => {
     }
   }, [fileDraft]);
 
-  const handleDelete = useCallback(
-    async (doc: IngestedDocument) => {
-      if (!window.confirm(`Delete "${doc.title}"? This removes its chunks too.`)) return;
-      try {
-        await deleteIngestedDocument(doc.id);
-        await refreshDocs();
-      } catch (err) {
-        setErrorMessage(err instanceof Error ? err.message : 'Failed to delete document');
-      }
-    },
-    [refreshDocs],
-  );
+  const handleDelete = useCallback((doc: IngestedDocument) => {
+    setDocToDelete(doc);
+  }, []);
+
+  const confirmDelete = useCallback(async () => {
+    if (!docToDelete) return;
+    setDeletingDoc(true);
+    try {
+      await deleteIngestedDocument(docToDelete.id);
+      setDocToDelete(null);
+      await refreshDocs();
+    } catch (err) {
+      setErrorMessage(err instanceof Error ? err.message : 'Failed to delete document');
+    } finally {
+      setDeletingDoc(false);
+    }
+  }, [docToDelete, refreshDocs]);
 
   const handleJobClosed = useCallback(() => {
     setActiveJob(null);
@@ -159,8 +169,8 @@ export const RegIngest: React.FC = () => {
           <div
             className="rounded-lg border p-3 text-sm flex items-start gap-2"
             style={{
-              borderColor: 'rgba(220,38,38,0.4)',
-              backgroundColor: 'rgba(220,38,38,0.08)',
+              borderColor: 'var(--error)',
+              backgroundColor: 'var(--error-bg)',
               color: 'var(--error)',
             }}
           >
@@ -179,40 +189,42 @@ export const RegIngest: React.FC = () => {
         <div
           className="rounded-xl border overflow-hidden"
           style={{
-            backgroundColor: 'var(--color-bg-panel, var(--surface))',
-            borderColor: 'var(--color-border-subtle, var(--border))',
+            backgroundColor: 'var(--surface)',
+            borderColor: 'var(--border-subtle)',
           }}
         >
-          <nav
-            className="flex border-b"
-            style={{ borderColor: 'var(--border)' }}
-            role="tablist"
-          >
-            <TabButton
-              active={tab === 'url'}
-              onClick={() => setTab('url')}
-              icon={<LinkIcon className="h-4 w-4" />}
-              label="Ingest from URL"
-            />
-            <TabButton
-              active={tab === 'text'}
-              onClick={() => setTab('text')}
-              icon={<DocumentTextIcon className="h-4 w-4" />}
-              label="Ingest from text"
-            />
-            <TabButton
-              active={tab === 'file'}
-              onClick={() => setTab('file')}
-              icon={<ArrowUpTrayIcon className="h-4 w-4" />}
-              label="Upload PDF"
-            />
-            <TabButton
-              active={tab === 'documents'}
-              onClick={() => setTab('documents')}
-              icon={<DocumentTextIcon className="h-4 w-4" />}
-              label={`Documents (${documents.length})`}
-            />
-          </nav>
+          <div className="table-wrap">
+            <nav
+              className="flex border-b"
+              style={{ borderColor: 'var(--border)' }}
+              role="tablist"
+            >
+              <TabButton
+                active={tab === 'url'}
+                onClick={() => setTab('url')}
+                icon={<LinkIcon className="h-4 w-4" />}
+                label="Ingest from URL"
+              />
+              <TabButton
+                active={tab === 'text'}
+                onClick={() => setTab('text')}
+                icon={<DocumentTextIcon className="h-4 w-4" />}
+                label="Ingest from text"
+              />
+              <TabButton
+                active={tab === 'file'}
+                onClick={() => setTab('file')}
+                icon={<ArrowUpTrayIcon className="h-4 w-4" />}
+                label="Upload PDF"
+              />
+              <TabButton
+                active={tab === 'documents'}
+                onClick={() => setTab('documents')}
+                icon={<DocumentTextIcon className="h-4 w-4" />}
+                label={`Documents (${documents.length})`}
+              />
+            </nav>
+          </div>
 
           <div className="p-6">
             {tab === 'url' && (
@@ -261,6 +273,41 @@ export const RegIngest: React.FC = () => {
       {viewerDoc && (
         <DocumentViewerModal document={viewerDoc} onClose={() => setViewerDoc(null)} />
       )}
+
+      <Modal
+        open={docToDelete !== null}
+        onClose={() => {
+          if (!deletingDoc) setDocToDelete(null);
+        }}
+        title="Delete document"
+        size="sm"
+        footer={
+          <>
+            <button
+              type="button"
+              className="btn-secondary"
+              onClick={() => setDocToDelete(null)}
+              disabled={deletingDoc}
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              className="btn-danger"
+              onClick={() => void confirmDelete()}
+              disabled={deletingDoc}
+            >
+              {deletingDoc ? 'Deleting…' : 'Delete'}
+            </button>
+          </>
+        }
+      >
+        <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+          {docToDelete
+            ? `Delete "${docToDelete.title}"? This removes its chunks too.`
+            : ''}
+        </p>
+      </Modal>
     </AppLayout>
   );
 };
@@ -280,7 +327,7 @@ const TabButton: React.FC<{
     onClick={onClick}
     role="tab"
     aria-selected={active}
-    className="flex items-center gap-2 px-5 py-3 text-sm font-medium border-b-2 transition-colors"
+    className="flex items-center gap-2 px-5 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap"
     style={{
       borderColor: active ? 'rgb(var(--color-accent-primary))' : 'transparent',
       color: active ? 'rgb(var(--color-accent-primary))' : 'var(--text-secondary)',
@@ -304,12 +351,7 @@ const UrlForm: React.FC<{
         value={draft.url}
         onChange={(e) => onChange({ ...draft, url: e.target.value })}
         placeholder="https://www.tdi.texas.gov/bulletins/2026/b-2026-04.html"
-        className="w-full px-3 py-2 rounded-lg border text-sm font-mono"
-        style={{
-          backgroundColor: 'var(--surface-2)',
-          borderColor: 'var(--border)',
-          color: 'var(--text)',
-        }}
+        className="input text-sm font-mono"
       />
     </Field>
     <Field label="Title">
@@ -318,42 +360,24 @@ const UrlForm: React.FC<{
         value={draft.title}
         onChange={(e) => onChange({ ...draft, title: e.target.value })}
         placeholder="Auto-fetched from <title> if empty"
-        className="w-full px-3 py-2 rounded-lg border text-sm"
-        style={{
-          backgroundColor: 'var(--surface-2)',
-          borderColor: 'var(--border)',
-          color: 'var(--text)',
-        }}
+        className="input text-sm"
       />
     </Field>
-    <div className="grid grid-cols-2 gap-3">
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
       <Field label="State">
-        <input
-          type="text"
-          maxLength={4}
+        <Select
+          options={US_STATE_OPTIONS}
           value={draft.stateCode}
-          onChange={(e) => onChange({ ...draft, stateCode: e.target.value.toUpperCase() })}
-          placeholder="TX"
-          className="w-full px-3 py-2 rounded-lg border text-sm"
-          style={{
-            backgroundColor: 'var(--surface-2)',
-            borderColor: 'var(--border)',
-            color: 'var(--text)',
-          }}
+          onChange={(e) => onChange({ ...draft, stateCode: e.target.value })}
+          placeholder="Select state"
         />
       </Field>
       <Field label="Line of business">
-        <input
-          type="text"
+        <Select
+          options={LOB_OPTIONS}
           value={draft.lob}
           onChange={(e) => onChange({ ...draft, lob: e.target.value })}
-          placeholder="workers_comp"
-          className="w-full px-3 py-2 rounded-lg border text-sm"
-          style={{
-            backgroundColor: 'var(--surface-2)',
-            borderColor: 'var(--border)',
-            color: 'var(--text)',
-          }}
+          placeholder="Select LOB"
         />
       </Field>
     </div>
@@ -368,7 +392,7 @@ const UrlForm: React.FC<{
         type="button"
         onClick={onSubmit}
         disabled={submitting || !draft.url.trim()}
-        className="px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium"
+        className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed text-sm"
       >
         {submitting ? 'Queueing…' : 'Ingest URL'}
       </button>
@@ -389,42 +413,24 @@ const TextForm: React.FC<{
         value={draft.title}
         onChange={(e) => onChange({ ...draft, title: e.target.value })}
         placeholder="e.g., TX WC Notice 2026-12"
-        className="w-full px-3 py-2 rounded-lg border text-sm"
-        style={{
-          backgroundColor: 'var(--surface-2)',
-          borderColor: 'var(--border)',
-          color: 'var(--text)',
-        }}
+        className="input text-sm"
       />
     </Field>
-    <div className="grid grid-cols-2 gap-3">
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
       <Field label="State">
-        <input
-          type="text"
-          maxLength={4}
+        <Select
+          options={US_STATE_OPTIONS}
           value={draft.stateCode}
-          onChange={(e) => onChange({ ...draft, stateCode: e.target.value.toUpperCase() })}
-          placeholder="TX"
-          className="w-full px-3 py-2 rounded-lg border text-sm"
-          style={{
-            backgroundColor: 'var(--surface-2)',
-            borderColor: 'var(--border)',
-            color: 'var(--text)',
-          }}
+          onChange={(e) => onChange({ ...draft, stateCode: e.target.value })}
+          placeholder="Select state"
         />
       </Field>
       <Field label="Line of business">
-        <input
-          type="text"
+        <Select
+          options={LOB_OPTIONS}
           value={draft.lob}
           onChange={(e) => onChange({ ...draft, lob: e.target.value })}
-          placeholder="workers_comp"
-          className="w-full px-3 py-2 rounded-lg border text-sm"
-          style={{
-            backgroundColor: 'var(--surface-2)',
-            borderColor: 'var(--border)',
-            color: 'var(--text)',
-          }}
+          placeholder="Select LOB"
         />
       </Field>
     </div>
@@ -434,12 +440,7 @@ const TextForm: React.FC<{
         onChange={(e) => onChange({ ...draft, text: e.target.value })}
         rows={10}
         placeholder="Paste the regulatory text here…"
-        className="w-full px-3 py-2 rounded-lg border text-sm font-mono"
-        style={{
-          backgroundColor: 'var(--surface-2)',
-          borderColor: 'var(--border)',
-          color: 'var(--text)',
-        }}
+        className="input text-sm font-mono"
       />
     </Field>
     <div className="flex justify-end">
@@ -447,7 +448,7 @@ const TextForm: React.FC<{
         type="button"
         onClick={onSubmit}
         disabled={submitting || !draft.title.trim() || !draft.text.trim()}
-        className="px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium"
+        className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed text-sm"
       >
         {submitting ? 'Queueing…' : 'Ingest text'}
       </button>
@@ -462,22 +463,81 @@ const FileForm: React.FC<{
   submitting: boolean;
 }> = ({ draft, onChange, onSubmit, submitting }) => {
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const [dragging, setDragging] = useState(false);
+
+  const handleDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragging(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragging(false);
+  }, []);
+
+  const handleDrop = useCallback(
+    (e: React.DragEvent<HTMLDivElement>) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setDragging(false);
+      const file = e.dataTransfer.files?.[0];
+      if (file && (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf'))) {
+        onChange({ ...draft, file });
+      }
+    },
+    [draft, onChange],
+  );
+
   return (
     <div className="space-y-4 max-w-2xl">
       <Field label="PDF file *">
-        <input
-          ref={inputRef}
-          type="file"
-          accept="application/pdf,.pdf"
-          onChange={(e) => onChange({ ...draft, file: e.target.files?.[0] ?? null })}
-          className="block w-full text-sm file:mr-3 file:px-3 file:py-1.5 file:rounded-md file:border-0 file:bg-purple-700 file:text-white file:cursor-pointer"
-          style={{ color: 'var(--text)' }}
-        />
-        {draft.file && (
-          <p className="text-xs mt-1" style={{ color: 'var(--muted)' }}>
-            {draft.file.name} · {(draft.file.size / 1024).toFixed(1)} KB
+        <div
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+          onClick={() => inputRef.current?.click()}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              inputRef.current?.click();
+            }
+          }}
+          className="border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors"
+          style={{
+            borderColor: dragging
+              ? 'rgb(var(--color-accent-primary))'
+              : 'var(--border)',
+            backgroundColor: dragging ? 'var(--accent-bg)' : 'transparent',
+          }}
+        >
+          <ArrowUpTrayIcon
+            className="h-6 w-6 mx-auto mb-2"
+            style={{ color: 'var(--muted)' }}
+          />
+          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+            {draft.file ? (
+              <span style={{ color: 'var(--text)' }}>{draft.file.name}</span>
+            ) : (
+              <>Drop a PDF here, or click to select</>
+            )}
           </p>
-        )}
+          {draft.file && (
+            <p className="text-xs mt-1" style={{ color: 'var(--muted)' }}>
+              {(draft.file.size / 1024).toFixed(1)} KB
+            </p>
+          )}
+          <input
+            ref={inputRef}
+            type="file"
+            accept="application/pdf,.pdf"
+            onChange={(e) => onChange({ ...draft, file: e.target.files?.[0] ?? null })}
+            className="hidden"
+          />
+        </div>
       </Field>
       <Field label="Title (optional)">
         <input
@@ -485,42 +545,24 @@ const FileForm: React.FC<{
           value={draft.title}
           onChange={(e) => onChange({ ...draft, title: e.target.value })}
           placeholder="Defaults to the filename"
-          className="w-full px-3 py-2 rounded-lg border text-sm"
-          style={{
-            backgroundColor: 'var(--surface-2)',
-            borderColor: 'var(--border)',
-            color: 'var(--text)',
-          }}
+          className="input text-sm"
         />
       </Field>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <Field label="State">
-          <input
-            type="text"
-            maxLength={4}
+          <Select
+            options={US_STATE_OPTIONS}
             value={draft.stateCode}
-            onChange={(e) => onChange({ ...draft, stateCode: e.target.value.toUpperCase() })}
-            placeholder="TX"
-            className="w-full px-3 py-2 rounded-lg border text-sm"
-            style={{
-              backgroundColor: 'var(--surface-2)',
-              borderColor: 'var(--border)',
-              color: 'var(--text)',
-            }}
+            onChange={(e) => onChange({ ...draft, stateCode: e.target.value })}
+            placeholder="Select state"
           />
         </Field>
         <Field label="Line of business">
-          <input
-            type="text"
+          <Select
+            options={LOB_OPTIONS}
             value={draft.lob}
             onChange={(e) => onChange({ ...draft, lob: e.target.value })}
-            placeholder="workers_comp"
-            className="w-full px-3 py-2 rounded-lg border text-sm"
-            style={{
-              backgroundColor: 'var(--surface-2)',
-              borderColor: 'var(--border)',
-              color: 'var(--text)',
-            }}
+            placeholder="Select LOB"
           />
         </Field>
       </div>
@@ -533,7 +575,7 @@ const FileForm: React.FC<{
           type="button"
           onClick={onSubmit}
           disabled={submitting || !draft.file}
-          className="px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium"
+          className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed text-sm"
         >
           {submitting ? 'Uploading…' : 'Ingest PDF'}
         </button>
@@ -547,7 +589,7 @@ const DocumentsTable: React.FC<{
   onDelete: (doc: IngestedDocument) => void;
   onView: (doc: IngestedDocument) => void;
 }> = ({ documents, onDelete, onView }) => (
-  <div className="overflow-x-auto">
+  <div className="table-wrap">
     <table className="w-full text-sm">
       <thead>
         <tr

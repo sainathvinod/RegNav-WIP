@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { AppLayout } from '../components/layout/AppLayout';
+import { Badge } from '../components/ui/Badge';
 import { getResults, listRuns } from '../services/regvalidate';
 import type { ValidationResult, ValidationRun } from '../types/regvalidate';
 
@@ -38,106 +39,153 @@ const Reports: React.FC = () => {
     <AppLayout title="Reports">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h2 className="text-xl font-semibold text-gray-100">Validation Reports</h2>
-          <p className="text-sm text-gray-400 mt-0.5">
+          <h2 className="text-xl font-semibold" style={{ color: 'var(--text)' }}>
+            Validation Reports
+          </h2>
+          <p className="text-sm mt-0.5" style={{ color: 'var(--muted)' }}>
             Export validation run results as CSV for audit and compliance evidence.
           </p>
         </div>
         {runs.length > 0 && (
-          <button
-            onClick={handleExportAll}
-            className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-gray-200 rounded-lg text-sm transition-colors"
-          >
+          <button onClick={handleExportAll} className="btn-secondary text-sm">
             Export Summary CSV
           </button>
         )}
       </div>
 
       {error && (
-        <div className="mb-4 p-3 rounded-lg bg-red-900/30 border border-red-700 text-red-300 text-sm">
+        <div
+          className="mb-4 p-3 rounded-lg border text-sm"
+          style={{
+            backgroundColor: 'var(--error-bg)',
+            borderColor: 'var(--error)',
+            color: 'var(--error)',
+          }}
+        >
           {error}
-          <p className="text-xs mt-1 text-red-400/70">Start the backend to view reports.</p>
+          <p className="text-xs mt-1" style={{ color: 'var(--error)', opacity: 0.7 }}>
+            Start the backend to view reports.
+          </p>
         </div>
       )}
 
       {loading ? (
-        <div className="text-center py-16 text-gray-400">Loading reports…</div>
+        <div className="text-center py-16" style={{ color: 'var(--muted)' }}>
+          Loading reports…
+        </div>
       ) : runs.length === 0 ? (
         <div className="card">
           <div className="text-center py-16">
             <div className="text-5xl mb-4">📑</div>
-            <p className="text-gray-400">No validation runs yet.</p>
-            <p className="text-sm text-gray-500 mt-1">
+            <p style={{ color: 'var(--muted)' }}>No validation runs yet.</p>
+            <p className="text-sm mt-1" style={{ color: 'var(--disabled)' }}>
               Run a file validation in RegValidate to generate reports here.
             </p>
           </div>
         </div>
       ) : (
         <div className="card overflow-hidden">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-gray-700 text-left">
-                <th className="pb-3 text-gray-400 font-medium">File</th>
-                <th className="pb-3 text-gray-400 font-medium">Type</th>
-                <th className="pb-3 text-gray-400 font-medium">Status</th>
-                <th className="pb-3 text-gray-400 font-medium text-right">Rules</th>
-                <th className="pb-3 text-gray-400 font-medium text-right">Errors</th>
-                <th className="pb-3 text-gray-400 font-medium text-right">Warnings</th>
-                <th className="pb-3 text-gray-400 font-medium">Completed</th>
-                <th className="pb-3" />
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-800">
-              {runs.map(run => (
-                <tr key={run.id} className="hover:bg-gray-800/30 transition-colors">
-                  <td className="py-3 text-gray-200 font-medium max-w-xs truncate">
-                    {run.filename}
-                  </td>
-                  <td className="py-3">
-                    <span className="text-xs bg-gray-700 text-gray-300 px-1.5 py-0.5 rounded">
-                      {run.fileType.toUpperCase()}
-                    </span>
-                  </td>
-                  <td className="py-3">
-                    <RunStatusBadge run={run} />
-                  </td>
-                  <td className="py-3 text-gray-400 text-right">{run.totalRulesChecked}</td>
-                  <td className="py-3 text-right">
-                    <span className={run.violationsFound > 0 ? 'text-red-400 font-medium' : 'text-gray-500'}>
-                      {run.violationsFound}
-                    </span>
-                  </td>
-                  <td className="py-3 text-right">
-                    <span className={run.warningsFound > 0 ? 'text-yellow-400' : 'text-gray-500'}>
-                      {run.warningsFound}
-                    </span>
-                  </td>
-                  <td className="py-3 text-gray-500 text-xs">
-                    {run.completedAt ? new Date(run.completedAt).toLocaleString() : '—'}
-                  </td>
-                  <td className="py-3 text-right">
-                    {run.status === 'completed' && (
-                      <button
-                        onClick={() => handleExportCsv(run)}
-                        disabled={exporting === run.id}
-                        className="text-xs text-purple-400 hover:text-purple-300 disabled:text-gray-600 transition-colors"
-                      >
-                        {exporting === run.id ? 'Exporting…' : 'Export CSV'}
-                      </button>
-                    )}
-                  </td>
+          <div className="table-wrap">
+            <table className="w-full text-sm">
+              <thead>
+                <tr
+                  className="border-b text-left"
+                  style={{ borderColor: 'var(--border)' }}
+                >
+                  <th className="pb-3 font-medium" style={{ color: 'var(--muted)' }}>File</th>
+                  <th className="pb-3 font-medium" style={{ color: 'var(--muted)' }}>Type</th>
+                  <th className="pb-3 font-medium" style={{ color: 'var(--muted)' }}>Status</th>
+                  <th className="pb-3 font-medium text-right" style={{ color: 'var(--muted)' }}>Rules</th>
+                  <th className="pb-3 font-medium text-right" style={{ color: 'var(--muted)' }}>Errors</th>
+                  <th className="pb-3 font-medium text-right" style={{ color: 'var(--muted)' }}>Warnings</th>
+                  <th className="pb-3 font-medium" style={{ color: 'var(--muted)' }}>Completed</th>
+                  <th className="pb-3" />
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {runs.map(run => (
+                  <tr
+                    key={run.id}
+                    className="border-b transition-colors"
+                    style={{ borderColor: 'var(--border-subtle)' }}
+                  >
+                    <td
+                      className="py-3 font-medium max-w-xs truncate"
+                      style={{ color: 'var(--text)' }}
+                    >
+                      {run.filename}
+                    </td>
+                    <td className="py-3">
+                      <span
+                        className="text-xs px-1.5 py-0.5 rounded"
+                        style={{
+                          backgroundColor: 'var(--surface-2)',
+                          color: 'var(--text-secondary)',
+                        }}
+                      >
+                        {run.fileType.toUpperCase()}
+                      </span>
+                    </td>
+                    <td className="py-3">
+                      <RunStatusBadge run={run} />
+                    </td>
+                    <td className="py-3 text-right" style={{ color: 'var(--muted)' }}>
+                      {run.totalRulesChecked}
+                    </td>
+                    <td className="py-3 text-right">
+                      <span
+                        style={{
+                          color: run.violationsFound > 0 ? 'var(--error)' : 'var(--muted)',
+                          fontWeight: run.violationsFound > 0 ? 500 : 400,
+                        }}
+                      >
+                        {run.violationsFound}
+                      </span>
+                    </td>
+                    <td className="py-3 text-right">
+                      <span
+                        style={{
+                          color: run.warningsFound > 0 ? 'var(--warning)' : 'var(--muted)',
+                        }}
+                      >
+                        {run.warningsFound}
+                      </span>
+                    </td>
+                    <td className="py-3 text-xs" style={{ color: 'var(--muted)' }}>
+                      {run.completedAt ? new Date(run.completedAt).toLocaleString() : '—'}
+                    </td>
+                    <td className="py-3 text-right">
+                      {run.status === 'completed' && (
+                        <button
+                          onClick={() => handleExportCsv(run)}
+                          disabled={exporting === run.id}
+                          className="btn-ghost text-xs px-2 py-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {exporting === run.id ? 'Exporting…' : 'Export CSV'}
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
       {/* SOC 2 note */}
       {runs.length > 0 && (
-        <div className="mt-4 p-4 rounded-lg bg-blue-900/20 border border-blue-800">
-          <p className="text-sm text-blue-300 font-medium mb-1">SOC 2 Evidence Collection</p>
-          <p className="text-xs text-blue-400/70">
+        <div
+          className="mt-4 p-4 rounded-lg border"
+          style={{
+            backgroundColor: 'var(--info-bg)',
+            borderColor: 'var(--info)',
+          }}
+        >
+          <p className="text-sm font-medium mb-1" style={{ color: 'var(--info)' }}>
+            SOC 2 Evidence Collection
+          </p>
+          <p className="text-xs" style={{ color: 'var(--info)', opacity: 0.85 }}>
             Exported CSVs can be attached as evidence artefacts in your SOC 2 audit trail.
             Each report includes rule codes, severity classifications, field-level findings,
             and timestamps for complete regulatory traceability.
@@ -150,15 +198,15 @@ const Reports: React.FC = () => {
 
 const RunStatusBadge: React.FC<{ run: ValidationRun }> = ({ run }) => {
   if (run.status === 'completed' && run.violationsFound === 0 && run.warningsFound === 0) {
-    return <span className="text-xs text-green-400 font-medium">✓ Compliant</span>;
+    return <Badge tone="success">Compliant</Badge>;
   }
   if (run.status === 'completed' && run.violationsFound > 0) {
-    return <span className="text-xs text-red-400 font-medium">✗ Violations</span>;
+    return <Badge tone="danger">Violations</Badge>;
   }
   if (run.status === 'failed') {
-    return <span className="text-xs text-red-500">Failed</span>;
+    return <Badge tone="danger">Failed</Badge>;
   }
-  return <span className="text-xs text-yellow-400">{run.status}</span>;
+  return <Badge tone="warning">{run.status}</Badge>;
 };
 
 function buildCsv(run: ValidationRun, results: ValidationResult[]): string {

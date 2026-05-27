@@ -8,6 +8,7 @@ import { DEFAULT_REFERENCE_PROMPTS } from '../data/defaultReferencePrompts';
 interface AppStore {
   // UI State
   sidebarCollapsed: boolean;
+  sidebarMobileOpen: boolean;
   regScoutView: 'config' | 'loading' | 'results';
   
   // Configuration
@@ -30,6 +31,8 @@ interface AppStore {
   
   // Actions
   toggleSidebar: () => void;
+  openMobileSidebar: () => void;
+  closeMobileSidebar: () => void;
   setRegScoutView: (view: 'config' | 'loading' | 'results') => void;
   setSelectedCountries: (countries: string[]) => void;
   setSelectedStates: (states: string[]) => void;
@@ -70,6 +73,7 @@ export const useAppStore = create<AppStore>()(
     (set, get) => ({
       // Initial State
       sidebarCollapsed: false,
+      sidebarMobileOpen: false,
       regScoutView: 'config',
       selectedCountries: ['US'],
       selectedStates: [],
@@ -92,7 +96,9 @@ export const useAppStore = create<AppStore>()(
 
       // Actions
       toggleSidebar: () => set((state) => ({ sidebarCollapsed: !state.sidebarCollapsed })),
-      
+      openMobileSidebar: () => set({ sidebarMobileOpen: true }),
+      closeMobileSidebar: () => set({ sidebarMobileOpen: false }),
+
       setRegScoutView: (view) => set({ regScoutView: view }),
 
       setSelectedCountries: (countries) => set({ selectedCountries: countries }),

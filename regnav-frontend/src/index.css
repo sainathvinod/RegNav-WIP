@@ -213,6 +213,78 @@
     background-color: rgb(var(--color-accent-primary));
   }
   
+  /* Semantic button variants */
+  .btn-success {
+    @apply text-white font-medium py-2 px-4 rounded-lg transition-all duration-200;
+    background-color: var(--success);
+  }
+  .btn-success:hover { filter: brightness(0.92); }
+  .btn-danger {
+    @apply text-white font-medium py-2 px-4 rounded-lg transition-all duration-200;
+    background-color: var(--error);
+  }
+  .btn-danger:hover { filter: brightness(0.92); }
+  .btn-ghost {
+    @apply font-medium py-2 px-4 rounded-lg transition-all duration-200;
+    background-color: transparent;
+    color: var(--text-secondary);
+  }
+  .btn-ghost:hover {
+    background-color: var(--hover);
+    color: var(--text);
+  }
+
+  /* Themed select dropdown */
+  .select {
+    @apply w-full px-3 py-2 rounded-lg transition-all appearance-none;
+    background-color: var(--surface-2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236B7280'%3e%3cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 0.625rem center;
+    background-size: 1rem;
+    padding-right: 2.25rem;
+  }
+  .select:focus {
+    border-color: rgb(var(--color-accent-primary));
+    box-shadow: 0 0 0 3px rgba(var(--color-accent-primary), 0.1);
+    outline: none;
+  }
+  .select:disabled { opacity: 0.6; cursor: not-allowed; }
+
+  /* Form helpers */
+  .form-label {
+    @apply block text-sm font-medium mb-1;
+    color: var(--text-secondary);
+  }
+  .form-help {
+    @apply text-xs mt-1;
+    color: var(--muted);
+  }
+
+  /* Section titles */
+  .page-subtitle { @apply text-sm; color: var(--muted); }
+  .section-title { @apply text-base font-semibold; color: var(--text); }
+
+  /* Status badge tone classes (paired with .badge or span.border) */
+  .status-success { background-color: var(--success-bg); color: var(--success); border-color: var(--success); }
+  .status-warning { background-color: var(--warning-bg); color: var(--warning); border-color: var(--warning); }
+  .status-danger  { background-color: var(--error-bg);   color: var(--error);   border-color: var(--error); }
+  .status-info    { background-color: var(--info-bg);    color: var(--info);    border-color: var(--info); }
+  .status-neutral { background-color: var(--surface-2);  color: var(--text-secondary); border-color: var(--border); }
+  .status-accent  {
+    background-color: var(--accent-bg);
+    color: rgb(var(--color-accent-primary));
+    border-color: rgb(var(--color-accent-primary));
+  }
+
+  /* Responsive table wrapper — wrap every data table in this */
+  .table-wrap {
+    @apply w-full overflow-x-auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
   /* Tables - Theme-Aware */
   .table {
     @apply w-full text-sm text-left;
