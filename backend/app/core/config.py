@@ -49,6 +49,7 @@ class Settings(BaseSettings):
     # --- Azure / LLM ---------------------------------------------------
     azure_keyvault_url: str | None = None
     azure_openai_endpoint: str | None = None
+    anthropic_api_key: str | None = None
 
     # --- Telemetry -----------------------------------------------------
     log_level: str = "INFO"
