@@ -14,7 +14,7 @@ from app.core.auth import CurrentUser, get_current_user, require_role
 from app.core.logging import get_logger
 from app.db.engine import get_db
 from app.db.models import Role, User, UserRole
-from app.services import audit
+from app.services import audit, notifications
 
 logger = get_logger(__name__)
 
@@ -193,6 +193,20 @@ async def invite_user(
             "display_name": new_user.display_name,
             "roles": body.roles,
         },
+    )
+    # Send invite email + create in-app welcome notification for the invitee.
+    await notifications.notify(
+        db,
+        tenant_id=actor.tenant_id,
+        user_id=new_user.id,
+        event_type="user.invited",
+        title="Welcome to RegNav.AI",
+        body=(
+            f"You've been invited to RegNav.AI. Sign in with {new_user.email} "
+            "to access compliance tools."
+        ),
+        severity="info",
+        send_email_too=True,
     )
     await db.commit()
     await db.refresh(new_user)

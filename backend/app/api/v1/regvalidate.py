@@ -13,6 +13,7 @@ from app.core.auth import CurrentUser, get_current_user
 from app.core.logging import get_logger
 from app.db.engine import get_db
 from app.db.models import ValidationResult, ValidationRun
+from app.services import notifications
 from app.services.regvalidate import validate_file
 
 logger = get_logger(__name__)
@@ -111,6 +112,32 @@ async def run_validation(
         state_code=body.state_code,
         lob=body.lob,
     )
+
+    if completed_run.status == "completed":
+        severity = (
+            "success"
+            if completed_run.violations_found == 0
+            else "warning"
+            if completed_run.violations_found < 5
+            else "error"
+        )
+        await notifications.notify(
+            db,
+            tenant_id=user.tenant_id,
+            user_id=user.user_id,
+            event_type="validation.completed",
+            title=f"Validation complete: {body.filename}",
+            body=(
+                f"{completed_run.total_rules_checked} rules checked · "
+                f"{completed_run.violations_found} violation"
+                f"{'s' if completed_run.violations_found != 1 else ''}, "
+                f"{completed_run.warnings_found} warning"
+                f"{'s' if completed_run.warnings_found != 1 else ''}."
+            ),
+            link=f"/regvalidate?run={completed_run.id}",
+            severity=severity,
+        )
+
     await db.commit()
     await db.refresh(completed_run)
     return ValidationRunResponse.from_orm(completed_run)

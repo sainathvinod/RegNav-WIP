@@ -7,6 +7,7 @@ from app.api.v1 import (
     audit,
     config,
     jobs,
+    notifications,
     organizations,
     regingest,
     regscout,
@@ -25,6 +26,7 @@ router.include_router(organizations.router, prefix="/organizations", tags=["orga
 router.include_router(config.router, prefix="/config", tags=["config"])
 router.include_router(analytics.router, prefix="/analytics", tags=["analytics"])
 router.include_router(audit.router, prefix="/audit", tags=["audit"])
+router.include_router(notifications.router, prefix="/notifications", tags=["notifications"])
 router.include_router(rulesense.router, prefix="/rulesense", tags=["rulesense"])
 router.include_router(jobs.router, prefix="/jobs", tags=["jobs"])
 router.include_router(regscout.router, prefix="/regscout", tags=["regscout"])

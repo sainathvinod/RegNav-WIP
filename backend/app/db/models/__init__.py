@@ -8,6 +8,7 @@ from app.db.models.discovered_document import DiscoveredDocument
 from app.db.models.document import Document
 from app.db.models.document_chunk import DocumentChunk
 from app.db.models.job import Job
+from app.db.models.notification import Notification
 from app.db.models.regulatory_source import RegulatorySource
 from app.db.models.role import Role, UserRole
 from app.db.models.rule import Rule
@@ -25,6 +26,7 @@ __all__ = [
     "Document",
     "DocumentChunk",
     "Job",
+    "Notification",
     "RegulatorySource",
     "Role",
     "Rule",

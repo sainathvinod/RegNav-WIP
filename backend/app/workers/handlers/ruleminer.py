@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.logging import get_logger
 from app.db.models import Job
+from app.services import notifications
 from app.services.ruleminer import extract_rules_from_document
 from app.workers.runner import ProgressReporter
 
@@ -39,6 +40,21 @@ async def handle_ruleminer_extract(
 
     for rule in rules:
         db.add(rule)
+
+    if job.user_id is not None:
+        await notifications.notify(
+            db,
+            tenant_id=tenant_id,
+            user_id=job.user_id,
+            event_type="ruleminer.completed",
+            title="Rule extraction complete",
+            body=(
+                f"{len(rules)} draft rule{'s' if len(rules) != 1 else ''} extracted. "
+                "Review and approve them in RuleMiner."
+            ),
+            link="/ruleminer",
+            severity="success" if rules else "info",
+        )
 
     await db.commit()
 

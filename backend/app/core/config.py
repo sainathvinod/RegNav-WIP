@@ -59,6 +59,11 @@ class Settings(BaseSettings):
     rag_chunk_size: int = 800
     rag_chunk_overlap: int = 100
 
+    # --- Email / Notifications ----------------------------------------
+    email_provider: Literal["log", "acs"] = "log"
+    email_from_address: str | None = None
+    acs_connection_string: str | None = None
+
     # --- Telemetry -----------------------------------------------------
     log_level: str = "INFO"
     log_json: bool = True

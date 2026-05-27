@@ -1,6 +1,7 @@
 import React from 'react';
 import { SunIcon, MoonIcon, ComputerDesktopIcon } from '@heroicons/react/24/outline';
 import { UserMenu } from '../../auth/UserMenu';
+import { NotificationBell } from '../NotificationBell';
 import { useUserPreferences } from '../../store/userPreferencesStore';
 
 interface TopBarProps {
@@ -52,6 +53,7 @@ export const TopBar: React.FC<TopBarProps> = ({ title }) => {
           </div>
           
           <div className="flex items-center gap-3">
+          <NotificationBell />
           <UserMenu />
           {/* Global Light/Dark Mode Toggle */}
           <button
