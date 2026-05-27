@@ -8,10 +8,15 @@ test.describe('RuleMiner', () => {
   });
 
   test('renders stat cards', async ({ page }) => {
-    await expect(page.getByText('Total Rules')).toBeVisible();
-    await expect(page.getByText('Draft')).toBeVisible();
-    await expect(page.getByText('Approved')).toBeVisible();
-    await expect(page.getByText('Rejected')).toBeVisible();
+    // Stat-card labels live in <p class="text-sm text-gray-400">. The same
+    // strings ("Draft", "Approved", "Rejected") also appear as <option>s in
+    // the status filter and as lowercase status badges in rule rows, so we
+    // must scope to the stats grid to avoid strict-mode violations.
+    const statsGrid = page.locator('.grid').filter({ hasText: 'Total Rules' }).first();
+    await expect(statsGrid.getByText('Total Rules', { exact: true })).toBeVisible();
+    await expect(statsGrid.getByText('Draft', { exact: true })).toBeVisible();
+    await expect(statsGrid.getByText('Approved', { exact: true })).toBeVisible();
+    await expect(statsGrid.getByText('Rejected', { exact: true })).toBeVisible();
   });
 
   test('extraction panel is present', async ({ page }) => {
@@ -30,8 +35,9 @@ test.describe('RuleMiner', () => {
     await expect(page.getByText('TX-WC-0001')).toBeVisible();
     await expect(page.getByText('Coverage must include all employees')).toBeVisible();
 
-    // Status badge shows draft
-    await expect(page.getByText('draft').first()).toBeVisible();
+    // The status badge is lowercase "draft"; the filter dropdown is capital
+    // "Draft". Exact + case-sensitive match disambiguates them.
+    await expect(page.getByText('draft', { exact: true })).toBeVisible();
 
     // Expand the rule row
     await page.getByText('Coverage must include all employees').click();
@@ -43,14 +49,17 @@ test.describe('RuleMiner', () => {
     // Expand rule
     await page.getByText('Coverage must include all employees').click();
 
-    // Click Approve
-    const approveBtn = page.getByRole('button', { name: /Approve/i });
+    // Click Approve — anchor on exact text so we don't also match the
+    // "Approved" filter option label.
+    const approveBtn = page.getByRole('button', { name: /^Approve$/ });
     await expect(approveBtn).toBeVisible();
     await approveBtn.click();
 
-    // Status badge should update to "approved"
-    await expect(page.getByText('approved').first()).toBeVisible();
-    await expect(page.getByText('draft').first()).not.toBeVisible();
+    // The status badge text is lowercase ("approved" / "draft"); the filter
+    // dropdown labels are capitalised ("Approved" / "Draft"). Case-sensitive
+    // exact matching targets only the badge.
+    await expect(page.getByText('approved', { exact: true })).toBeVisible();
+    await expect(page.getByText('draft', { exact: true })).toHaveCount(0);
   });
 
   test('extraction triggers job progress modal', async ({ page }) => {

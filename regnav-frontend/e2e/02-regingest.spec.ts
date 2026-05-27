@@ -16,9 +16,12 @@ test.describe('RegIngest', () => {
   test('documents tab shows ingested document from API', async ({ page }) => {
     await page.getByRole('tab', { name: /Documents/i }).click();
 
-    await expect(page.getByText('TX WC Notice 2026-12')).toBeVisible();
-    await expect(page.getByText('TX')).toBeVisible();
-    await expect(page.getByText('workers_comp')).toBeVisible();
+    // The row contains the document title; assert the State and LOB cells
+    // within that specific row to avoid matching "TX" in the title text too.
+    const row = page.locator('tr').filter({ hasText: 'TX WC Notice 2026-12' });
+    await expect(row).toBeVisible();
+    await expect(row.locator('td', { hasText: /^TX$/ })).toBeVisible();
+    await expect(row.locator('td', { hasText: 'workers_comp' })).toBeVisible();
   });
 
   test('text ingest form submits and shows job progress modal', async ({ page }) => {

@@ -30,11 +30,14 @@ test.describe('Dashboard', () => {
   test('regulatory pipeline steps are visible', async ({ page }) => {
     await page.goto('/');
 
-    await expect(page.getByText('Discover')).toBeVisible();
-    await expect(page.getByText('Ingest')).toBeVisible();
-    await expect(page.getByText('Extract Rules')).toBeVisible();
-    await expect(page.getByText('Chat & Search')).toBeVisible();
-    await expect(page.getByText('Validate Files')).toBeVisible();
+    // Scope to the Regulatory Pipeline card to avoid matching sidebar links
+    // (e.g. "RegIngest" would otherwise match the "Ingest" pipeline label).
+    const pipeline = page.locator('.card').filter({ hasText: 'Regulatory Pipeline' });
+    await expect(pipeline.getByText('Discover', { exact: true })).toBeVisible();
+    await expect(pipeline.getByText('Ingest', { exact: true })).toBeVisible();
+    await expect(pipeline.getByText('Extract Rules', { exact: true })).toBeVisible();
+    await expect(pipeline.getByText('Chat & Search', { exact: true })).toBeVisible();
+    await expect(pipeline.getByText('Validate Files', { exact: true })).toBeVisible();
   });
 
   test('notification bell shows unread count', async ({ page }) => {
