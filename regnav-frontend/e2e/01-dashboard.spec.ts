@@ -16,10 +16,15 @@ test.describe('Dashboard', () => {
   test('stat cards load live values from analytics API', async ({ page }) => {
     await page.goto('/');
 
-    // Wait for analytics to load — cards should show numbers, not the pulsing dash
-    await expect(page.getByText('5')).toBeVisible();          // Documents: 5
-    await expect(page.getByText('2')).toBeVisible();          // Active Rules (approved): 2
-    await expect(page.getByText('87%')).toBeVisible();        // Compliance Score: 87%
+    // Compliance Score is unique on the page — wait for analytics to resolve
+    await expect(page.getByText('87%')).toBeVisible({ timeout: 8000 });
+
+    // Each stat card: label is visible alongside its value
+    const docsCard = page.locator('.card').filter({ hasText: 'Documents' }).first();
+    await expect(docsCard.getByText('5')).toBeVisible();
+
+    const rulesCard = page.locator('.card').filter({ hasText: 'Active Rules' }).first();
+    await expect(rulesCard.getByText('2')).toBeVisible();
   });
 
   test('regulatory pipeline steps are visible', async ({ page }) => {
@@ -35,7 +40,9 @@ test.describe('Dashboard', () => {
   test('notification bell shows unread count', async ({ page }) => {
     await page.goto('/');
 
-    // Bell badge — mocked unread-count returns 3
-    await expect(page.locator('span').filter({ hasText: '3' }).first()).toBeVisible();
+    // The unread badge is a span.rounded-full inside the bell button
+    const badge = page.locator('button[title="Notifications"] span.rounded-full');
+    await expect(badge).toBeVisible({ timeout: 8000 });
+    await expect(badge).toHaveText('3');
   });
 });
