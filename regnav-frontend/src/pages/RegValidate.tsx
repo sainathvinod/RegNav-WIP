@@ -1,14 +1,17 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { AppLayout } from '../components/layout/AppLayout';
+import { Select } from '../components/ui/Select';
+import { Badge, BadgeTone } from '../components/ui/Badge';
+import { US_STATE_OPTIONS, LOB_OPTIONS } from '../lib/constants';
 import { deleteRun, getResults, listRuns, runValidation } from '../services/regvalidate';
 import type { ValidateRequest, ValidationResult, ValidationRun } from '../types/regvalidate';
 
 const FILE_TYPES = ['wcpols', 'acord', 'csv', 'text'];
 
-const SEVERITY_STYLES = {
-  error: 'bg-red-900/40 border-red-700 text-red-300',
-  warning: 'bg-yellow-900/40 border-yellow-700 text-yellow-300',
-  info: 'bg-blue-900/40 border-blue-700 text-blue-300',
+const SEVERITY_TONES: Record<string, BadgeTone> = {
+  error: 'danger',
+  warning: 'warning',
+  info: 'info',
 };
 
 const SEVERITY_ICONS = { error: '✗', warning: '⚠', info: 'ℹ' };
@@ -112,29 +115,44 @@ const RegValidate: React.FC = () => {
 
   return (
     <AppLayout title="RegValidate — File Validation">
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Left: Validate Panel */}
         <div className="space-y-4">
           <div className="card">
-            <h3 className="text-lg font-semibold text-gray-50 mb-4">Validate a File</h3>
+            <h3
+              className="text-lg font-semibold mb-4"
+              style={{ color: 'var(--text)' }}
+            >
+              Validate a File
+            </h3>
 
             <div className="space-y-3">
-              <div className="flex gap-3">
-                <div className="flex-1">
-                  <label className="block text-xs text-gray-400 mb-1">Filename</label>
+              <div className="flex flex-wrap gap-2 sm:gap-3">
+                <div className="flex-1 min-w-[12rem]">
+                  <label
+                    className="block text-xs mb-1"
+                    style={{ color: 'var(--muted)' }}
+                  >
+                    Filename
+                  </label>
                   <input
                     type="text"
                     value={filename}
                     onChange={e => setFilename(e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg bg-gray-800 border border-gray-700 text-gray-100 text-sm focus:outline-none focus:border-purple-500"
+                    className="input text-sm"
                   />
                 </div>
                 <div className="w-32">
-                  <label className="block text-xs text-gray-400 mb-1">File Type</label>
+                  <label
+                    className="block text-xs mb-1"
+                    style={{ color: 'var(--muted)' }}
+                  >
+                    File Type
+                  </label>
                   <select
                     value={fileType}
                     onChange={e => setFileType(e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg bg-gray-800 border border-gray-700 text-gray-200 text-sm focus:outline-none focus:border-purple-500"
+                    className="select text-sm"
                   >
                     {FILE_TYPES.map(t => (
                       <option key={t} value={t}>{t.toUpperCase()}</option>
@@ -143,46 +161,66 @@ const RegValidate: React.FC = () => {
                 </div>
               </div>
 
-              <div className="flex gap-3">
-                <div className="flex-1">
-                  <label className="block text-xs text-gray-400 mb-1">State (optional)</label>
-                  <input
-                    type="text"
+              <div className="flex flex-wrap gap-2 sm:gap-3">
+                <div className="flex-1 min-w-[12rem]">
+                  <label
+                    className="block text-xs mb-1"
+                    style={{ color: 'var(--muted)' }}
+                  >
+                    State (optional)
+                  </label>
+                  <Select
+                    options={US_STATE_OPTIONS}
                     value={stateCode}
-                    onChange={e => setStateCode(e.target.value.toUpperCase())}
-                    maxLength={2}
-                    placeholder="TX"
-                    className="w-full px-3 py-2 rounded-lg bg-gray-800 border border-gray-700 text-gray-100 text-sm focus:outline-none focus:border-purple-500"
+                    onChange={e => setStateCode(e.target.value)}
+                    allLabel="All states"
+                    className="text-sm"
                   />
                 </div>
-                <div className="flex-1">
-                  <label className="block text-xs text-gray-400 mb-1">LOB (optional)</label>
-                  <input
-                    type="text"
+                <div className="flex-1 min-w-[12rem]">
+                  <label
+                    className="block text-xs mb-1"
+                    style={{ color: 'var(--muted)' }}
+                  >
+                    LOB (optional)
+                  </label>
+                  <Select
+                    options={LOB_OPTIONS}
                     value={lob}
                     onChange={e => setLob(e.target.value)}
-                    placeholder="Workers Compensation"
-                    className="w-full px-3 py-2 rounded-lg bg-gray-800 border border-gray-700 text-gray-100 text-sm focus:outline-none focus:border-purple-500"
+                    allLabel="All LOBs"
+                    className="text-sm"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs text-gray-400 mb-1">
+                <label
+                  className="block text-xs mb-1"
+                  style={{ color: 'var(--muted)' }}
+                >
                   File Content
-                  <span className="ml-2 text-gray-600">(paste or edit the data)</span>
+                  <span className="ml-2" style={{ color: 'var(--muted)' }}>
+                    (paste or edit the data)
+                  </span>
                 </label>
                 <textarea
                   value={content}
                   onChange={e => setContent(e.target.value)}
-                  rows={10}
-                  className="w-full px-3 py-2 rounded-lg bg-gray-900 border border-gray-700 text-gray-200 text-sm font-mono focus:outline-none focus:border-purple-500 resize-y"
+                  className="input min-h-[12rem] resize-y text-sm font-mono"
                   placeholder="Paste WCPOLS, ACORD, CSV or plain text…"
                 />
               </div>
 
               {validateError && (
-                <div className="p-3 rounded-lg bg-red-900/30 border border-red-700 text-red-300 text-sm">
+                <div
+                  className="p-3 rounded-lg border text-sm"
+                  style={{
+                    backgroundColor: 'var(--error-bg)',
+                    borderColor: 'var(--error)',
+                    color: 'var(--error)',
+                  }}
+                >
                   {validateError}
                 </div>
               )}
@@ -190,7 +228,7 @@ const RegValidate: React.FC = () => {
               <button
                 onClick={handleValidate}
                 disabled={validating || !content.trim()}
-                className="w-full py-2.5 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-700 disabled:text-gray-500 text-white rounded-lg text-sm font-medium transition-colors"
+                className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed text-sm"
               >
                 {validating ? 'Validating…' : 'Run Validation'}
               </button>
@@ -200,20 +238,26 @@ const RegValidate: React.FC = () => {
           {/* History */}
           <div className="card">
             <div className="flex items-center justify-between mb-3">
-              <h3 className="text-base font-semibold text-gray-50">Validation History</h3>
+              <h3
+                className="text-base font-semibold"
+                style={{ color: 'var(--text)' }}
+              >
+                Validation History
+              </h3>
               <button
                 onClick={fetchRuns}
-                className="text-xs text-purple-400 hover:text-purple-300"
+                className="text-xs"
+                style={{ color: 'rgb(var(--color-accent-primary))' }}
               >
                 Refresh
               </button>
             </div>
             {runsLoading ? (
-              <p className="text-sm text-gray-400">Loading…</p>
+              <p className="text-sm" style={{ color: 'var(--muted)' }}>Loading…</p>
             ) : runsError ? (
-              <p className="text-sm text-red-400">{runsError}</p>
+              <p className="text-sm" style={{ color: 'var(--error)' }}>{runsError}</p>
             ) : runs.length === 0 ? (
-              <p className="text-sm text-gray-500">No validation runs yet.</p>
+              <p className="text-sm" style={{ color: 'var(--muted)' }}>No validation runs yet.</p>
             ) : (
               <div className="space-y-2">
                 {runs.map(run => (
@@ -235,7 +279,7 @@ const RegValidate: React.FC = () => {
           {!selectedRun ? (
             <div className="text-center py-16">
               <div className="text-5xl mb-4">📋</div>
-              <p className="text-gray-400">Select a validation run to see results</p>
+              <p style={{ color: 'var(--muted)' }}>Select a validation run to see results</p>
             </div>
           ) : (
             <ResultsPanel
@@ -258,47 +302,69 @@ const RunCard: React.FC<{
 }> = ({ run, selected, onSelect, onDelete }) => {
   const statusColor =
     run.status === 'completed' && run.violationsFound === 0
-      ? 'text-green-400'
+      ? 'var(--success)'
       : run.status === 'completed' && run.violationsFound > 0
-      ? 'text-red-400'
+      ? 'var(--error)'
       : run.status === 'failed'
-      ? 'text-red-400'
-      : 'text-yellow-400';
+      ? 'var(--error)'
+      : 'var(--warning)';
 
   return (
     <div
       onClick={onSelect}
-      className={`px-3 py-2.5 rounded-lg border cursor-pointer transition-colors ${
-        selected
-          ? 'border-purple-600 bg-purple-900/20'
-          : 'border-gray-700 bg-gray-800/50 hover:border-gray-600'
-      }`}
+      className="px-3 py-2.5 rounded-lg border cursor-pointer transition-colors"
+      style={{
+        borderColor: selected
+          ? 'rgb(var(--color-accent-primary))'
+          : 'var(--border)',
+        backgroundColor: selected ? 'var(--accent-bg)' : 'var(--surface-2)',
+      }}
     >
       <div className="flex items-center justify-between">
-        <p className="text-sm text-gray-200 font-medium truncate">{run.filename}</p>
+        <p
+          className="text-sm font-medium truncate"
+          style={{ color: 'var(--text)' }}
+        >
+          {run.filename}
+        </p>
         <div className="flex items-center gap-2 shrink-0 ml-2">
-          <span className={`text-xs font-medium ${statusColor}`}>{run.status}</span>
+          <span
+            className="text-xs font-medium"
+            style={{ color: statusColor }}
+          >
+            {run.status}
+          </span>
           <button
             onClick={e => { e.stopPropagation(); onDelete(); }}
-            className="text-gray-600 hover:text-red-400 text-xs transition-colors"
+            className="text-xs transition-colors"
+            style={{ color: 'var(--muted)' }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.color = 'var(--error)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.color = 'var(--muted)';
+            }}
           >
             ✕
           </button>
         </div>
       </div>
-      <div className="flex gap-3 mt-1 text-xs text-gray-400">
-        <span className="bg-gray-700 px-1.5 rounded">{run.fileType.toUpperCase()}</span>
+      <div
+        className="flex flex-wrap gap-2 mt-1 text-xs items-center"
+        style={{ color: 'var(--muted)' }}
+      >
+        <Badge tone="neutral">{run.fileType.toUpperCase()}</Badge>
         {run.status === 'completed' && (
           <>
             <span>{run.totalRulesChecked} rules</span>
             {run.violationsFound > 0 && (
-              <span className="text-red-400">{run.violationsFound} errors</span>
+              <span style={{ color: 'var(--error)' }}>{run.violationsFound} errors</span>
             )}
             {run.warningsFound > 0 && (
-              <span className="text-yellow-400">{run.warningsFound} warnings</span>
+              <span style={{ color: 'var(--warning)' }}>{run.warningsFound} warnings</span>
             )}
             {run.violationsFound === 0 && run.warningsFound === 0 && (
-              <span className="text-green-400">Clean</span>
+              <span style={{ color: 'var(--success)' }}>Clean</span>
             )}
           </>
         )}
@@ -320,17 +386,24 @@ const ResultsPanel: React.FC<{
     <div>
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h3 className="text-base font-semibold text-gray-100">{run.filename}</h3>
-          <p className="text-xs text-gray-400">
+          <h3
+            className="text-base font-semibold"
+            style={{ color: 'var(--text)' }}
+          >
+            {run.filename}
+          </h3>
+          <p className="text-xs" style={{ color: 'var(--muted)' }}>
             {run.fileType.toUpperCase()} · {run.totalRulesChecked} rules checked
             {run.completedAt && ` · ${new Date(run.completedAt).toLocaleString()}`}
           </p>
         </div>
         <div className="text-right">
           {run.violationsFound === 0 && run.warningsFound === 0 ? (
-            <span className="text-green-400 font-semibold">✓ Compliant</span>
+            <span className="font-semibold" style={{ color: 'var(--success)' }}>
+              ✓ Compliant
+            </span>
           ) : (
-            <span className="text-red-400 font-semibold">
+            <span className="font-semibold" style={{ color: 'var(--error)' }}>
               {run.violationsFound} error{run.violationsFound !== 1 ? 's' : ''}
             </span>
           )}
@@ -338,22 +411,41 @@ const ResultsPanel: React.FC<{
       </div>
 
       {loading ? (
-        <p className="text-sm text-gray-400 py-8 text-center">Loading results…</p>
+        <p
+          className="text-sm py-8 text-center"
+          style={{ color: 'var(--muted)' }}
+        >
+          Loading results…
+        </p>
       ) : results.length === 0 ? (
         run.status === 'completed' ? (
           <div className="text-center py-12">
             <div className="text-4xl mb-3">✅</div>
-            <p className="text-green-400 font-medium">No violations found</p>
-            <p className="text-sm text-gray-400 mt-1">
+            <p className="font-medium" style={{ color: 'var(--success)' }}>
+              No violations found
+            </p>
+            <p className="text-sm mt-1" style={{ color: 'var(--muted)' }}>
               All {run.totalRulesChecked} rules passed
             </p>
           </div>
         ) : run.status === 'failed' ? (
-          <div className="p-3 rounded-lg bg-red-900/30 border border-red-700 text-red-300 text-sm">
+          <div
+            className="p-3 rounded-lg border text-sm"
+            style={{
+              backgroundColor: 'var(--error-bg)',
+              borderColor: 'var(--error)',
+              color: 'var(--error)',
+            }}
+          >
             {run.errorMessage ?? 'Validation failed with an unknown error.'}
           </div>
         ) : (
-          <p className="text-sm text-gray-400 text-center py-8">No results yet.</p>
+          <p
+            className="text-sm text-center py-8"
+            style={{ color: 'var(--muted)' }}
+          >
+            No results yet.
+          </p>
         )
       ) : (
         <div className="space-y-2">
@@ -367,17 +459,21 @@ const ResultsPanel: React.FC<{
 };
 
 const FindingCard: React.FC<{ result: ValidationResult }> = ({ result }) => {
-  const style = SEVERITY_STYLES[result.severity] ?? SEVERITY_STYLES.error;
+  const tone = SEVERITY_TONES[result.severity] ?? 'danger';
   const icon = SEVERITY_ICONS[result.severity] ?? '✗';
 
   return (
-    <div className={`p-3 rounded-lg border text-sm ${style}`}>
+    <div className="p-3 rounded-lg border text-sm">
       <div className="flex items-start gap-2">
-        <span className="font-bold shrink-0">{icon}</span>
+        <Badge tone={tone} className="shrink-0">
+          <span className="font-bold">{icon}</span>
+        </Badge>
         <div className="flex-1 min-w-0">
-          <p className="font-medium">{result.message}</p>
+          <p className="font-medium" style={{ color: 'var(--text)' }}>
+            {result.message}
+          </p>
           {(result.fieldName || result.fieldValue) && (
-            <p className="mt-1 text-xs opacity-80">
+            <p className="mt-1 text-xs" style={{ color: 'var(--text-secondary)' }}>
               {result.fieldName && <span>Field: <code className="font-mono">{result.fieldName}</code></span>}
               {result.fieldName && result.fieldValue && ' = '}
               {result.fieldValue && <code className="font-mono">{result.fieldValue}</code>}
@@ -385,7 +481,12 @@ const FindingCard: React.FC<{ result: ValidationResult }> = ({ result }) => {
             </p>
           )}
           {result.suggestion && (
-            <p className="mt-1.5 text-xs opacity-75 italic">{result.suggestion}</p>
+            <p
+              className="mt-1.5 text-xs italic"
+              style={{ color: 'var(--muted)' }}
+            >
+              {result.suggestion}
+            </p>
           )}
         </div>
       </div>

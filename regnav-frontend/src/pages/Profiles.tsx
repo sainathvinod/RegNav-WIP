@@ -1,6 +1,6 @@
 /**
  * Profiles - Discovery Profile Management
- * 
+ *
  * Allows users to view, edit, and manage their saved discovery profiles.
  * Profiles can be loaded into RegScout or used for rule mining.
  */
@@ -30,7 +30,13 @@ import {
   DocumentDuplicateIcon,
 } from '@heroicons/react/24/outline';
 import { DiscoveryProfile } from '../types';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { Badge } from '../components/ui/Badge';
+import { Select } from '../components/ui/Select';
+import { Modal } from '../components/ui/Modal';
+import { EmptyState } from '../components/ui/EmptyState';
+import { PROFILE_STATUS_OPTIONS } from '../lib/constants';
+import { formatDate } from '../lib/format';
 
 export const Profiles: React.FC = () => {
   const {
@@ -61,7 +67,7 @@ export const Profiles: React.FC = () => {
       cancelled = true;
     };
   }, [setDiscoveryProfiles]);
-  
+
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState<'all' | 'draft' | 'finalized' | 'used_for_rules'>('all');
   const [sortBy, setSortBy] = useState<'name' | 'created' | 'updated'>('updated');
@@ -71,6 +77,7 @@ export const Profiles: React.FC = () => {
   const [detailsMode, setDetailsMode] = useState<'view' | 'edit'>('view');
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
+  const [toastTone, setToastTone] = useState<'success' | 'error'>('success');
   const [showDuplicateModal, setShowDuplicateModal] = useState(false);
   const [profileToDuplicate, setProfileToDuplicate] = useState<DiscoveryProfile | null>(null);
 
@@ -91,10 +98,10 @@ export const Profiles: React.FC = () => {
         const matchesTags = profile.tags?.some(tag => tag.toLowerCase().includes(query));
         if (!matchesName && !matchesDescription && !matchesTags) return false;
       }
-      
+
       // Status filter
       if (filterStatus !== 'all' && profile.status !== filterStatus) return false;
-      
+
       return true;
     })
     .sort((a, b) => {
@@ -114,6 +121,7 @@ export const Profiles: React.FC = () => {
       deleteProfile(profileId);
     } catch (err) {
       setToastMessage(err instanceof Error ? err.message : 'Failed to delete profile');
+      setToastTone('error');
       setShowToast(true);
       setTimeout(() => setShowToast(false), 3000);
     }
@@ -148,8 +156,10 @@ export const Profiles: React.FC = () => {
         setSelectedProfile(JSON.parse(JSON.stringify(saved)));
       }
       setToastMessage(`Successfully saved "${saved.name}"`);
+      setToastTone('success');
     } catch (err) {
       setToastMessage(err instanceof Error ? err.message : 'Failed to save profile');
+      setToastTone('error');
     }
     setShowToast(true);
     setTimeout(() => setShowToast(false), 3000);
@@ -181,8 +191,10 @@ export const Profiles: React.FC = () => {
       });
       upsertDiscoveryProfile(created);
       setToastMessage(`Profile "${created.name}" created successfully!`);
+      setToastTone('success');
     } catch (err) {
       setToastMessage(err instanceof Error ? err.message : 'Failed to duplicate profile');
+      setToastTone('error');
     }
     setShowToast(true);
     setTimeout(() => setShowToast(false), 3000);
@@ -193,37 +205,54 @@ export const Profiles: React.FC = () => {
     switch (status) {
       case 'draft':
         return (
-          <span className="px-2 py-1 bg-blue-900/30 border border-blue-500/30 text-blue-300 text-xs rounded-full flex items-center gap-1">
-            <ClockIcon className="w-3 h-3" />
-            Draft
-          </span>
+          <Badge tone="info">
+            <span className="inline-flex items-center gap-1">
+              <ClockIcon className="w-3 h-3" />
+              Draft
+            </span>
+          </Badge>
         );
       case 'finalized':
         return (
-          <span className="px-2 py-1 bg-green-900/30 border border-green-500/30 text-green-300 text-xs rounded-full flex items-center gap-1">
-            <CheckCircleIcon className="w-3 h-3" />
-            Finalized
-          </span>
+          <Badge tone="success">
+            <span className="inline-flex items-center gap-1">
+              <CheckCircleIcon className="w-3 h-3" />
+              Finalized
+            </span>
+          </Badge>
         );
       case 'used_for_rules':
         return (
-          <span className="px-2 py-1 bg-purple-900/30 border border-purple-500/30 text-purple-300 text-xs rounded-full flex items-center gap-1">
-            <BeakerIcon className="w-3 h-3" />
-            Used for Rules
-          </span>
+          <Badge tone="accent">
+            <span className="inline-flex items-center gap-1">
+              <BeakerIcon className="w-3 h-3" />
+              Used for Rules
+            </span>
+          </Badge>
         );
       default:
         return null;
     }
   };
 
+  const activeSortStyle: React.CSSProperties = {
+    backgroundColor: 'rgb(var(--color-accent-primary))',
+    color: '#fff',
+  };
+
   return (
     <AppLayout title="Regulatory Portfolios">
-      <div className="max-w-[1600px] mx-auto">
+      <div>
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-white flex items-center gap-3">
-            <FolderIcon className="w-8 h-8 text-purple-500" />
+          <h1
+            className="text-2xl sm:text-3xl font-bold flex items-center gap-3"
+            style={{ color: 'var(--text)' }}
+          >
+            <FolderIcon
+              className="w-8 h-8"
+              style={{ color: 'rgb(var(--color-accent-primary))' }}
+            />
             Regulatory Portfolios
           </h1>
           <p className="mt-2" style={{ color: 'var(--muted)' }}>
@@ -232,97 +261,75 @@ export const Profiles: React.FC = () => {
         </div>
 
         {/* Filters */}
-        <div className="rounded-lg border p-6 mb-6" style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)' }}>
+        <div className="card mb-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* Search */}
             <div className="md:col-span-2">
               <div className="relative">
-                <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-500" />
+                <MagnifyingGlassIcon
+                  className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5"
+                  style={{ color: 'var(--muted)' }}
+                />
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search profiles by name, description, or tags..."
-                  className="w-full pl-10 pr-4 py-2 rounded-lg transition-all"
-                  style={{ 
-                    backgroundColor: 'var(--surface-2)', 
-                    borderWidth: '1px',
-                    borderStyle: 'solid',
-                    borderColor: 'var(--border)', 
-                    color: 'var(--text)' 
-                  }}
-                  onFocus={(e) => {
-                    e.currentTarget.style.borderColor = 'rgb(var(--color-accent-primary))';
-                    e.currentTarget.style.boxShadow = `0 0 0 3px rgba(var(--color-accent-primary), 0.1)`;
-                  }}
-                  onBlur={(e) => {
-                    e.currentTarget.style.borderColor = 'var(--border)';
-                    e.currentTarget.style.boxShadow = 'none';
-                  }}
+                  className="input pl-10"
                 />
               </div>
             </div>
 
             {/* Status Filter */}
             <div>
-              <select
-                value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value as any)}
-                className="w-full px-4 py-2 rounded-lg transition-all"
-                style={{ 
-                  backgroundColor: 'var(--surface-2)', 
-                  borderWidth: '1px',
-                  borderStyle: 'solid',
-                  borderColor: 'var(--border)', 
-                  color: 'var(--text)' 
-                }}
-                onFocus={(e) => {
-                  e.currentTarget.style.borderColor = 'rgb(var(--color-accent-primary))';
-                  e.currentTarget.style.boxShadow = `0 0 0 3px rgba(var(--color-accent-primary), 0.1)`;
-                }}
-                onBlur={(e) => {
-                  e.currentTarget.style.borderColor = 'var(--border)';
-                  e.currentTarget.style.boxShadow = 'none';
-                }}
-              >
-                <option value="all">All Statuses</option>
-                <option value="draft">Draft</option>
-                <option value="finalized">Finalized</option>
-                <option value="used_for_rules">Used for Rules</option>
-              </select>
+              <Select
+                options={PROFILE_STATUS_OPTIONS}
+                allLabel="All statuses"
+                value={filterStatus === 'all' ? '' : filterStatus}
+                onChange={(e) =>
+                  setFilterStatus((e.target.value || 'all') as
+                    | 'all'
+                    | 'draft'
+                    | 'finalized'
+                    | 'used_for_rules')
+                }
+              />
             </div>
           </div>
 
           {/* Sort */}
-          <div className="mt-4 flex items-center gap-2">
+          <div className="mt-4 flex items-center gap-2 flex-wrap">
             <span className="text-sm" style={{ color: 'var(--muted)' }}>Sort by:</span>
             <button
               onClick={() => setSortBy('updated')}
-              className={`px-3 py-1 rounded text-sm transition-colors ${
+              className={
                 sortBy === 'updated'
-                  ? 'bg-purple-600 text-white'
-                  : 'bg-gray-800 text-gray-400 hover:text-white'
-              }`}
+                  ? 'px-3 py-1 rounded text-sm transition-colors'
+                  : 'btn-secondary px-3 py-1 text-sm'
+              }
+              style={sortBy === 'updated' ? activeSortStyle : undefined}
             >
               Last Updated
             </button>
             <button
               onClick={() => setSortBy('created')}
-              className={`px-3 py-1 rounded text-sm transition-colors ${
+              className={
                 sortBy === 'created'
-                  ? 'bg-purple-600 text-white'
-                  : 'bg-gray-800 text-gray-400 hover:text-white'
-              }`}
+                  ? 'px-3 py-1 rounded text-sm transition-colors'
+                  : 'btn-secondary px-3 py-1 text-sm'
+              }
+              style={sortBy === 'created' ? activeSortStyle : undefined}
             >
               Date Created
             </button>
             <button
               onClick={() => setSortBy('name')}
-              className={`px-3 py-1 rounded text-sm transition-colors ${
+              className={
                 sortBy === 'name'
-                  ? 'bg-purple-600 text-white'
-                  : 'bg-gray-800 text-gray-400 hover:text-white'
-              }`}
+                  ? 'px-3 py-1 rounded text-sm transition-colors'
+                  : 'btn-secondary px-3 py-1 text-sm'
+              }
+              style={sortBy === 'name' ? activeSortStyle : undefined}
             >
               Name
             </button>
@@ -330,42 +337,54 @@ export const Profiles: React.FC = () => {
         </div>
 
         {/* Profiles Count */}
-        <div className="mb-4 text-sm text-gray-400">
+        <div className="mb-4 text-sm" style={{ color: 'var(--muted)' }}>
           Showing {filteredProfiles.length} of {discoveryProfiles.length} profiles
         </div>
 
         {/* Profiles Grid */}
         {filteredProfiles.length === 0 ? (
-          <div className="bg-gray-900 border border-gray-800 rounded-lg p-12 text-center">
-            <FolderIcon className="w-16 h-16 text-gray-700 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-400 mb-2">
-              {searchQuery || filterStatus !== 'all' ? 'No profiles found' : 'No profiles yet'}
-            </h3>
-            <p className="text-gray-500 mb-6">
-              {searchQuery || filterStatus !== 'all'
-                ? 'Try adjusting your filters or search query'
-                : 'Save your first discovery result as a profile from RegScout'}
-            </p>
-            {!searchQuery && filterStatus === 'all' && (
-              <button
-                onClick={() => navigate('/regscout')}
-                className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-500 transition-colors"
-              >
-                Go to RegScout
-              </button>
-            )}
-          </div>
+          searchQuery || filterStatus !== 'all' ? (
+            <EmptyState
+              icon={<FolderIcon className="w-12 h-12" />}
+              title="No profiles found"
+              description="Try adjusting your filters or search query"
+            />
+          ) : (
+            <EmptyState
+              icon={<FolderIcon className="w-12 h-12" />}
+              title="No profiles yet"
+              description="Save your first discovery result as a profile from RegScout"
+              action={
+                <Link to="/regscout" className="btn-primary">
+                  Go to RegScout
+                </Link>
+              }
+            />
+          )
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredProfiles.map((profile) => (
               <div
                 key={profile.id}
-                className="bg-gray-900 border border-gray-800 rounded-lg p-6 hover:border-purple-500 transition-all"
+                className="rounded-lg border p-6 transition-all"
+                style={{
+                  backgroundColor: 'var(--surface)',
+                  borderColor: 'var(--border)',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = 'rgb(var(--color-accent-primary))';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = 'var(--border)';
+                }}
               >
                 {/* Header */}
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-white mb-1 line-clamp-2">
+                    <h3
+                      className="text-lg font-semibold mb-1 line-clamp-2"
+                      style={{ color: 'var(--text)' }}
+                    >
                       {profile.name}
                     </h3>
                     {getStatusBadge(profile.status)}
@@ -374,7 +393,10 @@ export const Profiles: React.FC = () => {
 
                 {/* Description */}
                 {profile.description && (
-                  <p className="text-sm text-gray-400 mb-4 line-clamp-2">
+                  <p
+                    className="text-sm mb-4 line-clamp-2"
+                    style={{ color: 'var(--muted)' }}
+                  >
                     {profile.description}
                   </p>
                 )}
@@ -382,37 +404,53 @@ export const Profiles: React.FC = () => {
                 {/* Metadata */}
                 <div className="grid grid-cols-2 gap-3 text-xs mb-4">
                   <div>
-                    <div className="text-gray-500">Sources</div>
-                    <div className="text-white font-semibold">{profile.metadata.totalSources}</div>
+                    <div style={{ color: 'var(--muted)' }}>Sources</div>
+                    <div className="font-semibold" style={{ color: 'var(--text)' }}>
+                      {profile.metadata.totalSources}
+                    </div>
                   </div>
                   <div>
-                    <div className="text-gray-500">Gov Auto</div>
-                    <div className="text-white font-semibold">{profile.metadata.govAutoSources}</div>
+                    <div style={{ color: 'var(--muted)' }}>Gov Auto</div>
+                    <div className="font-semibold" style={{ color: 'var(--text)' }}>
+                      {profile.metadata.govAutoSources}
+                    </div>
                   </div>
                   <div>
-                    <div className="text-gray-500">Confidence</div>
-                    <div className="text-white font-semibold">{(profile.metadata.avgConfidence * 100).toFixed(0)}%</div>
+                    <div style={{ color: 'var(--muted)' }}>Confidence</div>
+                    <div className="font-semibold" style={{ color: 'var(--text)' }}>
+                      {(profile.metadata.avgConfidence * 100).toFixed(0)}%
+                    </div>
                   </div>
                   <div>
-                    <div className="text-gray-500">LOB</div>
-                    <div className="text-white font-semibold truncate">{profile.configuration.linesOfBusiness || 'N/A'}</div>
+                    <div style={{ color: 'var(--muted)' }}>LOB</div>
+                    <div
+                      className="font-semibold truncate"
+                      style={{ color: 'var(--text)' }}
+                    >
+                      {profile.configuration.linesOfBusiness || 'N/A'}
+                    </div>
                   </div>
                 </div>
 
                 {/* Tags */}
                 {profile.tags && profile.tags.length > 0 && (
                   <div className="flex items-center gap-2 mb-4 flex-wrap">
-                    <TagIcon className="w-4 h-4 text-gray-500" />
+                    <TagIcon className="w-4 h-4" style={{ color: 'var(--muted)' }} />
                     {profile.tags.slice(0, 3).map((tag, idx) => (
                       <span
                         key={idx}
-                        className="px-2 py-0.5 bg-gray-800 text-gray-300 text-xs rounded"
+                        className="px-2 py-0.5 text-xs rounded"
+                        style={{
+                          backgroundColor: 'var(--surface-2)',
+                          color: 'var(--text-secondary)',
+                          border: '1px solid var(--border)',
+                        }}
                       >
                         {tag}
                       </span>
                     ))}
                     {profile.tags.length > 3 && (
-                      <span className="text-xs text-gray-500">
+                      <span className="text-xs" style={{ color: 'var(--muted)' }}>
                         +{profile.tags.length - 3} more
                       </span>
                     )}
@@ -420,38 +458,42 @@ export const Profiles: React.FC = () => {
                 )}
 
                 {/* Date */}
-                <div className="flex items-center gap-2 text-xs text-gray-500 mb-4">
+                <div
+                  className="flex items-center gap-2 text-xs mb-4"
+                  style={{ color: 'var(--muted)' }}
+                >
                   <CalendarIcon className="w-4 h-4" />
-                  Updated {new Date(profile.updatedAt).toLocaleDateString()}
+                  Updated {formatDate(profile.updatedAt)}
                 </div>
 
                 {/* Actions */}
-                <div className="flex gap-2">
+                <div className="flex gap-2 flex-wrap">
                   <button
                     onClick={() => handleView(profile)}
-                    className="flex-1 px-3 py-2 bg-purple-600 text-white rounded hover:bg-purple-500 transition-colors text-sm flex items-center justify-center gap-1"
+                    className="btn-primary flex-1 text-sm py-2 px-3 flex items-center justify-center gap-1"
                   >
                     <EyeIcon className="w-4 h-4" />
                     View
                   </button>
                   <button
                     onClick={() => handleEdit(profile)}
-                    className="px-3 py-2 bg-gray-800 text-gray-300 rounded hover:bg-gray-700 transition-colors"
+                    className="btn-secondary px-3 py-2"
                     title="Edit"
                   >
                     <PencilSquareIcon className="w-4 h-4" />
                   </button>
                   <button
                     onClick={() => handleDuplicate(profile)}
-                    className="px-3 py-2 bg-gray-800 text-blue-400 rounded hover:bg-blue-900/30 transition-colors"
+                    className="btn-secondary px-3 py-2"
                     title="Duplicate"
                   >
                     <DocumentDuplicateIcon className="w-4 h-4" />
                   </button>
                   <button
                     onClick={() => setShowDeleteConfirm(profile.id)}
-                    className="px-3 py-2 bg-gray-800 text-red-400 rounded hover:bg-red-900/30 transition-colors"
+                    className="btn-secondary px-3 py-2"
                     title="Delete"
+                    style={{ color: 'var(--error)' }}
                   >
                     <TrashIcon className="w-4 h-4" />
                   </button>
@@ -462,30 +504,32 @@ export const Profiles: React.FC = () => {
         )}
 
         {/* Delete Confirmation Modal */}
-        {showDeleteConfirm && (
-          <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-            <div className="bg-gray-900 rounded-lg border border-gray-700 max-w-md w-full p-6">
-              <h3 className="text-lg font-semibold text-white mb-2">Delete Profile?</h3>
-              <p className="text-gray-400 mb-6">
-                This action cannot be undone. The profile and all its data will be permanently deleted.
-              </p>
-              <div className="flex gap-3 justify-end">
-                <button
-                  onClick={() => setShowDeleteConfirm(null)}
-                  className="px-4 py-2 bg-gray-800 text-gray-300 rounded-lg hover:bg-gray-700 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={() => handleDelete(showDeleteConfirm)}
-                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-500 transition-colors"
-                >
-                  Delete
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+        <Modal
+          open={showDeleteConfirm !== null}
+          onClose={() => setShowDeleteConfirm(null)}
+          title="Delete Profile?"
+          size="md"
+          footer={
+            <>
+              <button
+                onClick={() => setShowDeleteConfirm(null)}
+                className="btn-secondary"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => showDeleteConfirm && handleDelete(showDeleteConfirm)}
+                className="btn-danger"
+              >
+                Delete
+              </button>
+            </>
+          }
+        >
+          <p style={{ color: 'var(--text-secondary)' }}>
+            This action cannot be undone. The profile and all its data will be permanently deleted.
+          </p>
+        </Modal>
 
         {/* Profile Details Modal */}
         <ProfileDetailsModal
@@ -511,9 +555,24 @@ export const Profiles: React.FC = () => {
         {/* Toast Notification */}
         {showToast && (
           <div className="fixed bottom-4 right-4 z-50 animate-fade-in">
-            <div className="bg-purple-900/30 backdrop-blur-sm border border-purple-500/50 text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-2">
-              <CheckCircleIcon className="w-5 h-5 text-purple-400" />
-              <span className="text-gray-100">{toastMessage}</span>
+            <div
+              className="border px-6 py-3 rounded-lg shadow-lg flex items-center gap-2"
+              style={
+                toastTone === 'error'
+                  ? {
+                      backgroundColor: 'var(--error-bg)',
+                      borderColor: 'var(--error)',
+                      color: 'var(--error)',
+                    }
+                  : {
+                      backgroundColor: 'var(--accent-bg)',
+                      borderColor: 'rgb(var(--color-accent-primary))',
+                      color: 'rgb(var(--color-accent-primary))',
+                    }
+              }
+            >
+              <CheckCircleIcon className="w-5 h-5" />
+              <span>{toastMessage}</span>
             </div>
           </div>
         )}
@@ -521,4 +580,3 @@ export const Profiles: React.FC = () => {
     </AppLayout>
   );
 };
-
