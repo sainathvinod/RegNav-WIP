@@ -7,6 +7,7 @@ import { JobProgressModal } from '../components/JobProgressModal';
 import { Select } from '../components/ui/Select';
 import { Modal } from '../components/ui/Modal';
 import { US_STATE_OPTIONS, LOB_OPTIONS } from '../lib/constants';
+import { toUserError } from '../lib/apiError';
 import {
   ArrowUpTrayIcon,
   DocumentTextIcon,
@@ -70,7 +71,7 @@ export const RegIngest: React.FC = () => {
       const data = await listIngestedDocuments();
       setDocuments(data);
     } catch (err) {
-      setErrorMessage(err instanceof Error ? err.message : 'Failed to load documents');
+      setErrorMessage(toUserError(err, 'Failed to load documents'));
     }
   }, []);
 
@@ -92,7 +93,7 @@ export const RegIngest: React.FC = () => {
       setActiveJob({ id: jobId, title: `Ingesting URL — ${urlDraft.url}` });
       setUrlDraft(EMPTY_URL);
     } catch (err) {
-      setErrorMessage(err instanceof Error ? err.message : 'Failed to start ingestion');
+      setErrorMessage(toUserError(err, 'Failed to start ingestion'));
     } finally {
       setSubmitting(false);
     }
@@ -112,7 +113,7 @@ export const RegIngest: React.FC = () => {
       setActiveJob({ id: jobId, title: `Ingesting text — ${textDraft.title}` });
       setTextDraft(EMPTY_TEXT);
     } catch (err) {
-      setErrorMessage(err instanceof Error ? err.message : 'Failed to start ingestion');
+      setErrorMessage(toUserError(err, 'Failed to start ingestion'));
     } finally {
       setSubmitting(false);
     }
@@ -133,7 +134,7 @@ export const RegIngest: React.FC = () => {
       setActiveJob({ id: jobId, title: `Ingesting PDF — ${label}` });
       setFileDraft(EMPTY_FILE);
     } catch (err) {
-      setErrorMessage(err instanceof Error ? err.message : 'Failed to start ingestion');
+      setErrorMessage(toUserError(err, 'Failed to start ingestion'));
     } finally {
       setSubmitting(false);
     }
@@ -151,7 +152,7 @@ export const RegIngest: React.FC = () => {
       setDocToDelete(null);
       await refreshDocs();
     } catch (err) {
-      setErrorMessage(err instanceof Error ? err.message : 'Failed to delete document');
+      setErrorMessage(toUserError(err, 'Failed to delete document'));
     } finally {
       setDeletingDoc(false);
     }
@@ -383,8 +384,8 @@ const UrlForm: React.FC<{
     </div>
 
     <p className="text-xs" style={{ color: 'var(--muted)' }}>
-      PDF support arrives with Azure Document Intelligence in Phase 4. For now, the backend
-      handles HTML and plain text.
+      Fetches the page and extracts its text. For documents at a PDF URL, use the Upload PDF tab
+      for table-aware Docling extraction.
     </p>
 
     <div className="flex justify-end">
@@ -664,7 +665,7 @@ const DocumentsTable: React.FC<{
         {documents.length === 0 && (
           <tr>
             <td colSpan={8} className="px-3 py-10 text-center text-xs" style={{ color: 'var(--muted)' }}>
-              No documents ingested yet. Use the URL or Text tab to get started.
+              No documents ingested yet. Use the URL, Text, or Upload PDF tab to get started.
             </td>
           </tr>
         )}
