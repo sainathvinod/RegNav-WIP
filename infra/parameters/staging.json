@@ -1,0 +1,21 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "environment": { "value": "staging" },
+    "baseName": { "value": "regnav" },
+    "location": { "value": "eastus2" },
+    "postgresAdminLogin": { "value": "regnav_admin" },
+    "postgresAdminPassword": {
+      "reference": {
+        "keyVault": {
+          "id": "/subscriptions/REPLACE_SUB_ID/resourceGroups/regnav-shared-rg/providers/Microsoft.KeyVault/vaults/regnav-shared-kv"
+        },
+        "secretName": "postgres-admin-password-staging"
+      }
+    },
+    "containerImageTag": { "value": "latest" },
+    "backendMinReplicas": { "value": 1 },
+    "backendMaxReplicas": { "value": 3 }
+  }
+}
