@@ -29,6 +29,7 @@ _LIMITS: dict[str, int] = {
 _WINDOW_SECONDS = 60
 
 _redis_client: aioredis.Redis | None = None
+_redis_unavailable: bool = False
 
 
 def _classify(path: str) -> str:
@@ -42,8 +43,11 @@ def _classify(path: str) -> str:
 
 
 async def _get_redis() -> aioredis.Redis | None:
-    """Lazily connect to Redis. Returns None if the connection fails."""
-    global _redis_client
+    """Lazily connect to Redis. Caches unavailability so we don't retry the
+    full 2-second connect timeout on every request when Redis is down."""
+    global _redis_client, _redis_unavailable
+    if _redis_unavailable:
+        return None
     if _redis_client is not None:
         return _redis_client
     try:
@@ -53,6 +57,7 @@ async def _get_redis() -> aioredis.Redis | None:
         return client
     except Exception as exc:
         logger.warning("rate_limit_redis_unavailable", error=str(exc))
+        _redis_unavailable = True
         return None
 
 

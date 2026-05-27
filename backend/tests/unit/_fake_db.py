@@ -20,6 +20,15 @@ class _FakeResult:
     def first(self) -> Any | None:
         return self._items[0] if self._items else None
 
+    def scalar_one_or_none(self) -> Any | None:
+        return self._items[0] if self._items else None
+
+    def scalar(self) -> Any | None:
+        return self._items[0] if self._items else None
+
+    def __iter__(self):  # type: ignore[no-untyped-def]
+        return iter(self._items)
+
 
 class FakeSession:
     """Minimal AsyncSession stand-in for unit tests.
@@ -76,6 +85,31 @@ class FakeSession:
 
     async def get(self, entity: type, identifier: uuid.UUID) -> Any:
         return self.store.get(entity, {}).get(identifier)
+
+    async def scalar(self, stmt: Any) -> Any:
+        """Equivalent of ``(await execute(stmt)).scalar()``.
+
+        For ``select(func.count())`` statements we just return the count of
+        the relevant table; otherwise return the first row's first value.
+        """
+        text = str(stmt).lower()
+        entity = self._guess_entity(stmt)
+        if entity is None:
+            # Could be a count over an unmapped entity — return 0 for counts
+            if "count(" in text:
+                return 0
+            return None
+        items = list(self.store.get(entity, {}).values())
+        if "deleted_at" in text and "is null" in text:
+            items = [i for i in items if getattr(i, "deleted_at", None) is None]
+        if "count(" in text:
+            return len(items)
+        return items[0] if items else None
+
+    async def delete(self, instance: Any) -> None:
+        bucket = self.store.get(type(instance))
+        if bucket is not None:
+            bucket.pop(getattr(instance, "id", None), None)
 
     async def flush(self) -> None:
         return None
