@@ -1,5 +1,7 @@
 // RegNav.AI TypeScript Type Definitions
 
+export * from './rulesense';
+
 export interface Organization {
   id: string;
   name: string;

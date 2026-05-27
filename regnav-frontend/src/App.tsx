@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AppLayout } from './components/layout/AppLayout';
 import { ThemeProvider } from './components/ThemeProvider';
 import { RegScout } from './pages/RegScout';
+import { RuleSense } from './pages/RuleSense';
 import { Settings } from './pages/Settings';
 import { Profiles } from './pages/Profiles';
 
@@ -137,7 +138,7 @@ function App() {
           <Route path="/regscout" element={<RegScout />} />
           <Route path="/regingest" element={<PlaceholderPage title="RegIngest - Document Repository" />} />
           <Route path="/ruleminer" element={<PlaceholderPage title="RuleMiner - Rule Extraction" />} />
-          <Route path="/rulesense" element={<PlaceholderPage title="RuleSense - AI Insights" />} />
+          <Route path="/rulesense" element={<RuleSense />} />
           <Route path="/regvalidate" element={<PlaceholderPage title="RegValidate - File Validation" />} />
           <Route path="/analytics" element={<PlaceholderPage title="Analytics" />} />
           <Route path="/reports" element={<PlaceholderPage title="Reports" />} />

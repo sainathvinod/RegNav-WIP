@@ -50,6 +50,14 @@ class Settings(BaseSettings):
     azure_keyvault_url: str | None = None
     azure_openai_endpoint: str | None = None
     anthropic_api_key: str | None = None
+    openai_api_key: str | None = None
+
+    # --- RAG / chat ----------------------------------------------------
+    embedding_model: str = "text-embedding-3-small"
+    chat_model: str = "claude-sonnet-4-20250514"
+    rag_top_k: int = 5
+    rag_chunk_size: int = 800
+    rag_chunk_overlap: int = 100
 
     # --- Telemetry -----------------------------------------------------
     log_level: str = "INFO"

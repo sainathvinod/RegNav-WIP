@@ -13,8 +13,8 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 
 from app.core.auth import CurrentUser, get_current_user
-from app.core.config import settings
 from app.core.logging import get_logger
+from app.llm.credentials import get_anthropic_api_key
 
 logger = get_logger(__name__)
 
@@ -22,56 +22,6 @@ router = APIRouter()
 
 ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages"
 ANTHROPIC_VERSION = "2023-06-01"
-
-# ---------------------------------------------------------------------------
-# Key Vault helper (cached per process)
-# ---------------------------------------------------------------------------
-
-_cached_api_key: str | None = None
-
-
-async def _get_anthropic_api_key() -> str:
-    """Resolve the Anthropic API key, preferring Azure Key Vault."""
-    global _cached_api_key
-
-    if _cached_api_key:
-        return _cached_api_key
-
-    # --- Azure Key Vault ---
-    if settings.azure_keyvault_url:
-        try:
-            from azure.identity.aio import DefaultAzureCredential
-            from azure.keyvault.secrets.aio import SecretClient
-
-            async with (
-                DefaultAzureCredential() as credential,
-                SecretClient(
-                    vault_url=settings.azure_keyvault_url,
-                    credential=credential,
-                ) as client,
-            ):
-                secret = await client.get_secret("anthropic-api-key")
-                if secret.value:
-                    _cached_api_key = secret.value
-                    logger.info("anthropic_key_loaded_from_keyvault")
-                    return _cached_api_key
-        except Exception as exc:
-            logger.warning(
-                "keyvault_key_fetch_failed",
-                error=str(exc),
-                fallback="env_var",
-            )
-
-    # --- Environment variable fallback ---
-    if settings.anthropic_api_key:
-        _cached_api_key = settings.anthropic_api_key
-        logger.info("anthropic_key_loaded_from_env")
-        return _cached_api_key
-
-    raise HTTPException(
-        status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-        detail="Anthropic API key not configured. Set ANTHROPIC_API_KEY or configure Azure Key Vault.",
-    )
 
 
 # ---------------------------------------------------------------------------
@@ -106,7 +56,7 @@ async def proxy_anthropic(
 
     The API key is resolved server-side; clients must NOT send it.
     """
-    api_key = await _get_anthropic_api_key()
+    api_key = await get_anthropic_api_key()
 
     payload: dict = {
         "model": body.model,
