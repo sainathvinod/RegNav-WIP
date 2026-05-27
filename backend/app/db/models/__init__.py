@@ -5,6 +5,7 @@ from app.db.models.base import Base, SoftDeleteMixin, TimestampMixin
 from app.db.models.chat_message import ChatMessage
 from app.db.models.chat_session import ChatSession
 from app.db.models.discovered_document import DiscoveredDocument
+from app.db.models.discovery_profile import DiscoveryProfile
 from app.db.models.document import Document
 from app.db.models.document_chunk import DocumentChunk
 from app.db.models.job import Job
@@ -23,6 +24,7 @@ __all__ = [
     "ChatMessage",
     "ChatSession",
     "DiscoveredDocument",
+    "DiscoveryProfile",
     "Document",
     "DocumentChunk",
     "Job",

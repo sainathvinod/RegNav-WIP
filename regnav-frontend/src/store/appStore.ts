@@ -53,6 +53,8 @@ interface AppStore {
   setDiscoveredSources: (sources: RegulatorySource[]) => void;
   addDiscoveredSource: (source: RegulatorySource) => void;
   removeDiscoveredSource: (sourceId: string) => void;
+  setDiscoveryProfiles: (profiles: DiscoveryProfile[]) => void;
+  upsertDiscoveryProfile: (profile: DiscoveryProfile) => void;
   createProfile: (profile: Omit<DiscoveryProfile, 'id' | 'createdAt' | 'updatedAt'>, insertBeforeId?: string) => DiscoveryProfile;
   updateProfile: (profileId: string, updates: Partial<DiscoveryProfile>) => void;
   deleteProfile: (profileId: string) => void;
@@ -245,6 +247,21 @@ export const useAppStore = create<AppStore>()(
         set((state) => ({
           discoveredSources: state.discoveredSources.filter(s => s.id !== sourceId),
         })),
+
+      setDiscoveryProfiles: (profiles) =>
+        set(() => ({ discoveryProfiles: JSON.parse(JSON.stringify(profiles)) })),
+
+      upsertDiscoveryProfile: (profile) =>
+        set((state) => {
+          const cloned = JSON.parse(JSON.stringify(profile)) as DiscoveryProfile;
+          const idx = state.discoveryProfiles.findIndex((p) => p.id === profile.id);
+          if (idx >= 0) {
+            const next = state.discoveryProfiles.slice();
+            next[idx] = cloned;
+            return { discoveryProfiles: next };
+          }
+          return { discoveryProfiles: [cloned, ...state.discoveryProfiles] };
+        }),
 
       createProfile: (profileData, insertBeforeId) => {
         // DEEP CLONE to ensure complete data isolation

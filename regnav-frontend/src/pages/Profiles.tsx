@@ -5,10 +5,16 @@
  * Profiles can be loaded into RegScout or used for rule mining.
  */
 
-import React, { useState, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { AppLayout } from '../components/layout/AppLayout';
 import { ProfileDetailsModal } from '../components/ProfileDetailsModal';
 import { DuplicateProfileModal } from '../components/DuplicateProfileModal';
+import {
+  createProfile as apiCreateProfile,
+  deleteProfile as apiDeleteProfile,
+  listProfiles as apiListProfiles,
+  updateProfile as apiUpdateProfile,
+} from '../services/profiles';
 import { useAppStore } from '../store/appStore';
 import {
   FolderIcon,
@@ -27,8 +33,34 @@ import { DiscoveryProfile } from '../types';
 import { useNavigate } from 'react-router-dom';
 
 export const Profiles: React.FC = () => {
-  const { discoveryProfiles: rawProfiles, deleteProfile, updateProfile, createProfile, loadProfileForEditing } = useAppStore();
+  const {
+    discoveryProfiles: rawProfiles,
+    setDiscoveryProfiles,
+    upsertDiscoveryProfile,
+    deleteProfile,
+    loadProfileForEditing,
+  } = useAppStore();
   const navigate = useNavigate();
+
+  // On mount, fetch the persisted profiles from the API. The local store
+  // is treated as a cache so RegScout's `loadProfileForEditing` keeps
+  // working without changes. If the API is unreachable (dev without
+  // backend, etc.) the local store remains as a fallback.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const profiles = await apiListProfiles();
+        if (!cancelled) setDiscoveryProfiles(profiles);
+      } catch {
+        /* leave local store untouched — the toast surface elsewhere will
+         * tell the user when a write fails. */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [setDiscoveryProfiles]);
   
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState<'all' | 'draft' | 'finalized' | 'used_for_rules'>('all');
@@ -75,9 +107,16 @@ export const Profiles: React.FC = () => {
       }
     });
 
-  const handleDelete = (profileId: string) => {
-    deleteProfile(profileId);
+  const handleDelete = async (profileId: string) => {
     setShowDeleteConfirm(null);
+    try {
+      await apiDeleteProfile(profileId);
+      deleteProfile(profileId);
+    } catch (err) {
+      setToastMessage(err instanceof Error ? err.message : 'Failed to delete profile');
+      setShowToast(true);
+      setTimeout(() => setShowToast(false), 3000);
+    }
   };
 
   const handleView = (profile: DiscoveryProfile) => {
@@ -93,17 +132,25 @@ export const Profiles: React.FC = () => {
     navigate('/regscout');
   };
 
-  const handleSaveProfile = (profileId: string, updates: Partial<DiscoveryProfile>) => {
-    updateProfile(profileId, updates);
-    // Update selectedProfile with deep cloning to prevent reference sharing
-    if (selectedProfile && selectedProfile.id === profileId) {
-      const updatedProfile = JSON.parse(JSON.stringify({ ...selectedProfile, ...updates }));
-      setSelectedProfile(updatedProfile);
+  const handleSaveProfile = async (profileId: string, updates: Partial<DiscoveryProfile>) => {
+    try {
+      const saved = await apiUpdateProfile(profileId, {
+        name: updates.name,
+        description: updates.description ?? null,
+        status: updates.status,
+        configuration: updates.configuration,
+        sources: updates.sources,
+        metadata: updates.metadata,
+        tags: updates.tags,
+      });
+      upsertDiscoveryProfile(saved);
+      if (selectedProfile && selectedProfile.id === profileId) {
+        setSelectedProfile(JSON.parse(JSON.stringify(saved)));
+      }
+      setToastMessage(`Successfully saved "${saved.name}"`);
+    } catch (err) {
+      setToastMessage(err instanceof Error ? err.message : 'Failed to save profile');
     }
-    
-    // Show success toast with profile name
-    const profileName = updates.name || selectedProfile?.name || 'Profile';
-    setToastMessage(`Successfully saved "${profileName}"`);
     setShowToast(true);
     setTimeout(() => setShowToast(false), 3000);
   };
@@ -119,30 +166,26 @@ export const Profiles: React.FC = () => {
     setShowDuplicateModal(true);
   };
 
-  const handleConfirmDuplicate = (newName: string, newDescription?: string) => {
+  const handleConfirmDuplicate = async (newName: string, newDescription?: string) => {
     if (!profileToDuplicate) return;
 
-    // Deep copy to ensure complete isolation from original
-    // Insert copy BEFORE original (copy on left, original on right)
-    const copiedProfile = createProfile({
-      name: newName,
-      description: newDescription || profileToDuplicate.description,
-      // Deep copy configuration
-      configuration: JSON.parse(JSON.stringify(profileToDuplicate.configuration)),
-      // Deep copy sources
-      sources: JSON.parse(JSON.stringify(profileToDuplicate.sources)),
-      // Deep copy metadata
-      metadata: JSON.parse(JSON.stringify(profileToDuplicate.metadata)),
-      status: 'draft', // Reset status to draft for new copy
-      tags: profileToDuplicate.tags ? JSON.parse(JSON.stringify(profileToDuplicate.tags)) : [],
-    }, profileToDuplicate.id); // Insert before original
-
-    // Show toast notification
-    setToastMessage(`Profile "${copiedProfile.name}" created successfully!`);
+    try {
+      const created = await apiCreateProfile({
+        name: newName,
+        description: newDescription || profileToDuplicate.description,
+        configuration: JSON.parse(JSON.stringify(profileToDuplicate.configuration)),
+        sources: JSON.parse(JSON.stringify(profileToDuplicate.sources)),
+        metadata: JSON.parse(JSON.stringify(profileToDuplicate.metadata)),
+        status: 'draft',
+        tags: profileToDuplicate.tags ? JSON.parse(JSON.stringify(profileToDuplicate.tags)) : [],
+      });
+      upsertDiscoveryProfile(created);
+      setToastMessage(`Profile "${created.name}" created successfully!`);
+    } catch (err) {
+      setToastMessage(err instanceof Error ? err.message : 'Failed to duplicate profile');
+    }
     setShowToast(true);
     setTimeout(() => setShowToast(false), 3000);
-
-    // Reset duplicate modal state
     setProfileToDuplicate(null);
   };
 
