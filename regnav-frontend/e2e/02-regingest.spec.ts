@@ -53,4 +53,28 @@ test.describe('RegIngest', () => {
     const submitBtn = page.getByRole('button', { name: /Ingest URL/i });
     await expect(submitBtn).toBeDisabled();
   });
+
+  test('PDF upload tab is present and submit is gated on a file selection', async ({ page }) => {
+    await page.getByRole('tab', { name: /Upload PDF/i }).click();
+
+    // Submit button is disabled until a file is chosen.
+    const submitBtn = page.getByRole('button', { name: /Ingest PDF/i });
+    await expect(submitBtn).toBeDisabled();
+
+    // Set a tiny fake PDF on the file input — DataTransfer-driven file
+    // selection works headlessly in Playwright.
+    await page.locator('input[type=file]').setInputFiles({
+      name: 'bulletin.pdf',
+      mimeType: 'application/pdf',
+      buffer: Buffer.from('%PDF-1.4\n%%EOF\n'),
+    });
+
+    await expect(submitBtn).toBeEnabled();
+    await submitBtn.click();
+
+    // The mocked /from-file returns a jobId; the job modal should open.
+    await expect(page.getByRole('heading', { name: /Ingesting PDF/i })).toBeVisible();
+    await expect(page.getByText('Done')).toBeVisible({ timeout: 5000 });
+    await page.getByRole('button', { name: /Close/i }).last().click();
+  });
 });

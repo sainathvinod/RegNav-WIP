@@ -1,5 +1,10 @@
 // RegIngest API client.
-import type { IngestedDocument, IngestTextInput, IngestUrlInput } from '../types/regscout';
+import type {
+  IngestFileInput,
+  IngestedDocument,
+  IngestTextInput,
+  IngestUrlInput,
+} from '../types/regscout';
 
 const API_BASE_URL = (
   import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000'
@@ -58,6 +63,39 @@ export async function ingestFromText(input: IngestTextInput): Promise<{ jobId: s
     }),
   });
   return handleJson<{ jobId: string }>(resp);
+}
+
+export async function ingestFromFile(input: IngestFileInput): Promise<{ jobId: string }> {
+  const form = new FormData();
+  form.append('file', input.file);
+  if (input.title) form.append('title', input.title);
+  if (input.stateCode) form.append('state_code', input.stateCode);
+  if (input.lob) form.append('lob', input.lob);
+
+  const resp = await fetch(`${BASE}/from-file`, {
+    method: 'POST',
+    headers: authHeaders(), // do NOT set Content-Type; the browser fills in the multipart boundary
+    body: form,
+  });
+  return handleJson<{ jobId: string }>(resp);
+}
+
+/** Build the URL the document viewer uses to stream the archived bytes. */
+export function archiveUrl(documentId: string): string {
+  return `${BASE}/documents/${documentId}/archive`;
+}
+
+/**
+ * Fetch the archive as a Blob URL so we can render it via PDF.js / <iframe>.
+ * The caller owns the URL and must call URL.revokeObjectURL when done.
+ */
+export async function fetchArchiveBlobUrl(documentId: string): Promise<string> {
+  const resp = await fetch(archiveUrl(documentId), { headers: authHeaders() });
+  if (!resp.ok) {
+    throw new Error(`Failed to load archive: ${resp.status}`);
+  }
+  const blob = await resp.blob();
+  return URL.createObjectURL(blob);
 }
 
 export async function deleteIngestedDocument(id: string): Promise<void> {

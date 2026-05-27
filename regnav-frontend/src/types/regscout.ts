@@ -68,6 +68,8 @@ export interface IngestedDocument {
   status: string;
   chunkCount: number;
   createdAt: string;
+  archiveContentType: string | null;
+  archiveSizeBytes: number | null;
 }
 
 export interface IngestUrlInput {
@@ -80,6 +82,13 @@ export interface IngestUrlInput {
 export interface IngestTextInput {
   title: string;
   text: string;
+  stateCode?: string | null;
+  lob?: string | null;
+}
+
+export interface IngestFileInput {
+  file: File;
+  title?: string | null;
   stateCode?: string | null;
   lob?: string | null;
 }

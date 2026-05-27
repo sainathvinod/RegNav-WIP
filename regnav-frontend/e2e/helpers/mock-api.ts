@@ -31,6 +31,8 @@ function mockDoc() {
     status: 'ready',
     chunkCount: 3,
     createdAt: '2026-05-01T00:00:00Z',
+    archiveContentType: null,
+    archiveSizeBytes: null,
   };
 }
 
@@ -161,11 +163,14 @@ export async function mockAllApis(page: Page) {
     }
     return route.fulfill(json(mockDoc()));
   });
-  // 3. text + url ingest (no overlap with documents paths)
+  // 3. text + url + file ingest (no overlap with documents paths)
   await page.route(/\/api\/v1\/regingest\/from-text/, (route: Route) =>
     route.fulfill(json({ jobId: JOB_ID })),
   );
   await page.route(/\/api\/v1\/regingest\/from-url/, (route: Route) =>
+    route.fulfill(json({ jobId: JOB_ID })),
+  );
+  await page.route(/\/api\/v1\/regingest\/from-file/, (route: Route) =>
     route.fulfill(json({ jobId: JOB_ID })),
   );
 

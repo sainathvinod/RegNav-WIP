@@ -1,11 +1,13 @@
-// RegIngest — server-side document ingestion (URL + text), with a documents tab.
+// RegIngest — server-side document ingestion (URL, text, PDF upload) + documents tab.
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { AppLayout } from '../components/layout/AppLayout';
+import { DocumentViewerModal } from '../components/DocumentViewerModal';
 import { JobProgressModal } from '../components/JobProgressModal';
 import {
   ArrowUpTrayIcon,
   DocumentTextIcon,
+  EyeIcon,
   LinkIcon,
   TrashIcon,
   ExclamationTriangleIcon,
@@ -13,13 +15,14 @@ import {
 } from '@heroicons/react/24/outline';
 import {
   deleteIngestedDocument,
+  ingestFromFile,
   ingestFromText,
   ingestFromUrl,
   listIngestedDocuments,
 } from '../services/regingest';
 import type { IngestedDocument } from '../types/regscout';
 
-type Tab = 'url' | 'text' | 'documents';
+type Tab = 'url' | 'text' | 'file' | 'documents';
 
 interface UrlDraft {
   url: string;
@@ -35,17 +38,27 @@ interface TextDraft {
   lob: string;
 }
 
+interface FileDraft {
+  file: File | null;
+  title: string;
+  stateCode: string;
+  lob: string;
+}
+
 const EMPTY_URL: UrlDraft = { url: '', title: '', stateCode: '', lob: '' };
 const EMPTY_TEXT: TextDraft = { title: '', text: '', stateCode: '', lob: '' };
+const EMPTY_FILE: FileDraft = { file: null, title: '', stateCode: '', lob: '' };
 
 export const RegIngest: React.FC = () => {
   const [tab, setTab] = useState<Tab>('url');
   const [urlDraft, setUrlDraft] = useState<UrlDraft>(EMPTY_URL);
   const [textDraft, setTextDraft] = useState<TextDraft>(EMPTY_TEXT);
+  const [fileDraft, setFileDraft] = useState<FileDraft>(EMPTY_FILE);
   const [submitting, setSubmitting] = useState(false);
   const [documents, setDocuments] = useState<IngestedDocument[]>([]);
   const [activeJob, setActiveJob] = useState<{ id: string; title: string } | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [viewerDoc, setViewerDoc] = useState<IngestedDocument | null>(null);
 
   const refreshDocs = useCallback(async () => {
     try {
@@ -99,6 +112,27 @@ export const RegIngest: React.FC = () => {
       setSubmitting(false);
     }
   }, [textDraft]);
+
+  const handleSubmitFile = useCallback(async () => {
+    if (!fileDraft.file) return;
+    setErrorMessage(null);
+    setSubmitting(true);
+    try {
+      const { jobId } = await ingestFromFile({
+        file: fileDraft.file,
+        title: fileDraft.title.trim() || null,
+        stateCode: fileDraft.stateCode.trim() || null,
+        lob: fileDraft.lob.trim() || null,
+      });
+      const label = fileDraft.title.trim() || fileDraft.file.name;
+      setActiveJob({ id: jobId, title: `Ingesting PDF — ${label}` });
+      setFileDraft(EMPTY_FILE);
+    } catch (err) {
+      setErrorMessage(err instanceof Error ? err.message : 'Failed to start ingestion');
+    } finally {
+      setSubmitting(false);
+    }
+  }, [fileDraft]);
 
   const handleDelete = useCallback(
     async (doc: IngestedDocument) => {
@@ -167,9 +201,15 @@ export const RegIngest: React.FC = () => {
               label="Ingest from text"
             />
             <TabButton
+              active={tab === 'file'}
+              onClick={() => setTab('file')}
+              icon={<ArrowUpTrayIcon className="h-4 w-4" />}
+              label="Upload PDF"
+            />
+            <TabButton
               active={tab === 'documents'}
               onClick={() => setTab('documents')}
-              icon={<ArrowUpTrayIcon className="h-4 w-4" />}
+              icon={<DocumentTextIcon className="h-4 w-4" />}
               label={`Documents (${documents.length})`}
             />
           </nav>
@@ -191,8 +231,20 @@ export const RegIngest: React.FC = () => {
                 submitting={submitting}
               />
             )}
+            {tab === 'file' && (
+              <FileForm
+                draft={fileDraft}
+                onChange={setFileDraft}
+                onSubmit={() => void handleSubmitFile()}
+                submitting={submitting}
+              />
+            )}
             {tab === 'documents' && (
-              <DocumentsTable documents={documents} onDelete={handleDelete} />
+              <DocumentsTable
+                documents={documents}
+                onDelete={handleDelete}
+                onView={setViewerDoc}
+              />
             )}
           </div>
         </div>
@@ -204,6 +256,10 @@ export const RegIngest: React.FC = () => {
           title={activeJob.title}
           onClose={handleJobClosed}
         />
+      )}
+
+      {viewerDoc && (
+        <DocumentViewerModal document={viewerDoc} onClose={() => setViewerDoc(null)} />
       )}
     </AppLayout>
   );
@@ -399,10 +455,98 @@ const TextForm: React.FC<{
   </div>
 );
 
+const FileForm: React.FC<{
+  draft: FileDraft;
+  onChange: (next: FileDraft) => void;
+  onSubmit: () => void;
+  submitting: boolean;
+}> = ({ draft, onChange, onSubmit, submitting }) => {
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  return (
+    <div className="space-y-4 max-w-2xl">
+      <Field label="PDF file *">
+        <input
+          ref={inputRef}
+          type="file"
+          accept="application/pdf,.pdf"
+          onChange={(e) => onChange({ ...draft, file: e.target.files?.[0] ?? null })}
+          className="block w-full text-sm file:mr-3 file:px-3 file:py-1.5 file:rounded-md file:border-0 file:bg-purple-700 file:text-white file:cursor-pointer"
+          style={{ color: 'var(--text)' }}
+        />
+        {draft.file && (
+          <p className="text-xs mt-1" style={{ color: 'var(--muted)' }}>
+            {draft.file.name} · {(draft.file.size / 1024).toFixed(1)} KB
+          </p>
+        )}
+      </Field>
+      <Field label="Title (optional)">
+        <input
+          type="text"
+          value={draft.title}
+          onChange={(e) => onChange({ ...draft, title: e.target.value })}
+          placeholder="Defaults to the filename"
+          className="w-full px-3 py-2 rounded-lg border text-sm"
+          style={{
+            backgroundColor: 'var(--surface-2)',
+            borderColor: 'var(--border)',
+            color: 'var(--text)',
+          }}
+        />
+      </Field>
+      <div className="grid grid-cols-2 gap-3">
+        <Field label="State">
+          <input
+            type="text"
+            maxLength={4}
+            value={draft.stateCode}
+            onChange={(e) => onChange({ ...draft, stateCode: e.target.value.toUpperCase() })}
+            placeholder="TX"
+            className="w-full px-3 py-2 rounded-lg border text-sm"
+            style={{
+              backgroundColor: 'var(--surface-2)',
+              borderColor: 'var(--border)',
+              color: 'var(--text)',
+            }}
+          />
+        </Field>
+        <Field label="Line of business">
+          <input
+            type="text"
+            value={draft.lob}
+            onChange={(e) => onChange({ ...draft, lob: e.target.value })}
+            placeholder="workers_comp"
+            className="w-full px-3 py-2 rounded-lg border text-sm"
+            style={{
+              backgroundColor: 'var(--surface-2)',
+              borderColor: 'var(--border)',
+              color: 'var(--text)',
+            }}
+          />
+        </Field>
+      </div>
+      <p className="text-xs" style={{ color: 'var(--muted)' }}>
+        Tables and headings are preserved via the Docling parser. The original PDF is stored
+        alongside the extracted text and can be re-opened from the Documents tab.
+      </p>
+      <div className="flex justify-end">
+        <button
+          type="button"
+          onClick={onSubmit}
+          disabled={submitting || !draft.file}
+          className="px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium"
+        >
+          {submitting ? 'Uploading…' : 'Ingest PDF'}
+        </button>
+      </div>
+    </div>
+  );
+};
+
 const DocumentsTable: React.FC<{
   documents: IngestedDocument[];
   onDelete: (doc: IngestedDocument) => void;
-}> = ({ documents, onDelete }) => (
+  onView: (doc: IngestedDocument) => void;
+}> = ({ documents, onDelete, onView }) => (
   <div className="overflow-x-auto">
     <table className="w-full text-sm">
       <thead>
@@ -450,15 +594,28 @@ const DocumentsTable: React.FC<{
               {new Date(doc.createdAt).toLocaleString()}
             </td>
             <td className="px-3 py-3 text-right">
-              <button
-                type="button"
-                onClick={() => onDelete(doc)}
-                aria-label="Delete document"
-                style={{ color: 'var(--muted)' }}
-                className="p-1 rounded hover:bg-red-500/20"
-              >
-                <TrashIcon className="h-4 w-4" />
-              </button>
+              <div className="flex items-center justify-end gap-1">
+                <button
+                  type="button"
+                  onClick={() => onView(doc)}
+                  disabled={!doc.archiveContentType}
+                  aria-label="View document"
+                  title={doc.archiveContentType ? 'View archive' : 'No archive stored'}
+                  style={{ color: 'var(--muted)' }}
+                  className="p-1 rounded hover:bg-purple-500/20 disabled:opacity-30 disabled:cursor-not-allowed"
+                >
+                  <EyeIcon className="h-4 w-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onDelete(doc)}
+                  aria-label="Delete document"
+                  style={{ color: 'var(--muted)' }}
+                  className="p-1 rounded hover:bg-red-500/20"
+                >
+                  <TrashIcon className="h-4 w-4" />
+                </button>
+              </div>
             </td>
           </tr>
         ))}
