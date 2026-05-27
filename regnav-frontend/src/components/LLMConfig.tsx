@@ -23,7 +23,6 @@ export const LLMConfig: React.FC<LLMConfigProps> = ({
   const [collapsed, setCollapsed] = useState(defaultCollapsed);
   const [testing, setTesting] = useState(false);
   const [testResult, setTestResult] = useState<LLMTestResult | null>(null);
-  const [showApiKey, setShowApiKey] = useState(false);
 
   const selectedProvider = LLM_PROVIDERS.find((p) => p.id === config.provider);
   const availableModels = selectedProvider?.models || [];
@@ -137,34 +136,13 @@ export const LLMConfig: React.FC<LLMConfigProps> = ({
             </div>
           )}
 
-          {/* API Key */}
+          {/* API Key — managed server-side in Phase 1+ */}
           {selectedProvider?.requiresApiKey && (
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">API Key</label>
-              <div className="flex space-x-2">
-                <input
-                  type={showApiKey ? 'text' : 'password'}
-                  value={config.apiKey || ''}
-                  onChange={(e) => {
-                    updateConfig({ apiKey: e.target.value });
-                    setTestResult(null);
-                  }}
-                  placeholder={`Enter ${selectedProvider.name} API key`}
-                  className="input flex-1"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowApiKey(!showApiKey)}
-                  className="btn-secondary px-4"
-                >
-                  {showApiKey ? 'Hide' : 'Show'}
-                </button>
-              </div>
-              {!config.apiKey && (
-                <p className="text-xs text-yellow-400 mt-1">
-                  ⚠️ API key required to make real-time calls
-                </p>
-              )}
+            <div className="rounded-lg border border-blue-500/30 bg-blue-500/10 px-4 py-3">
+              <p className="text-sm text-blue-300 font-medium">API credentials are managed securely by the platform administrator</p>
+              <p className="text-xs text-blue-400/80 mt-1">
+                Keys are stored in Azure Key Vault and injected server-side. No browser-side API key is required.
+              </p>
             </div>
           )}
 
@@ -218,7 +196,7 @@ export const LLMConfig: React.FC<LLMConfigProps> = ({
             <button
               type="button"
               onClick={handleTestConnection}
-              disabled={testing || !config.apiKey}
+              disabled={testing}
               className="btn-primary w-full md:w-auto"
             >
               {testing ? (

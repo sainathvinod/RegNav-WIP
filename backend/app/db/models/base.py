@@ -1,10 +1,9 @@
 """Declarative base and common column mixins."""
 
 from datetime import UTC, datetime
-from typing import Optional
 from uuid import UUID
 
-from sqlalchemy import DateTime, String, func
+from sqlalchemy import DateTime, func
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
@@ -33,12 +32,12 @@ class TimestampMixin:
 class SoftDeleteMixin:
     """Adds soft-delete columns."""
 
-    deleted_at: Mapped[Optional[datetime]] = mapped_column(
+    deleted_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True),
         nullable=True,
         default=None,
     )
-    deleted_by: Mapped[Optional[UUID]] = mapped_column(
+    deleted_by: Mapped[UUID | None] = mapped_column(
         nullable=True,
         default=None,
     )

@@ -225,9 +225,9 @@ export const Settings: React.FC = () => {
               <ul className="text-sm space-y-1" style={{ color: 'var(--color-text-secondary)' }}>
                 <li>• Each module (RegScout, RegIngest, etc.) has its own independent LLM configuration</li>
                 <li>• Configure the AI model once here, and it will be used automatically in that module</li>
-                <li>• API keys are stored securely in your browser's local storage</li>
+                <li>• API credentials are managed securely by the platform administrator — no key entry required</li>
                 <li>• You can use different models for different modules (e.g., Claude for RegScout, GPT-4o for RegIngest)</li>
-                <li>• Click "Test Connection" to verify your API key before saving</li>
+                <li>• Click "Test Connection" to verify the backend can reach the selected model</li>
               </ul>
             </div>
           </div>

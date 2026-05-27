@@ -1,14 +1,17 @@
 // Anthropic Claude API Client
 //
-// PHASE 0 NOTE: This client still accepts an API key from the browser and
-// forwards it through the legacy proxy. That is a known security gap and
-// will be removed in Phase 1 when the FastAPI backend handles all LLM
-// credentials via Azure Key Vault. For now the proxy URL is at least
-// environment-driven instead of hardcoded.
+// Phase 1: API keys are managed server-side (Azure Key Vault or env var).
+// The frontend never sends an API key — only the user's JWT is forwarded.
 import { LLMConfiguration, LLMTestResult } from '../../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000';
 const PROXY_URL = `${API_BASE_URL.replace(/\/$/, '')}/api/anthropic`;
+
+/** Retrieve the stored JWT for the current session, if any. */
+function getAuthHeader(): Record<string, string> {
+  const token = localStorage.getItem('auth_token');
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
 
 export interface AnthropicMessage {
   role: 'user' | 'assistant';
@@ -40,16 +43,13 @@ export interface AnthropicResponse {
 }
 
 /**
- * Call Anthropic Claude API via the RegNav proxy/backend.
+ * Call Anthropic Claude API via the RegNav backend proxy.
+ * The API key is resolved server-side; do NOT pass it from the browser.
  */
 export const callAnthropicAPI = async (
   prompt: string,
   config: LLMConfiguration,
 ): Promise<string> => {
-  if (!config.apiKey) {
-    throw new Error('Anthropic API key not configured');
-  }
-
   const startTime = Date.now();
 
   const requestBody: AnthropicRequest = {
@@ -65,14 +65,16 @@ export const callAnthropicAPI = async (
     ],
   };
 
-  const proxyRequestBody = { ...requestBody, apiKey: config.apiKey };
-
+  // No apiKey field — the backend resolves it from Key Vault / env
   let response: Response;
   try {
     response = await fetch(PROXY_URL, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(proxyRequestBody),
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeader(),
+      },
+      body: JSON.stringify(requestBody),
       signal: AbortSignal.timeout(config.timeout * 1000),
     });
   } catch (error: unknown) {
@@ -112,7 +114,8 @@ export const callAnthropicAPI = async (
 };
 
 /**
- * Test Anthropic API connection.
+ * Test Anthropic API connection via the backend proxy.
+ * No API key needed from the browser — the backend manages credentials.
  */
 export const testAnthropicConnection = async (
   config: LLMConfiguration,
@@ -120,14 +123,6 @@ export const testAnthropicConnection = async (
   const startTime = Date.now();
 
   try {
-    if (!config.apiKey) {
-      return {
-        success: false,
-        message: 'API key is required',
-        error: 'No API key provided',
-      };
-    }
-
     const testPrompt = 'Respond with "OK" to confirm connection.';
     const response = await callAnthropicAPI(testPrompt, {
       ...config,
