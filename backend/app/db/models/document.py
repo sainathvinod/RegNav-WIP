@@ -45,3 +45,10 @@ class Document(TimestampMixin, SoftDeleteMixin, Base):
     )
     chunk_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    # Archive: the original raw bytes (PDF, HTML-rendered-as-PDF, etc.) live
+    # in object storage. We only keep the blob key + content type here so the
+    # /archive endpoint can stream them back on demand.
+    archive_blob_key: Mapped[str | None] = mapped_column(String(512), nullable=True)
+    archive_content_type: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    archive_size_bytes: Mapped[int | None] = mapped_column(Integer, nullable=True)

@@ -52,6 +52,18 @@ class Settings(BaseSettings):
     anthropic_api_key: str | None = None
     openai_api_key: str | None = None
 
+    # --- Object storage (Azure Blob, local fallback) ------------------
+    # When `azure_storage_account_url` is set, archives go to Azure Blob
+    # via Managed Identity. Otherwise we fall back to `storage_local_dir`
+    # on disk so dev + tests work without an Azure dependency.
+    azure_storage_account_url: str | None = None
+    azure_storage_container: str = "regnav-archives"
+    storage_local_dir: str = "/tmp/regnav-archives"
+
+    # HTML-to-PDF rendering — when true, every URL ingest also produces a
+    # printable PDF archive via Playwright (worker only).
+    archive_html_as_pdf: bool = True
+
     # --- RAG / chat ----------------------------------------------------
     embedding_model: str = "text-embedding-3-small"
     chat_model: str = "claude-sonnet-4-20250514"
