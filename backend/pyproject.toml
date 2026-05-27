@@ -21,6 +21,8 @@ dependencies = [
     "azure-keyvault-secrets>=4.8.0",
     "pgvector>=0.3.0",
     "openai>=1.50.0",
+    "beautifulsoup4>=4.12",
+    "lxml>=5.3",
 ]
 
 [project.optional-dependencies]

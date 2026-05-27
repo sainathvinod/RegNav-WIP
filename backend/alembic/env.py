@@ -14,6 +14,13 @@ from alembic import context
 # ---------------------------------------------------------------------------
 from app.db.models import Base
 from app.db.models.audit_log import AuditLog  # noqa: F401
+from app.db.models.chat_message import ChatMessage  # noqa: F401
+from app.db.models.chat_session import ChatSession  # noqa: F401
+from app.db.models.discovered_document import DiscoveredDocument  # noqa: F401
+from app.db.models.document import Document  # noqa: F401
+from app.db.models.document_chunk import DocumentChunk  # noqa: F401
+from app.db.models.job import Job  # noqa: F401
+from app.db.models.regulatory_source import RegulatorySource  # noqa: F401
 from app.db.models.role import Role, UserRole  # noqa: F401
 from app.db.models.tenant import Tenant  # noqa: F401
 from app.db.models.user import User  # noqa: F401

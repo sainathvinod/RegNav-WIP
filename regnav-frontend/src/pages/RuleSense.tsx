@@ -1,8 +1,10 @@
 // RuleSense - Regulatory compliance chatbot (RAG over ingested documents).
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { AppLayout } from '../components/layout/AppLayout';
 import {
+  ArrowRightIcon,
   ChatBubbleLeftRightIcon,
   DocumentTextIcon,
   PaperAirplaneIcon,
@@ -371,17 +373,24 @@ export const RuleSense: React.FC = () => {
 
               {documentsOpen && (
                 <div className="mt-2">
+                  <Link
+                    to="/regingest"
+                    className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs transition-colors bg-purple-600 hover:bg-purple-700 text-white"
+                  >
+                    Add via RegIngest
+                    <ArrowRightIcon className="h-3.5 w-3.5" />
+                  </Link>
                   <button
                     type="button"
                     onClick={() => setShowUploadModal(true)}
-                    className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg border text-xs transition-colors"
+                    className="mt-2 w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg border text-xs transition-colors"
                     style={{
                       borderColor: 'var(--border)',
                       color: 'var(--text-secondary)',
                     }}
                   >
                     <PlusIcon className="h-4 w-4" />
-                    Add document
+                    Quick add (text)
                   </button>
 
                   <ul className="mt-2 space-y-1">

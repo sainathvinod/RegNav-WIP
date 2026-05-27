@@ -59,6 +59,30 @@ services:
       - ./backend/app:/app/app:ro
     command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
 
+  worker:
+    # Background job worker — drains the Postgres `jobs` table and runs
+    # regscout.discover / regingest.ingest_url / regingest.ingest_text
+    # handlers. Same image as backend; only the entrypoint differs.
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: regnav-worker
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      APP_ENV: development
+      DEBUG: "true"
+      DATABASE_URL: postgresql+asyncpg://regnav:regnav@postgres:5432/regnav
+      REDIS_URL: redis://redis:6379/0
+      LOG_LEVEL: DEBUG
+      LOG_JSON: "false"
+    volumes:
+      - ./backend/app:/app/app:ro
+    command: ["python", "-m", "app.workers.cli"]
+
 volumes:
   postgres_data:
   redis_data:
