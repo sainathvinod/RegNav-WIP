@@ -115,6 +115,14 @@ function sseBody() {
 
 export async function mockAllApis(page: Page) {
   // ─────────────────────────────────────────────────────────────
+  // Catch-all fallback — empty list for anything we forgot to mock.
+  // Registered FIRST so specific routes below override it.
+  // ─────────────────────────────────────────────────────────────
+  await page.route(/\/api\/v1\//, (route: Route) =>
+    route.fulfill(json([])),
+  );
+
+  // ─────────────────────────────────────────────────────────────
   // Analytics (no conflicts)
   // ─────────────────────────────────────────────────────────────
   await page.route(/\/api\/v1\/analytics\/summary/, (route: Route) =>
@@ -124,6 +132,62 @@ export async function mockAllApis(page: Page) {
       validations: { total: 4, today: 1, violationsRate: 0.25 },
       complianceScore: 87,
     })),
+  );
+
+  // ─────────────────────────────────────────────────────────────
+  // Misc routes needed for visual capture across all pages
+  // ─────────────────────────────────────────────────────────────
+  await page.route(/\/api\/v1\/health\/llm/, (route: Route) =>
+    route.fulfill(json({
+      overall: true,
+      providers: {
+        anthropic: { ok: true, latency_ms: 412 },
+        openai:    { ok: true, latency_ms: 287, dimensions: 1536 },
+      },
+    })),
+  );
+  await page.route(/\/api\/v1\/config/, (route: Route) =>
+    route.fulfill(json({
+      entries: [
+        { key: 'chat_model',         value: 'claude-sonnet-4-20250514', default: 'claude-sonnet-4-20250514', isOverridden: false },
+        { key: 'embedding_model',    value: 'text-embedding-3-small',   default: 'text-embedding-3-small',   isOverridden: false },
+        { key: 'rag_top_k',          value: '8',                        default: '8',                        isOverridden: false },
+        { key: 'default_state_code', value: 'TX',                       default: '',                         isOverridden: true  },
+        { key: 'default_lob',        value: 'workers_comp',             default: '',                         isOverridden: true  },
+      ],
+    })),
+  );
+  await page.route(/\/api\/v1\/users\/me/, (route: Route) =>
+    route.fulfill(json({
+      id: '00000000-0000-0000-0000-000000000002',
+      email: 'dev@localhost',
+      displayName: 'Dev User',
+      roles: ['platform_admin'],
+      tenantId: '00000000-0000-0000-0000-000000000001',
+    })),
+  );
+  await page.route(/\/api\/v1\/users/, (route: Route) =>
+    route.fulfill(json([
+      { id: 'u1', email: 'alice@example.com', displayName: 'Alice', roles: ['compliance_officer'], status: 'active', createdAt: '2026-04-01T00:00:00Z' },
+      { id: 'u2', email: 'bob@example.com',   displayName: 'Bob',   roles: ['analyst'],            status: 'active', createdAt: '2026-04-15T00:00:00Z' },
+    ])),
+  );
+  await page.route(/\/api\/v1\/organizations/, (route: Route) =>
+    route.fulfill(json([
+      { id: 'o1', name: 'Acme Insurance', kind: 'carrier', country: 'US', state: 'TX', createdAt: '2026-04-01T00:00:00Z' },
+    ])),
+  );
+  await page.route(/\/api\/v1\/audit/, (route: Route) =>
+    route.fulfill(json([])),
+  );
+  await page.route(/\/api\/v1\/tenants/, (route: Route) =>
+    route.fulfill(json([])),
+  );
+  await page.route(/\/api\/v1\/profiles/, (route: Route) =>
+    route.fulfill(json([])),
+  );
+  await page.route(/\/api\/v1\/regscout/, (route: Route) =>
+    route.fulfill(json([])),
   );
 
   // ─────────────────────────────────────────────────────────────

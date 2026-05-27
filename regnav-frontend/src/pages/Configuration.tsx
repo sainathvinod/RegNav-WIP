@@ -1,23 +1,35 @@
 import React, { useEffect, useState } from 'react';
 import { AppLayout } from '../components/layout/AppLayout';
+import { Select } from '../components/ui/Select';
+import { US_STATE_OPTIONS, LOB_OPTIONS, type Option } from '../lib/constants';
 import { getConfig, resetConfigKey, updateConfig, type ConfigEntry } from '../services/tenantConfig';
 
-const KEY_META: Record<string, { label: string; description: string; type: 'text' | 'number' | 'select'; options?: string[] }> = {
+interface KeyMeta {
+  label: string;
+  description: string;
+  type: 'text' | 'number' | 'select';
+  options?: Option[];
+}
+
+const KEY_META: Record<string, KeyMeta> = {
   chat_model: {
     label: 'Chat Model',
     description: 'Anthropic model used for RuleSense and RuleMiner.',
     type: 'select',
     options: [
-      'claude-sonnet-4-20250514',
-      'claude-opus-4-5',
-      'claude-haiku-4-5-20251001',
+      { value: 'claude-sonnet-4-20250514',    label: 'Claude Sonnet 4 (recommended)' },
+      { value: 'claude-opus-4-5',             label: 'Claude Opus 4.5 (highest quality)' },
+      { value: 'claude-haiku-4-5-20251001',   label: 'Claude Haiku 4.5 (fastest)' },
     ],
   },
   embedding_model: {
     label: 'Embedding Model',
     description: 'OpenAI model used to generate vector embeddings.',
     type: 'select',
-    options: ['text-embedding-3-small', 'text-embedding-3-large'],
+    options: [
+      { value: 'text-embedding-3-small', label: 'text-embedding-3-small (recommended)' },
+      { value: 'text-embedding-3-large', label: 'text-embedding-3-large' },
+    ],
   },
   rag_top_k: {
     label: 'RAG Top-K',
@@ -36,15 +48,23 @@ const KEY_META: Record<string, { label: string; description: string; type: 'text
   },
   default_state_code: {
     label: 'Default State',
-    description: '2-letter state code pre-filled in RegScout / RegValidate.',
-    type: 'text',
+    description: 'State pre-filled in RegScout / RegValidate forms.',
+    type: 'select',
+    options: US_STATE_OPTIONS,
   },
   default_lob: {
     label: 'Default Line of Business',
     description: 'LOB pre-filled in forms (e.g. Workers Compensation).',
-    type: 'text',
+    type: 'select',
+    options: LOB_OPTIONS,
   },
 };
+
+const SECTIONS: Array<{ title: string; keys: string[] }> = [
+  { title: 'Models',   keys: ['chat_model', 'embedding_model'] },
+  { title: 'RAG',      keys: ['rag_top_k', 'rag_chunk_size', 'rag_chunk_overlap'] },
+  { title: 'Defaults', keys: ['default_state_code', 'default_lob'] },
+];
 
 const Configuration: React.FC = () => {
   const [entries, setEntries] = useState<ConfigEntry[]>([]);
@@ -56,17 +76,18 @@ const Configuration: React.FC = () => {
 
   useEffect(() => {
     getConfig()
-      .then(r => {
-        setEntries(r.entries);
+      .then((r) => {
+        const next = Array.isArray(r?.entries) ? r.entries : [];
+        setEntries(next);
         const initial: Record<string, string> = {};
-        for (const e of r.entries) initial[e.key] = e.value;
+        for (const e of next) initial[e.key] = e.value;
         setDrafts(initial);
       })
-      .catch(err => setError(err instanceof Error ? err.message : 'Failed to load'))
+      .catch((err) => setError(err instanceof Error ? err.message : 'Failed to load'))
       .finally(() => setLoading(false));
   }, []);
 
-  const isDirty = entries.some(e => drafts[e.key] !== e.value);
+  const isDirty = entries.some((e) => drafts[e.key] !== e.value);
 
   const handleSave = async () => {
     const updates: Record<string, string> = {};
@@ -95,30 +116,36 @@ const Configuration: React.FC = () => {
     try {
       await resetConfigKey(key);
       const result = await getConfig();
-      setEntries(result.entries);
+      const next = Array.isArray(result?.entries) ? result.entries : [];
+      setEntries(next);
       const newDrafts: Record<string, string> = {};
-      for (const e of result.entries) newDrafts[e.key] = e.value;
+      for (const e of next) newDrafts[e.key] = e.value;
       setDrafts(newDrafts);
     } catch {
       /* ignore */
     }
   };
 
+  const entriesByKey = Object.fromEntries(entries.map((e) => [e.key, e]));
+
   return (
     <AppLayout title="Configuration">
       <div className="max-w-3xl">
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-6">
           <div>
-            <h2 className="text-xl font-semibold text-gray-100">Tenant Configuration</h2>
-            <p className="text-sm text-gray-400 mt-0.5">
+            <h2 className="text-lg sm:text-xl font-semibold" style={{ color: 'var(--text)' }}>
+              Tenant Configuration
+            </h2>
+            <p className="text-sm mt-1" style={{ color: 'var(--muted)' }}>
               Override system defaults for this tenant. Blank values use system defaults.
             </p>
           </div>
           {isDirty && (
             <button
+              type="button"
               onClick={handleSave}
               disabled={saving}
-              className="px-5 py-2 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-700 text-white rounded-lg text-sm font-medium transition-colors"
+              className="btn-primary self-start sm:self-auto disabled:opacity-60 disabled:cursor-not-allowed"
             >
               {saving ? 'Saving…' : 'Save Changes'}
             </button>
@@ -126,82 +153,128 @@ const Configuration: React.FC = () => {
         </div>
 
         {error && (
-          <div className="mb-4 p-3 rounded-lg bg-red-900/30 border border-red-700 text-red-300 text-sm">
+          <div
+            className="mb-4 p-3 rounded-lg border text-sm"
+            role="alert"
+            style={{ backgroundColor: 'var(--error-bg)', borderColor: 'var(--error)', color: 'var(--error)' }}
+          >
             {error}
-            <p className="text-xs mt-1 text-red-400/70">Start the backend to configure settings.</p>
+            <p className="text-xs mt-1 opacity-80">Start the backend to configure settings.</p>
           </div>
         )}
 
         {loading ? (
-          <div className="text-center py-16 text-gray-400">Loading configuration…</div>
+          <div className="text-center py-16" style={{ color: 'var(--muted)' }}>
+            Loading configuration…
+          </div>
+        ) : entries.length === 0 ? (
+          <div className="card text-center py-12" style={{ color: 'var(--muted)' }}>
+            No configuration available yet. Backend may still be starting up.
+          </div>
         ) : (
-          <div className="space-y-3">
-            {entries.map(entry => {
-              const meta = KEY_META[entry.key];
-              const draft = drafts[entry.key] ?? entry.value;
-              const changed = draft !== entry.value;
-              const saved = savedKeys.has(entry.key);
+          <div className="space-y-6">
+            {SECTIONS.map((section) => {
+              const sectionEntries = section.keys
+                .map((k) => entriesByKey[k])
+                .filter((e): e is ConfigEntry => Boolean(e));
+              if (sectionEntries.length === 0) return null;
 
               return (
-                <div
-                  key={entry.key}
-                  className={`card transition-colors ${changed ? 'border-purple-700/50' : ''}`}
-                >
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-sm font-medium text-gray-100">
-                          {meta?.label ?? entry.key}
-                        </span>
-                        {entry.isOverridden && !changed && (
-                          <span className="text-xs bg-purple-900 text-purple-300 px-1.5 py-0.5 rounded border border-purple-700">
-                            overridden
-                          </span>
-                        )}
-                        {saved && (
-                          <span className="text-xs text-green-400">✓ saved</span>
-                        )}
-                      </div>
-                      {meta?.description && (
-                        <p className="text-xs text-gray-500 mb-2">{meta.description}</p>
-                      )}
-                      {meta?.type === 'select' ? (
-                        <select
-                          value={draft}
-                          onChange={e => setDrafts(prev => ({ ...prev, [entry.key]: e.target.value }))}
-                          className="w-full max-w-sm px-3 py-2 rounded-lg bg-gray-800 border border-gray-700 text-gray-200 text-sm focus:outline-none focus:border-purple-500"
-                        >
-                          {meta.options?.map(o => (
-                            <option key={o} value={o}>{o}</option>
-                          ))}
-                        </select>
-                      ) : (
-                        <input
-                          type={meta?.type === 'number' ? 'number' : 'text'}
-                          value={draft}
-                          onChange={e => setDrafts(prev => ({ ...prev, [entry.key]: e.target.value }))}
-                          placeholder={`Default: ${entry.default || '—'}`}
-                          className="w-full max-w-sm px-3 py-2 rounded-lg bg-gray-800 border border-gray-700 text-gray-100 text-sm focus:outline-none focus:border-purple-500"
-                        />
-                      )}
-                      {entry.isOverridden && (
-                        <p className="text-xs text-gray-600 mt-1">
-                          Default: <code>{entry.default || '—'}</code>
-                        </p>
-                      )}
-                    </div>
+                <section key={section.title}>
+                  <h3
+                    className="text-xs font-semibold uppercase tracking-wider mb-2 px-1"
+                    style={{ color: 'var(--muted)' }}
+                  >
+                    {section.title}
+                  </h3>
+                  <div className="space-y-3">
+                    {sectionEntries.map((entry) => {
+                      const meta = KEY_META[entry.key];
+                      const draft = drafts[entry.key] ?? entry.value;
+                      const changed = draft !== entry.value;
+                      const saved = savedKeys.has(entry.key);
 
-                    {entry.isOverridden && (
-                      <button
-                        onClick={() => handleReset(entry.key)}
-                        className="shrink-0 text-xs text-gray-500 hover:text-red-400 transition-colors mt-1"
-                        title="Reset to default"
-                      >
-                        Reset
-                      </button>
-                    )}
+                      return (
+                        <div
+                          key={entry.key}
+                          className="card"
+                          style={
+                            changed
+                              ? { borderColor: 'rgb(var(--color-accent-primary))' }
+                              : undefined
+                          }
+                        >
+                          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex flex-wrap items-center gap-2 mb-1">
+                                <span className="text-sm font-medium" style={{ color: 'var(--text)' }}>
+                                  {meta?.label ?? entry.key}
+                                </span>
+                                {entry.isOverridden && !changed && (
+                                  <span className="status-accent inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium border">
+                                    overridden
+                                  </span>
+                                )}
+                                {saved && (
+                                  <span className="text-xs" style={{ color: 'var(--success)' }}>
+                                    ✓ saved
+                                  </span>
+                                )}
+                              </div>
+                              {meta?.description && (
+                                <p className="text-xs mb-2" style={{ color: 'var(--muted)' }}>
+                                  {meta.description}
+                                </p>
+                              )}
+                              {meta?.type === 'select' ? (
+                                <Select
+                                  className="max-w-md"
+                                  value={draft}
+                                  options={meta.options ?? []}
+                                  onChange={(e) =>
+                                    setDrafts((prev) => ({ ...prev, [entry.key]: e.target.value }))
+                                  }
+                                />
+                              ) : (
+                                <input
+                                  type={meta?.type === 'number' ? 'number' : 'text'}
+                                  value={draft}
+                                  onChange={(e) =>
+                                    setDrafts((prev) => ({ ...prev, [entry.key]: e.target.value }))
+                                  }
+                                  placeholder={`Default: ${entry.default || '—'}`}
+                                  className="input max-w-md text-sm"
+                                />
+                              )}
+                              {entry.isOverridden && (
+                                <p className="text-xs mt-1" style={{ color: 'var(--muted)' }}>
+                                  Default:{' '}
+                                  <code style={{ color: 'var(--text-secondary)' }}>
+                                    {entry.default || '—'}
+                                  </code>
+                                </p>
+                              )}
+                            </div>
+
+                            {entry.isOverridden && (
+                              <button
+                                type="button"
+                                onClick={() => handleReset(entry.key)}
+                                className="text-xs self-start sm:self-auto sm:mt-1 transition-colors"
+                                style={{ color: 'var(--muted)' }}
+                                onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--error)')}
+                                onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--muted)')}
+                                title="Reset to default"
+                              >
+                                Reset
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
-                </div>
+                </section>
               );
             })}
           </div>

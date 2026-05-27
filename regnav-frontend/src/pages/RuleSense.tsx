@@ -63,6 +63,7 @@ export const RuleSense: React.FC = () => {
   const [uploadDraft, setUploadDraft] = useState<UploadDraft>(EMPTY_DRAFT);
   const [isUploading, setIsUploading] = useState(false);
   const [documentsOpen, setDocumentsOpen] = useState(true);
+  const [sidebarMobileOpen, setSidebarMobileOpen] = useState(false);
 
   const scrollAnchor = useRef<HTMLDivElement | null>(null);
 
@@ -107,6 +108,7 @@ export const RuleSense: React.FC = () => {
     setStreamingText('');
     setStreamingCitations([]);
     setErrorMessage(null);
+    setSidebarMobileOpen(false);
     try {
       const { messages: msgs } = await getSession(sessionId);
       setMessages(msgs);
@@ -126,6 +128,7 @@ export const RuleSense: React.FC = () => {
       setStreamingText('');
       setStreamingCitations([]);
       setErrorMessage(null);
+      setSidebarMobileOpen(false);
     } catch (err) {
       setErrorMessage(
         err instanceof Error ? err.message : 'Failed to create new chat',
@@ -283,14 +286,26 @@ export const RuleSense: React.FC = () => {
   );
 
   return (
-    <AppLayout title="RuleSense - AI Insights">
-      <div className="flex h-[calc(100vh-7rem)] gap-4">
+    <AppLayout title="RuleSense — AI Insights">
+      <div className="flex h-[calc(100vh-9rem)] md:h-[calc(100vh-10rem)] gap-3 md:gap-4 relative">
+        {/* Mobile chats-drawer backdrop */}
+        {sidebarMobileOpen && (
+          <button
+            type="button"
+            aria-label="Close chat history"
+            onClick={() => setSidebarMobileOpen(false)}
+            className="md:hidden absolute inset-0 z-10 bg-black/50"
+          />
+        )}
+
         {/* Sidebar ------------------------------------------------------ */}
         <aside
-          className="w-72 flex-shrink-0 flex flex-col rounded-xl border overflow-hidden"
+          className={`flex-col rounded-xl border overflow-hidden absolute md:relative top-0 left-0 z-20 h-full w-72 md:w-72 md:flex-shrink-0 transition-transform duration-200 ${
+            sidebarMobileOpen ? 'flex translate-x-0' : 'hidden md:flex -translate-x-full md:translate-x-0'
+          }`}
           style={{
-            backgroundColor: 'var(--color-bg-panel)',
-            borderColor: 'var(--color-border-subtle)',
+            backgroundColor: 'var(--surface)',
+            borderColor: 'var(--border)',
           }}
         >
           <div className="p-4 border-b" style={{ borderColor: 'var(--border)' }}>
@@ -431,29 +446,38 @@ export const RuleSense: React.FC = () => {
 
         {/* Chat pane --------------------------------------------------- */}
         <section
-          className="flex-1 flex flex-col rounded-xl border overflow-hidden"
+          className="flex-1 flex flex-col rounded-xl border overflow-hidden min-w-0"
           style={{
-            backgroundColor: 'var(--color-bg-panel)',
-            borderColor: 'var(--color-border-subtle)',
+            backgroundColor: 'var(--surface)',
+            borderColor: 'var(--border)',
           }}
         >
           {/* Header */}
           <header
-            className="px-6 py-4 border-b flex items-center justify-between"
+            className="px-4 sm:px-6 py-3 sm:py-4 border-b flex items-center justify-between gap-3"
             style={{ borderColor: 'var(--border)' }}
           >
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 min-w-0">
+              <button
+                type="button"
+                onClick={() => setSidebarMobileOpen(true)}
+                className="md:hidden p-1.5 rounded-lg"
+                aria-label="Open chat history"
+                style={{ color: 'var(--text-secondary)' }}
+              >
+                <ChatBubbleLeftRightIcon className="h-5 w-5" />
+              </button>
               <div
-                className="p-2 rounded-lg"
+                className="p-2 rounded-lg flex-shrink-0"
                 style={{ backgroundColor: 'rgb(var(--color-accent-primary))' }}
               >
                 <SparklesIcon className="h-5 w-5 text-white" />
               </div>
-              <div>
-                <h1 className="text-lg font-semibold" style={{ color: 'var(--text)' }}>
+              <div className="min-w-0">
+                <h1 className="text-base sm:text-lg font-semibold truncate" style={{ color: 'var(--text)' }}>
                   RuleSense
                 </h1>
-                <p className="text-xs" style={{ color: 'var(--muted)' }}>
+                <p className="text-xs truncate" style={{ color: 'var(--muted)' }}>
                   {activeSession?.title ?? 'Regulatory compliance assistant'}
                 </p>
               </div>
@@ -494,30 +518,26 @@ export const RuleSense: React.FC = () => {
             </div>
           )}
 
-          <div className="border-t px-6 py-4" style={{ borderColor: 'var(--border)' }}>
-            <div className="flex items-end gap-3 max-w-3xl mx-auto">
+          <div className="border-t px-4 sm:px-6 py-3 sm:py-4" style={{ borderColor: 'var(--border)' }}>
+            <div className="flex items-end gap-2 sm:gap-3 max-w-3xl mx-auto">
               <textarea
                 value={draftMessage}
                 onChange={(e) => setDraftMessage(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder="Ask a regulatory question… (Cmd/Ctrl+Enter to send)"
                 rows={2}
-                className="flex-1 resize-none px-3 py-2 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
-                style={{
-                  backgroundColor: 'var(--surface-2)',
-                  borderColor: 'var(--border)',
-                  color: 'var(--text)',
-                }}
+                className="input flex-1 resize-none text-sm"
                 disabled={isStreaming}
               />
               <button
                 type="button"
                 onClick={() => void handleSend()}
                 disabled={!draftMessage.trim() || isStreaming}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium transition-colors"
+                className="btn-primary flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                aria-label="Send message"
               >
                 <PaperAirplaneIcon className="h-4 w-4" />
-                Send
+                <span className="hidden sm:inline">Send</span>
               </button>
             </div>
           </div>
