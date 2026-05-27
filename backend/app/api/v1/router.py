@@ -7,6 +7,7 @@ from app.api.v1 import (
     audit,
     config,
     discovery_profiles,
+    health,
     jobs,
     notifications,
     organizations,
@@ -35,3 +36,4 @@ router.include_router(regingest.router, prefix="/regingest", tags=["regingest"])
 router.include_router(ruleminer.router, prefix="/ruleminer", tags=["ruleminer"])
 router.include_router(regvalidate.router, prefix="/regvalidate", tags=["regvalidate"])
 router.include_router(discovery_profiles.router, prefix="/profiles", tags=["discovery-profiles"])
+router.include_router(health.router, prefix="/health", tags=["health"])
